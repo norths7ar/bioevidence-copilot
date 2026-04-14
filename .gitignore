@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Environment & secrets
+.env
+
+# Database (local data, not versioned)
+data/
+
+# AI coding tools (machine-local)
+.claude/
+
+# OS
+Thumbs.db
+
+# IDE
+.vscode/
