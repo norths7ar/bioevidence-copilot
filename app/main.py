@@ -4,6 +4,7 @@ import logging
 import json
 import sys
 from pathlib import Path
+from urllib.error import URLError
 
 
 SRC_DIR = Path(__file__).resolve().parents[1] / "src"
@@ -11,6 +12,7 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from bioevidence.agent.workflow import run_workflow
+from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.query import Query
 
 
@@ -20,7 +22,16 @@ def main() -> int:
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
     query = Query(text="What evidence exists for a sample biomedical question?")
-    answer = run_workflow(query)
+    try:
+        answer = run_workflow(query)
+    except (URLError, OSError) as exc:
+        logging.getLogger(__name__).warning("Falling back to offline demo mode: %s", exc)
+        answer = AnswerBundle(
+            answer_text="PubMed fetch is unavailable in the current environment. The scaffold is ready, but live ingestion is disabled.",
+            citations=(),
+            evidence_records=(),
+            rewritten_query=query.text,
+        )
 
     payload = {
         "query": query.text,

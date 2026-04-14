@@ -54,6 +54,12 @@ def load_text(path: Path) -> str:
         return file.read()
 
 
+def save_text(text: str, path: Path) -> None:
+    """Write a text or Markdown file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
 def load_text_lines(path: Path) -> list[str]:
     """Load a text or Markdown file as lines."""
     with path.open("r", encoding="utf-8") as file:

@@ -21,7 +21,7 @@ It is intentionally built in two stages:
 4. system returns a final answer with citations
 
 ## Repository status
-Milestone 0 scaffold is in place.
+Milestone 0 scaffold is in place, and PubMed ingestion work for milestone 1 has started.
 
 ## Planned modules
 - ingestion
@@ -45,8 +45,12 @@ Example commands:
 ```powershell
 python -m pip install -e .[dev]
 python app/main.py
+python scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
 pytest
 ```
+
+The ingestion script writes raw artifacts under `data/raw/` and processed
+documents under `data/processed/`.
 
 ## Project structure
 
@@ -54,7 +58,7 @@ pytest
 app/                lightweight application entrypoint
 src/bioevidence/    importable package stubs
 docs/               project brief, architecture, roadmap, decisions
-scripts/            small helper scripts for local workflows
+scripts/            small helper scripts for local workflows and ingestion runs
 tests/              placeholder test shape
 data/               local-only raw, processed, and eval artifacts
 notebooks/          exploration notebook
