@@ -18,6 +18,7 @@ Do not redesign the project into an unrelated chatbot, general assistant, or toy
 
 ## Engineering principles
 - Python 3.12
+- Full interpreter path required: C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe
 - Use pathlib.Path instead of os.path when practical.
 - Prefer typed Python and dataclasses / pydantic where appropriate.
 - Keep side effects at the edges.
