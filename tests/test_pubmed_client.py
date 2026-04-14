@@ -2,9 +2,18 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+
+import pytest
 
 from bioevidence.ingestion.normalize import document_to_record, normalize_pubmed_record
-from bioevidence.ingestion.pubmed_client import fetch_pubmed_batch, save_pubmed_artifacts, search_pubmed
+import bioevidence.ingestion.pubmed_client as pubmed_client
+from bioevidence.ingestion.pubmed_client import (
+    PubMedRequestError,
+    fetch_pubmed_batch,
+    save_pubmed_artifacts,
+    search_pubmed,
+)
 from bioevidence.schemas.document import Document
 from bioevidence.schemas.query import Query
 
@@ -82,6 +91,64 @@ class _FakeOpener:
         raise AssertionError(f"Unexpected URL: {request.full_url}")
 
 
+class _TransientSearchOpener:
+    def __init__(self) -> None:
+        self.search_attempts = 0
+        self.requests: list[str] = []
+
+    def __call__(self, request):
+        self.requests.append(request.full_url)
+        if "esearch.fcgi" in request.full_url:
+            self.search_attempts += 1
+            if self.search_attempts == 1:
+                raise URLError(ConnectionResetError("connection reset"))
+            return _FakeResponse(json.dumps(SEARCH_JSON).encode("utf-8"))
+        if "efetch.fcgi" in request.full_url:
+            return _FakeResponse(EFETCH_XML.encode("utf-8"))
+        raise AssertionError(f"Unexpected URL: {request.full_url}")
+
+
+class _RetryableHttpSearchOpener:
+    def __init__(self, status_code: int) -> None:
+        self.status_code = status_code
+        self.search_attempts = 0
+        self.requests: list[str] = []
+
+    def __call__(self, request):
+        self.requests.append(request.full_url)
+        if "esearch.fcgi" in request.full_url:
+            self.search_attempts += 1
+            if self.search_attempts == 1:
+                raise HTTPError(request.full_url, self.status_code, "retryable", hdrs=None, fp=None)
+            return _FakeResponse(json.dumps(SEARCH_JSON).encode("utf-8"))
+        if "efetch.fcgi" in request.full_url:
+            return _FakeResponse(EFETCH_XML.encode("utf-8"))
+        raise AssertionError(f"Unexpected URL: {request.full_url}")
+
+
+class _FailingHttpSearchOpener:
+    def __init__(self, status_code: int) -> None:
+        self.status_code = status_code
+        self.search_attempts = 0
+
+    def __call__(self, request):
+        if "esearch.fcgi" in request.full_url:
+            self.search_attempts += 1
+            raise HTTPError(request.full_url, self.status_code, "non-retryable", hdrs=None, fp=None)
+        raise AssertionError(f"Unexpected URL: {request.full_url}")
+
+
+class _AlwaysFailingSearchOpener:
+    def __init__(self) -> None:
+        self.search_attempts = 0
+
+    def __call__(self, request):
+        if "esearch.fcgi" in request.full_url:
+            self.search_attempts += 1
+            raise URLError(ConnectionRefusedError("connection refused"))
+        raise AssertionError(f"Unexpected URL: {request.full_url}")
+
+
 def test_normalize_pubmed_record_normalizes_core_fields():
     document = normalize_pubmed_record(
         {
@@ -126,6 +193,58 @@ def test_search_pubmed_parses_documents_from_fake_responses():
 
     search_documents = search_pubmed(Query(text="alpha"), opener=_FakeOpener())
     assert search_documents[0].pmid == "12345678"
+
+
+def test_search_pubmed_retries_transient_network_failure_then_succeeds(monkeypatch):
+    opener = _TransientSearchOpener()
+    sleep_calls: list[float] = []
+    monkeypatch.setattr(pubmed_client, "sleep", lambda seconds: sleep_calls.append(seconds))
+
+    documents = search_pubmed(Query(text="alpha"), opener=opener)
+
+    assert len(documents) == 1
+    assert opener.search_attempts == 2
+    assert sleep_calls == [pubmed_client.PUBMED_BACKOFF_SECONDS]
+
+
+@pytest.mark.parametrize("status_code", [429, 500])
+def test_search_pubmed_retries_retryable_http_status_then_succeeds(monkeypatch, status_code):
+    opener = _RetryableHttpSearchOpener(status_code)
+    sleep_calls: list[float] = []
+    monkeypatch.setattr(pubmed_client, "sleep", lambda seconds: sleep_calls.append(seconds))
+
+    documents = search_pubmed(Query(text="alpha"), opener=opener)
+
+    assert len(documents) == 1
+    assert opener.search_attempts == 2
+    assert sleep_calls == [pubmed_client.PUBMED_BACKOFF_SECONDS]
+
+
+def test_search_pubmed_raises_clear_error_on_nonretryable_http_status(monkeypatch):
+    opener = _FailingHttpSearchOpener(404)
+    sleep_calls: list[float] = []
+    monkeypatch.setattr(pubmed_client, "sleep", lambda seconds: sleep_calls.append(seconds))
+
+    with pytest.raises(PubMedRequestError, match="HTTP 404"):
+        search_pubmed(Query(text="alpha"), opener=opener)
+
+    assert opener.search_attempts == 1
+    assert sleep_calls == []
+
+
+def test_search_pubmed_exhausts_retries_on_network_error(monkeypatch):
+    opener = _AlwaysFailingSearchOpener()
+    sleep_calls: list[float] = []
+    monkeypatch.setattr(pubmed_client, "sleep", lambda seconds: sleep_calls.append(seconds))
+
+    with pytest.raises(PubMedRequestError, match="connection refused"):
+        search_pubmed(Query(text="alpha"), opener=opener)
+
+    assert opener.search_attempts == pubmed_client.PUBMED_MAX_ATTEMPTS
+    assert sleep_calls == [
+        pubmed_client.PUBMED_BACKOFF_SECONDS,
+        pubmed_client.PUBMED_BACKOFF_SECONDS * 2,
+    ]
 
 
 def test_save_pubmed_artifacts_writes_raw_and_processed_outputs(tmp_path: Path):

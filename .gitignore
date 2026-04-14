@@ -6,14 +6,7 @@ __pycache__/
 .env
 
 # Database (local data, not versioned)
-data/*
-!data/.gitkeep
-!data/raw/
-!data/raw/.gitkeep
-!data/processed/
-!data/processed/.gitkeep
-!data/eval/
-!data/eval/.gitkeep
+data/
 
 # AI coding tools (machine-local)
 .claude/
@@ -28,6 +21,7 @@ Thumbs.db
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+tmp*/
 dist/
 build/
 *.egg-info/

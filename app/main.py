@@ -2,14 +2,7 @@ from __future__ import annotations
 
 import logging
 import json
-import sys
-from pathlib import Path
 from urllib.error import URLError
-
-
-SRC_DIR = Path(__file__).resolve().parents[1] / "src"
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
 
 from bioevidence.agent.workflow import run_workflow
 from bioevidence.schemas.answer import AnswerBundle

@@ -3,8 +3,10 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Sequence
 from pathlib import Path
+from time import sleep
 from typing import Any
 from urllib.parse import urlencode
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree as ET
 
@@ -16,6 +18,14 @@ from bioevidence.utils.io import save_json, save_jsonl, save_text
 from bioevidence.utils.text import slugify_text
 
 PUBMED_EUTILS_BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+PUBMED_REQUEST_TIMEOUT_SECONDS = 30.0
+PUBMED_MAX_ATTEMPTS = 3
+PUBMED_BACKOFF_SECONDS = 0.5
+PUBMED_ACCEPT_HEADER = "application/json, text/xml, application/xml"
+
+
+class PubMedRequestError(RuntimeError):
+    """Raised when a PubMed request cannot be completed."""
 
 
 def search_pubmed(
@@ -44,7 +54,7 @@ def fetch_pubmed_batch(
 ) -> tuple[dict[str, Any], list[Document]]:
     """Fetch a PubMed search response and the corresponding article records."""
     settings = settings or load_settings()
-    opener = opener or urlopen
+    opener = opener or _build_timeout_opener(PUBMED_REQUEST_TIMEOUT_SECONDS)
     limit = retmax if retmax is not None else query.top_k
 
     esearch_payload = _fetch_esearch_payload(
@@ -172,12 +182,30 @@ def _fetch_json(url: str, opener: Callable[[Request], Any]) -> dict[str, Any]:
 
 
 def _fetch_text(url: str, opener: Callable[[Request], Any]) -> str:
-    request = Request(url, headers={"Accept": "application/json, text/xml, application/xml"})
-    with opener(request) as response:
-        payload = response.read()
-    if isinstance(payload, bytes):
-        return payload.decode("utf-8")
-    return str(payload)
+    request = Request(url, headers={"Accept": PUBMED_ACCEPT_HEADER})
+    last_error: Exception | None = None
+
+    for attempt in range(1, PUBMED_MAX_ATTEMPTS + 1):
+        try:
+            with opener(request) as response:
+                payload = response.read()
+            if isinstance(payload, bytes):
+                return payload.decode("utf-8")
+            return str(payload)
+        except HTTPError as exc:
+            last_error = exc
+            if _should_retry_http_error(exc) and attempt < PUBMED_MAX_ATTEMPTS:
+                sleep(_retry_delay_seconds(attempt))
+                continue
+            raise PubMedRequestError(_format_http_error(url, exc)) from exc
+        except (TimeoutError, URLError) as exc:
+            last_error = exc
+            if attempt < PUBMED_MAX_ATTEMPTS:
+                sleep(_retry_delay_seconds(attempt))
+                continue
+            raise PubMedRequestError(_format_url_error(url, exc)) from exc
+
+    raise PubMedRequestError(_format_unexpected_error(url, last_error))
 
 
 def _extract_pmids(esearch_payload: dict[str, Any]) -> list[str]:
@@ -298,3 +326,33 @@ def _element_text(node: ET.Element | None) -> str:
     if node is None:
         return ""
     return "".join(node.itertext()).strip()
+
+
+def _build_timeout_opener(timeout_seconds: float) -> Callable[[Request], Any]:
+    def _opener(request: Request) -> Any:
+        return urlopen(request, timeout=timeout_seconds)
+
+    return _opener
+
+
+def _should_retry_http_error(exc: HTTPError) -> bool:
+    return exc.code == 429 or 500 <= exc.code < 600
+
+
+def _retry_delay_seconds(attempt: int) -> float:
+    return PUBMED_BACKOFF_SECONDS * (2 ** (attempt - 1))
+
+
+def _format_http_error(url: str, exc: HTTPError) -> str:
+    return f"PubMed request to {url} failed with HTTP {exc.code}: {exc.reason}"
+
+
+def _format_url_error(url: str, exc: Exception) -> str:
+    reason = getattr(exc, "reason", exc)
+    return f"PubMed request to {url} failed: {reason}"
+
+
+def _format_unexpected_error(url: str, exc: Exception | None) -> str:
+    if exc is None:
+        return f"PubMed request to {url} failed for an unknown reason"
+    return _format_url_error(url, exc)

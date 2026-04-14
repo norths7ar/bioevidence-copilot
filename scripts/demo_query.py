@@ -1,12 +1,8 @@
 from __future__ import annotations
 
 import logging
-from urllib.error import URLError
-import sys
 from pathlib import Path
-
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from urllib.error import URLError
 
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.agent.workflow import run_workflow

@@ -38,16 +38,19 @@ Suggested local setup:
 
 1. create and activate a Python 3.12 environment
 2. install the project in editable mode with test extras
-3. run the scaffold demo or the tests
+3. run the app as a module or run the tests
 
 Example commands:
 
 ```powershell
 python -m pip install -e .[dev]
-python app/main.py
+python -m app.main
 python scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
 pytest
 ```
+
+Editable install is the supported local workflow. Direct execution via
+`python app/main.py` is intentionally not the primary path.
 
 The ingestion script writes raw artifacts under `data/raw/` and processed
 documents under `data/processed/`.
