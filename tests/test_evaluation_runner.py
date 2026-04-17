@@ -4,7 +4,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from bioevidence.agent.workflow import WorkflowResult
+from bioevidence.agent.state import AgentState
+from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult
 from bioevidence.evaluation.dataset import EvaluationItem
 from bioevidence.evaluation.runner import EvaluationItemResult, EvaluationReport, run_evaluation, write_report
 from bioevidence.schemas.answer import AnswerBundle
@@ -141,3 +142,59 @@ def test_report_round_trips_to_json(tmp_path: Path):
 
     assert loaded["summary"]["items"] == 1
     assert loaded["items"][0]["retrieval_source"] == "local_corpus"
+
+
+def test_run_evaluation_accepts_agent_workflow_results(tmp_path: Path):
+    dataset = tmp_path / "dataset.jsonl"
+    dataset.write_text(
+        '{"id": "item-1", "query": "asthma corticosteroids", "gold_pmids": ["111"]}\n',
+        encoding="utf-8",
+    )
+
+    document = Document(
+        pmid="111",
+        title="Title 111",
+        abstract="Abstract 111",
+        journal="Journal",
+        year=2024,
+    )
+    candidate = RetrievedCandidate(document=document, score=1.0, rank=1)
+    evidence_record = EvidenceRecord(
+        pmid="111",
+        title=document.title,
+        year=document.year,
+        journal=document.journal,
+        entities=("asthma",),
+        summary=document.abstract,
+        relevance_score=1.0,
+    )
+    baseline = WorkflowResult(
+        query=Query(text="asthma corticosteroids"),
+        documents=(document,),
+        retrieved_candidates=(candidate,),
+        evidence_records=(evidence_record,),
+        answer=AnswerBundle(
+            answer_text="Baseline answer",
+            citations=("111",),
+            evidence_records=(evidence_record,),
+            rewritten_query="asthma corticosteroids",
+        ),
+        source="local_corpus",
+    )
+    agent_result = AgentWorkflowResult(
+        query=Query(text="asthma corticosteroids"),
+        baseline=baseline,
+        branch_results=tuple(),
+        documents=(document,),
+        retrieved_candidates=(candidate,),
+        evidence_records=(evidence_record,),
+        answer=baseline.answer,
+        source="agent:local_corpus",
+        state=AgentState(query=Query(text="asthma corticosteroids"), sufficient=True, stop_reason="sufficient_evidence"),
+        comparison={"branch_count": 0, "stop_reason": "sufficient_evidence"},
+    )
+
+    report = run_evaluation(dataset, pipeline=lambda query, *, data_dir=None, settings=None: agent_result)
+
+    assert report.summary["items"] == 1
+    assert report.items[0].retrieval_source == "agent:local_corpus"

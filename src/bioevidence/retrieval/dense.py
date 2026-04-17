@@ -42,8 +42,8 @@ def dense_retrieve(
         document_embeddings = embed_documents(documents, client=client, settings=settings)
         cache = {
             "corpus_signature": corpus_signature,
-            "model": settings.qwen_embedding_model,
-            "dimensions": settings.qwen_embedding_dimensions,
+            "model": settings.embedding_model,
+            "dimensions": settings.embedding_dimensions,
             "documents": [
                 {
                     "pmid": document.pmid,
@@ -68,8 +68,8 @@ def dense_retrieve(
         document_embeddings = embed_documents(documents, client=client, settings=settings)
         cache = {
             "corpus_signature": corpus_signature,
-            "model": settings.qwen_embedding_model,
-            "dimensions": settings.qwen_embedding_dimensions,
+            "model": settings.embedding_model,
+            "dimensions": settings.embedding_dimensions,
             "documents": [
                 {
                     "pmid": document.pmid,
@@ -134,8 +134,8 @@ def _cache_matches(cache: dict[str, object] | None, corpus_signature: str, setti
         return False
     return (
         cache.get("corpus_signature") == corpus_signature
-        and cache.get("model") == settings.qwen_embedding_model
-        and cache.get("dimensions") == settings.qwen_embedding_dimensions
+        and cache.get("model") == settings.embedding_model
+        and cache.get("dimensions") == settings.embedding_dimensions
         and isinstance(cache.get("documents"), list)
     )
 

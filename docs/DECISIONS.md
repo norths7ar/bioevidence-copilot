@@ -27,8 +27,8 @@
 
 ## 2026-04-15: Dense embedding backend
 
-- Use Qwen `text-embedding-v4` through the OpenAI-compatible SDK for true dense retrieval.
-- Load local `.env` values with `python-dotenv` so `QWEN_API_KEY` and related embedding settings work in local development.
+- Use an OpenAI-compatible embedding backend configured through generic `BIOEVIDENCE_EMBEDDING_*` fields in `.env`.
+- Keep the implementation provider-agnostic in code; the example configuration can point at Qwen `text-embedding-v4` or another OpenAI-compatible provider without code changes.
 - Cache corpus embeddings on disk keyed by corpus signature, model, and dimensions so repeated dense retrieval does not re-embed unchanged documents.
 - Fall back to lexical-only ranking when the dense backend is unavailable, rather than failing the whole retrieval flow.
 
@@ -43,3 +43,11 @@
 - Keep evaluation file-based and local by loading JSONL datasets from disk and running the existing RAG workflow per item.
 - Score retrieval with hit@k, recall@k, and MRR, and score answers with citation precision / recall / F1 plus normalized exact match and token overlap when a reference answer is available.
 - Return a structured evaluation report with per-item records and aggregate summary metrics, and make the CLI optionally write the full report as JSON.
+
+## 2026-04-17: Custom agentic orchestration
+
+- Keep the agent controller custom and lightweight instead of adopting LangChain or LangGraph for the first agent milestone.
+- Use generic `BIOEVIDENCE_AGENT_*` environment variables for the agent backend so provider choice stays in `.env` rather than in code.
+- Keep the agent backend OpenAI-compatible so DeepSeek, Qwen Chat, MiMo, and similar providers can be swapped without code changes.
+- Keep sufficiency deterministic: stop when the loop has accumulated enough unique PMIDs with a minimum relevance floor, otherwise continue until max iterations.
+- Surface the agent report in CLI / JSON form and keep a tracked example artifact under `examples/` for reviewability.

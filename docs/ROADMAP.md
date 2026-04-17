@@ -32,7 +32,7 @@
 - implement evaluation runner
 
 ## Milestone 5: Agentic orchestration
-- add planner
-- add multi-query workflow
-- add deduplication and stopping criteria
-- compare with baseline
+- add a custom LLM-backed planner and synthesis path
+- add multi-query branch execution over the existing retrieval stack
+- add deduplication, deterministic stopping, and baseline comparison
+- expose agent reports through CLI / JSON artifacts instead of a heavier UI

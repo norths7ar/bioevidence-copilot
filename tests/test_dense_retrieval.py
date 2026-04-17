@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from bioevidence.config import Settings
 from bioevidence.retrieval.dense import dense_retrieve
 from bioevidence.schemas.document import Document
 from bioevidence.schemas.query import Query
@@ -52,12 +53,40 @@ def _fake_embed_documents(documents, *, client=None, settings=None):
     return [vector_map[f"{document.title} {document.abstract}"] for document in documents]
 
 
+def _settings(tmp_path: Path) -> Settings:
+    return Settings(
+        data_dir=tmp_path,
+        embedding_cache_dir=tmp_path / "cache",
+        agent_api_key="test",
+        agent_base_url="https://example.invalid/v1",
+        agent_max_iterations=3,
+        agent_max_output_tokens=256,
+        agent_min_relevance_score=0.6,
+        agent_min_unique_pmids=3,
+        agent_model="test-model",
+        agent_temperature=0.0,
+        log_level="INFO",
+        pubmed_email="",
+        pubmed_tool_name="BioEvidence Copilot",
+        embedding_api_key="test-embedding-key",
+        embedding_base_url="https://example.invalid/v1",
+        embedding_model="text-embedding-v4",
+        embedding_dimensions=1024,
+    )
+
+
 def test_dense_retrieve_ranks_by_cosine_similarity(monkeypatch, tmp_path: Path):
     documents = _build_documents()
     monkeypatch.setattr("bioevidence.retrieval.dense.embed_documents", _fake_embed_documents)
     monkeypatch.setattr("bioevidence.retrieval.dense.embed_texts", _fake_embed_texts)
 
-    candidates = dense_retrieve(Query(text="asthma corticosteroids"), documents=documents, data_dir=tmp_path, client=object())
+    candidates = dense_retrieve(
+        Query(text="asthma corticosteroids"),
+        documents=documents,
+        data_dir=tmp_path,
+        client=object(),
+        settings=_settings(tmp_path),
+    )
 
     assert [candidate.document.pmid for candidate in candidates] == ["1", "2", "3"]
     assert candidates[0].score > candidates[1].score > candidates[2].score
@@ -81,10 +110,24 @@ def test_dense_retrieve_reuses_cached_embeddings(monkeypatch, tmp_path: Path):
     monkeypatch.setattr("bioevidence.retrieval.dense.embed_documents", fake_embed_documents)
     monkeypatch.setattr("bioevidence.retrieval.dense.embed_texts", fake_embed_texts)
 
-    dense_retrieve(Query(text="asthma corticosteroids"), documents=documents, data_dir=tmp_path, client=object())
+    settings = _settings(tmp_path)
+
+    dense_retrieve(
+        Query(text="asthma corticosteroids"),
+        documents=documents,
+        data_dir=tmp_path,
+        client=object(),
+        settings=settings,
+    )
     first_run_calls = list(calls)
     calls.clear()
-    dense_retrieve(Query(text="asthma corticosteroids"), documents=documents, data_dir=tmp_path, client=object())
+    dense_retrieve(
+        Query(text="asthma corticosteroids"),
+        documents=documents,
+        data_dir=tmp_path,
+        client=object(),
+        settings=settings,
+    )
 
     cache_file = tmp_path / "cache" / "dense_embeddings.cache.json"
     assert cache_file.exists()

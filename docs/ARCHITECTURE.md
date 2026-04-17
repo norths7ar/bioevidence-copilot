@@ -35,6 +35,13 @@ User query
 -> answer generation
 -> final output
 
+The agent implementation should remain a custom controller over the existing
+retrieval and extraction layers. The baseline templated answer path remains
+available for comparison, while the agent uses an OpenAI-compatible LLM backend
+for planning and final synthesis. The app surface stays lightweight; agent
+comparison is exposed through CLI / JSON report artifacts rather than a heavier
+interactive UI.
+
 ## Data model expectations
 At minimum define schemas for:
 - Query

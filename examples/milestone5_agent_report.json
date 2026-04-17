@@ -1,0 +1,99 @@
+{
+  "query": "asthma corticosteroids",
+  "baseline": {
+    "source": "local_corpus",
+    "answer": "Top retrieved evidence for 'asthma corticosteroids': Title 111 (2024) suggests Summary 111 [111] Citations: [111]",
+    "citations": [
+      "111"
+    ],
+    "retrieved_pmids": [
+      "111"
+    ]
+  },
+  "branches": [
+    {
+      "query": "asthma corticosteroids",
+      "rewritten_query": "asthma corticosteroids biomarkers",
+      "source": "branch",
+      "retrieved_pmids": [
+        "111",
+        "333"
+      ],
+      "evidence_pmids": [
+        "111",
+        "333"
+      ]
+    }
+  ],
+  "state": {
+    "iterations": 1,
+    "max_iterations": 3,
+    "branch_queries": [
+      "asthma corticosteroids",
+      "asthma corticosteroids biomarkers"
+    ],
+    "unique_pmids": [
+      "111",
+      "222",
+      "333"
+    ],
+    "sufficient": true,
+    "stop_reason": "sufficient_evidence"
+  },
+  "retrieved_papers": [
+    {
+      "pmid": "111",
+      "title": "Title 111",
+      "journal": "Journal",
+      "year": 2024,
+      "score": 0.92,
+      "rank": 1
+    },
+    {
+      "pmid": "333",
+      "title": "Title 333",
+      "journal": "Journal",
+      "year": 2024,
+      "score": 0.95,
+      "rank": 1
+    }
+  ],
+  "evidence_table": [
+    {
+      "pmid": "333",
+      "title": "Title 333",
+      "year": 2024,
+      "journal": "Journal",
+      "entities": [
+        "asthma"
+      ],
+      "summary": "Summary 333",
+      "relevance_score": 0.95
+    }
+  ],
+  "answer": "Agent synthesis",
+  "citations": [
+    "111",
+    "333"
+  ],
+  "comparison": {
+    "branch_count": 1,
+    "iterations": 1,
+    "unique_pmid_coverage": 3,
+    "baseline_unique_pmids": 2,
+    "agent_unique_pmids": 3,
+    "citation_overlap": [
+      "111"
+    ],
+    "baseline_citations": [
+      "111",
+      "222"
+    ],
+    "agent_citations": [
+      "111",
+      "333"
+    ],
+    "stop_reason": "sufficient_evidence"
+  },
+  "source": "agent:local_corpus"
+}
