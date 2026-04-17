@@ -6,17 +6,20 @@ from bioevidence.schemas.query import Query
 
 
 def extract_evidence(query: Query, documents: list[Document]) -> list[EvidenceRecord]:
-    _ = query
     records: list[EvidenceRecord] = []
-    for document in documents:
+    for index, document in enumerate(documents):
+        summary = document.abstract[:200].strip()
+        if not summary:
+            summary = document.title[:200].strip()
         records.append(
             EvidenceRecord(
                 pmid=document.pmid,
                 title=document.title,
                 year=document.year,
                 journal=document.journal,
-                summary=document.abstract[:200],
-                relevance_score=0.0,
+                entities=tuple(token for token in query.text.split() if token),
+                summary=summary,
+                relevance_score=max(0.0, 1.0 - (index * 0.1)),
             )
         )
     return records

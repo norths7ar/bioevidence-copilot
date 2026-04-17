@@ -21,7 +21,7 @@ It is intentionally built in two stages:
 4. system returns a final answer with citations
 
 ## Repository status
-Milestone 0 scaffold is in place, and PubMed ingestion work for milestone 1 has started.
+Milestone 2 baseline retrieval is now in place on top of the milestone 1 PubMed ingestion scaffold.
 
 ## Planned modules
 - ingestion
@@ -52,8 +52,28 @@ pytest
 Editable install is the supported local workflow. Direct execution via
 `python app/main.py` is intentionally not the primary path.
 
+To enable the dense retriever, add the Qwen embedding variables to your local
+`.env` file:
+
+- `QWEN_API_KEY`
+- `QWEN_BASE_URL` if you are using a non-default endpoint
+- `QWEN_EMBEDDING_MODEL=text-embedding-v4`
+- `QWEN_EMBEDDING_DIMENSIONS=1024`
+
+The demo app now shows:
+- the query and rewritten query
+- the top retrieved papers with scores and ranks
+- the final answer and citation list
+
 The ingestion script writes raw artifacts under `data/raw/` and processed
 documents under `data/processed/`.
+
+The milestone 2 retrieval baseline reads the local corpus from
+`data/processed/*.documents.jsonl` when available and falls back to live
+PubMed search only when the local corpus is empty.
+
+Dense embeddings are cached locally under the configured data directory so
+repeated queries do not re-embed the same corpus documents.
 
 ## Project structure
 

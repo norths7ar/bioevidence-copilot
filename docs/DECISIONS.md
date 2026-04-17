@@ -18,3 +18,16 @@
 - Use a module-local request policy for PubMed rather than a shared networking framework.
 - Default to a fixed request timeout, retry transient network failures and 429/5xx responses, and surface a clear `PubMedRequestError` after retries are exhausted.
 - Keep retry/backoff behavior deterministic and testable by injecting fake openers and monkeypatching sleep in tests.
+
+## 2026-04-14: Milestone 2 retrieval baseline
+
+- Load the baseline corpus from local `data/processed/*.documents.jsonl` artifacts rather than introducing a database or external index.
+- Use BM25-style lexical scoring over document title plus abstract, plus a deterministic overlap-based dense adapter so the hybrid retriever has two inspectable signals.
+- Keep merge and rerank behavior deterministic, and return the ranked candidates alongside the final answer so the app can expose intermediate artifacts.
+
+## 2026-04-15: Dense embedding backend
+
+- Use Qwen `text-embedding-v4` through the OpenAI-compatible SDK for true dense retrieval.
+- Load local `.env` values with `python-dotenv` so `QWEN_API_KEY` and related embedding settings work in local development.
+- Cache corpus embeddings on disk keyed by corpus signature, model, and dimensions so repeated dense retrieval does not re-embed unchanged documents.
+- Fall back to lexical-only ranking when the dense backend is unavailable, rather than failing the whole retrieval flow.

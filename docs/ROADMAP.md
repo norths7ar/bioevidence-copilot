@@ -14,6 +14,7 @@
 - save sample raw and processed artifacts
 
 ## Milestone 2: RAG baseline
+- status: complete
 - implement lexical retrieval
 - implement dense retrieval interface
 - implement hybrid merge
