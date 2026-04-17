@@ -1,0 +1,74 @@
+{
+  "answer": "Top retrieved evidence for 'asthma corticosteroids': Corticosteroids for asthma control (2024) suggests Corticosteroids reduce asthma exacerbations and improve control [12345678] Asthma management in children (2023) suggests This study discusses pediatric asthma care [23456789] Corticosteroid review in adults (2022) suggests Corticosteroids remain a common treatment for inflammatory airway disease [34567890] Citations: [12345678, 23456789, 34567890]",
+  "citations": [
+    "12345678",
+    "23456789",
+    "34567890"
+  ],
+  "evidence_count": 3,
+  "evidence_table": [
+    {
+      "entities": [
+        "asthma",
+        "corticosteroids"
+      ],
+      "journal": "Journal A",
+      "pmid": "12345678",
+      "relevance_score": 0.92,
+      "summary": "Corticosteroids reduce asthma exacerbations and improve control",
+      "title": "Corticosteroids for asthma control",
+      "year": 2024
+    },
+    {
+      "entities": [
+        "asthma"
+      ],
+      "journal": "Journal B",
+      "pmid": "23456789",
+      "relevance_score": 0.56,
+      "summary": "This study discusses pediatric asthma care",
+      "title": "Asthma management in children",
+      "year": 2023
+    },
+    {
+      "entities": [
+        "corticosteroids"
+      ],
+      "journal": "Journal C",
+      "pmid": "34567890",
+      "relevance_score": 0.41,
+      "summary": "Corticosteroids remain a common treatment for inflammatory airway disease",
+      "title": "Corticosteroid review in adults",
+      "year": 2022
+    }
+  ],
+  "query": "asthma corticosteroids",
+  "retrieval_source": "local_corpus",
+  "retrieved_papers": [
+    {
+      "journal": "Journal A",
+      "pmid": "12345678",
+      "rank": 1,
+      "score": 0.99,
+      "title": "Corticosteroids for asthma control",
+      "year": 2024
+    },
+    {
+      "journal": "Journal B",
+      "pmid": "23456789",
+      "rank": 2,
+      "score": 0.72,
+      "title": "Asthma management in children",
+      "year": 2023
+    },
+    {
+      "journal": "Journal C",
+      "pmid": "34567890",
+      "rank": 3,
+      "score": 0.48,
+      "title": "Corticosteroid review in adults",
+      "year": 2022
+    }
+  ],
+  "rewritten_query": "asthma corticosteroids"
+}

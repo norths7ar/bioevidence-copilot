@@ -41,7 +41,7 @@ def run_rag_pipeline(
 
     candidates = hybrid_retrieve(query, documents=documents, data_dir=data_dir, settings=settings)
     ranked_candidates = rerank_candidates(candidates)
-    evidence_records = extract_evidence(query, [candidate.document for candidate in ranked_candidates[: query.top_k]])
+    evidence_records = extract_evidence(query, ranked_candidates[: query.top_k])
     answer = generate_answer(query, evidence_records)
     return WorkflowResult(
         query=query,

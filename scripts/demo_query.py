@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import json
 import logging
 from urllib.error import URLError
 
-from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.agent.workflow import run_rag_pipeline
 from bioevidence.config import load_settings
+from bioevidence.presentation import build_demo_payload, render_demo_output
 from bioevidence.ingestion.pubmed_client import PubMedRequestError
+from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.query import Query
 
 
@@ -27,11 +29,24 @@ def main() -> int:
             evidence_records=(),
             rewritten_query=query.text,
         )
-        print(answer.answer_text)
+        payload = {
+            "query": query.text,
+            "rewritten_query": answer.rewritten_query,
+            "retrieval_source": "offline_fallback",
+            "retrieved_papers": [],
+            "evidence_table": [],
+            "answer": answer.answer_text,
+            "citations": list(answer.citations),
+            "evidence_count": len(answer.evidence_records),
+        }
+        print("Evidence table: (none)")
+        print()
+        print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
-    print(result.answer.answer_text)
-    for candidate in result.retrieved_candidates[: query.top_k]:
-        print(f"{candidate.rank}. {candidate.document.pmid} {candidate.document.title} ({candidate.score:.3f})")
+    payload = build_demo_payload(query, result)
+    print(render_demo_output(result))
+    print()
+    print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
 
 

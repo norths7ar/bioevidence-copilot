@@ -21,7 +21,7 @@ It is intentionally built in two stages:
 4. system returns a final answer with citations
 
 ## Repository status
-Milestone 2 baseline retrieval is now in place on top of the milestone 1 PubMed ingestion scaffold.
+Milestone 3 structured evidence output is now in place on top of the milestone 2 RAG baseline and milestone 1 PubMed ingestion scaffold.
 
 ## Planned modules
 - ingestion
@@ -63,6 +63,7 @@ To enable the dense retriever, add the Qwen embedding variables to your local
 The demo app now shows:
 - the query and rewritten query
 - the top retrieved papers with scores and ranks
+- a structured evidence table with PMID, title, year, journal, entities, summary, and relevance score
 - the final answer and citation list
 
 The ingestion script writes raw artifacts under `data/raw/` and processed

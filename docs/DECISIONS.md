@@ -31,3 +31,9 @@
 - Load local `.env` values with `python-dotenv` so `QWEN_API_KEY` and related embedding settings work in local development.
 - Cache corpus embeddings on disk keyed by corpus signature, model, and dimensions so repeated dense retrieval does not re-embed unchanged documents.
 - Fall back to lexical-only ranking when the dense backend is unavailable, rather than failing the whole retrieval flow.
+
+## 2026-04-17: Structured evidence table output
+
+- Keep evidence extraction deterministic for milestone 3 and derive structured `EvidenceRecord` rows directly from ranked retrieval output.
+- Surface the evidence table in the app and demo output as a first-class artifact, alongside the final answer and citations.
+- Store a curated example output under `examples/` so reviewers can inspect the evidence-table shape without running the pipeline.
