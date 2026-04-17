@@ -22,7 +22,7 @@ It is intentionally built in two stages:
 4. system returns a final answer with citations
 
 ## Repository status
-Milestone 5 agent orchestration is now in place on top of the milestone 4 evaluation harness, milestone 3 structured evidence output, milestone 2 RAG baseline, and milestone 1 PubMed ingestion scaffold.
+Milestone 6 Streamlit browser demo is now in place on top of milestone 5 agent orchestration, milestone 4 evaluation, milestone 3 structured evidence output, milestone 2 RAG baseline, and milestone 1 PubMed ingestion scaffold.
 
 ## Planned modules
 - ingestion
@@ -50,6 +50,10 @@ streamlit run app/streamlit_app.py
 python scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
 pytest
 ```
+
+For a portfolio or interview demo, `streamlit run app/streamlit_app.py` is the
+best first command because it shows the baseline/agent comparison in tabs.
+The CLI entrypoints remain useful for debugging and automated checks.
 
 Editable install is the supported local workflow. Direct execution via
 `python app/main.py` is intentionally not the primary path.
