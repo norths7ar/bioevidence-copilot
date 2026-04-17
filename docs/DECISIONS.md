@@ -37,3 +37,9 @@
 - Keep evidence extraction deterministic for milestone 3 and derive structured `EvidenceRecord` rows directly from ranked retrieval output.
 - Surface the evidence table in the app and demo output as a first-class artifact, alongside the final answer and citations.
 - Store a curated example output under `examples/` so reviewers can inspect the evidence-table shape without running the pipeline.
+
+## 2026-04-17: Local evaluation harness
+
+- Keep evaluation file-based and local by loading JSONL datasets from disk and running the existing RAG workflow per item.
+- Score retrieval with hit@k, recall@k, and MRR, and score answers with citation precision / recall / F1 plus normalized exact match and token overlap when a reference answer is available.
+- Return a structured evaluation report with per-item records and aggregate summary metrics, and make the CLI optionally write the full report as JSON.

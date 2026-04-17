@@ -21,7 +21,7 @@ It is intentionally built in two stages:
 4. system returns a final answer with citations
 
 ## Repository status
-Milestone 3 structured evidence output is now in place on top of the milestone 2 RAG baseline and milestone 1 PubMed ingestion scaffold.
+Milestone 4 evaluation harness is now in place on top of the milestone 3 structured evidence output, milestone 2 RAG baseline, and milestone 1 PubMed ingestion scaffold.
 
 ## Planned modules
 - ingestion
@@ -65,6 +65,22 @@ The demo app now shows:
 - the top retrieved papers with scores and ranks
 - a structured evidence table with PMID, title, year, journal, entities, summary, and relevance score
 - the final answer and citation list
+
+## Evaluation
+The evaluation harness is file-based and local:
+
+- runtime datasets live under `data/eval/`
+- a schema reference dataset is tracked at `examples/milestone4_eval_dataset.jsonl`
+- run the harness with `python scripts/run_eval.py --dataset data/eval/dataset.jsonl`
+- optionally add `--output path/to/report.json` to write the full report artifact
+
+Each JSONL dataset row uses:
+
+- `id`
+- `query`
+- `gold_pmids` or `gold_citations`
+- optional `reference_answer`
+- optional `top_k`
 
 The ingestion script writes raw artifacts under `data/raw/` and processed
 documents under `data/processed/`.

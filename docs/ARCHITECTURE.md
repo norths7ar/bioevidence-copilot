@@ -50,6 +50,14 @@ The app should make intermediate artifacts visible:
 - evidence table
 - final answer
 
+## Evaluation flow
+Evaluation should stay local and file-based:
+
+- load JSONL items from disk
+- run the existing workflow per item
+- compute retrieval and answer metrics
+- emit a summary report plus per-item results that can be written as JSON
+
 ## Initial implementation constraints
 - start with local development only
 - use environment variables for secrets
