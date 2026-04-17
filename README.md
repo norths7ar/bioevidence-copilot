@@ -46,6 +46,7 @@ Example commands:
 ```powershell
 python -m pip install -e .[dev]
 python -m app.main
+streamlit run app/streamlit_app.py
 python scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
 pytest
 ```
@@ -81,12 +82,18 @@ The demo app now shows:
 - the top retrieved papers with scores and ranks
 - a structured evidence table with PMID, title, year, journal, entities, summary, and relevance score
 - the final answer and citation list
+- baseline and agent comparisons in browser tabs via Streamlit
 
 The agent CLI adds:
 - multi-step branch planning
 - branch-level retrieval traces
 - baseline vs agent comparison metadata
 - JSON output that can be written to disk with `--output`
+
+Implementation note:
+- the baseline RAG answer path is evidence stitching / templated synthesis over structured evidence
+- the agent path is the LLM-backed synthesis path
+- `rerank.py` is a deterministic post-process, not a learned cross-encoder reranker
 
 ## Evaluation
 The evaluation harness is file-based and local:

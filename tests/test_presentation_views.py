@@ -1,15 +1,13 @@
-from pathlib import Path
-
-import scripts.run_agent as run_agent_script
 from bioevidence.agent.state import AgentState
 from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult
+from bioevidence.presentation import build_agent_comparison_payload, build_result_view
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.evidence import EvidenceRecord
 from bioevidence.schemas.query import Query
 
 
-def _agent_result() -> AgentWorkflowResult:
+def _workflow_result() -> WorkflowResult:
     document = Document(
         pmid="111",
         title="Corticosteroids for asthma control",
@@ -24,16 +22,16 @@ def _agent_result() -> AgentWorkflowResult:
         year=document.year,
         journal=document.journal,
         entities=("asthma",),
-        summary=document.abstract,
+        summary="Corticosteroids reduce asthma exacerbations.",
         relevance_score=0.92,
     )
     answer = AnswerBundle(
-        answer_text="Agent answer",
+        answer_text="Baseline answer",
         citations=("111",),
         evidence_records=(evidence_record,),
         rewritten_query="asthma corticosteroids",
     )
-    baseline = WorkflowResult(
+    return WorkflowResult(
         query=Query(text="asthma corticosteroids"),
         documents=(document,),
         retrieved_candidates=(candidate,),
@@ -41,6 +39,10 @@ def _agent_result() -> AgentWorkflowResult:
         answer=answer,
         source="local_corpus",
     )
+
+
+def _agent_result() -> AgentWorkflowResult:
+    baseline = _workflow_result()
     return AgentWorkflowResult(
         query=baseline.query,
         baseline=baseline,
@@ -48,7 +50,7 @@ def _agent_result() -> AgentWorkflowResult:
         documents=baseline.documents,
         retrieved_candidates=baseline.retrieved_candidates,
         evidence_records=baseline.evidence_records,
-        answer=answer,
+        answer=baseline.answer,
         source="agent:local_corpus",
         state=AgentState(query=baseline.query, sufficient=True, stop_reason="sufficient_evidence"),
         comparison={
@@ -66,20 +68,20 @@ def _agent_result() -> AgentWorkflowResult:
     )
 
 
-def test_run_agent_cli_prints_json_and_writes_output(tmp_path: Path, monkeypatch, capsys):
-    output_path = tmp_path / "agent-report.json"
-    monkeypatch.setattr(run_agent_script, "run_agent_workflow", lambda query, data_dir=None, settings=None: _agent_result())
+def test_build_result_view_normalizes_workflow_result():
+    view = build_result_view(_workflow_result())
 
-    exit_code = run_agent_script.main([
-        "--query",
-        "asthma corticosteroids",
-        "--output",
-        str(output_path),
-    ])
+    payload = view.to_dict()
+    assert payload["query"] == "asthma corticosteroids"
+    assert payload["retrieved_papers"][0]["pmid"] == "111"
+    assert payload["evidence_table"][0]["summary"] == "Corticosteroids reduce asthma exacerbations."
+    assert payload["citations"] == ["111"]
 
-    captured = capsys.readouterr()
 
-    assert exit_code == 0
-    assert '"query": "asthma corticosteroids"' in captured.out
-    assert output_path.exists()
-    assert '"branch_count": 0' in output_path.read_text(encoding="utf-8")
+def test_build_agent_comparison_payload_includes_baseline_and_agent():
+    payload = build_agent_comparison_payload(_agent_result())
+
+    assert payload["baseline"]["query"] == "asthma corticosteroids"
+    assert payload["agent"]["retrieval_source"] == "agent:local_corpus"
+    assert payload["comparison"]["agent_backend_ready"] is True
+    assert payload["state"]["stop_reason"] == "sufficient_evidence"

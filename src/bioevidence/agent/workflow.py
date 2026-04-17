@@ -212,7 +212,7 @@ def run_agent_workflow(
         settings=settings,
         client=agent_client,
     )
-    comparison = _build_comparison(baseline, answer, state, branch_results)
+    comparison = _build_comparison(baseline, answer, state, branch_results, agent_backend_ready=bool(settings.agent_api_key and settings.agent_base_url and settings.agent_model))
     return AgentWorkflowResult(
         query=query,
         baseline=baseline,
@@ -268,6 +268,8 @@ def _build_comparison(
     answer: AnswerBundle,
     state: AgentState,
     branch_results: list[AgentBranchResult],
+    *,
+    agent_backend_ready: bool,
 ) -> dict[str, object]:
     baseline_pmids = [candidate.document.pmid for candidate in baseline.retrieved_candidates]
     agent_pmids = [candidate.document.pmid for candidate in state.all_candidates]
@@ -283,4 +285,5 @@ def _build_comparison(
         "baseline_citations": list(baseline.answer.citations),
         "agent_citations": list(answer.citations),
         "stop_reason": state.stop_reason,
+        "agent_backend_ready": agent_backend_ready,
     }

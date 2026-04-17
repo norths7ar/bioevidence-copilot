@@ -51,3 +51,10 @@
 - Keep the agent backend OpenAI-compatible so DeepSeek, Qwen Chat, MiMo, and similar providers can be swapped without code changes.
 - Keep sufficiency deterministic: stop when the loop has accumulated enough unique PMIDs with a minimum relevance floor, otherwise continue until max iterations.
 - Surface the agent report in CLI / JSON form and keep a tracked example artifact under `examples/` for reviewability.
+
+## 2026-04-17: Streamlit presentation layer
+
+- Use Streamlit only as a thin presentation layer on top of the existing workflow outputs, not as a second place for business logic.
+- Show baseline RAG and agent outputs in tabs so the comparison is easy to inspect in a browser.
+- Keep the browser demo aligned with the CLI/demo helpers by normalizing workflow results into shared presentation payloads.
+- Document baseline answer generation honestly as evidence stitching / templated synthesis and keep the rerank step explicitly deterministic rather than learned.

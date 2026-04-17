@@ -36,3 +36,8 @@
 - add multi-query branch execution over the existing retrieval stack
 - add deduplication, deterministic stopping, and baseline comparison
 - expose agent reports through CLI / JSON artifacts instead of a heavier UI
+
+## Milestone 6: Streamlit demo surface
+- add a thin browser UI for baseline vs agent comparison
+- reuse the existing presentation helpers and workflow outputs
+- keep the browser view presentation-only and read-only

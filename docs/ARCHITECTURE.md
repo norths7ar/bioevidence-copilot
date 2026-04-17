@@ -57,6 +57,10 @@ The app should make intermediate artifacts visible:
 - evidence table
 - final answer
 
+The browser demo is a thin Streamlit presentation layer that renders baseline
+and agent outputs in tabs while reusing the same normalized view payloads as
+the CLI and demo scripts.
+
 ## Evaluation flow
 Evaluation should stay local and file-based:
 

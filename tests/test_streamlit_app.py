@@ -1,12 +1,35 @@
 from pathlib import Path
 
-import scripts.run_agent as run_agent_script
+import app.streamlit_app as streamlit_app
 from bioevidence.agent.state import AgentState
 from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult
+from bioevidence.config import Settings
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.evidence import EvidenceRecord
 from bioevidence.schemas.query import Query
+
+
+def _settings(tmp_path: Path) -> Settings:
+    return Settings(
+        data_dir=tmp_path,
+        embedding_cache_dir=tmp_path / "cache",
+        agent_api_key="test-agent-key",
+        agent_base_url="https://example.invalid/v1",
+        agent_max_iterations=3,
+        agent_max_output_tokens=256,
+        agent_min_relevance_score=0.6,
+        agent_min_unique_pmids=3,
+        agent_model="test-model",
+        agent_temperature=0.0,
+        log_level="INFO",
+        pubmed_email="",
+        pubmed_tool_name="BioEvidence Copilot",
+        embedding_api_key="test-embedding-key",
+        embedding_base_url="https://example.invalid/v1",
+        embedding_model="text-embedding-v4",
+        embedding_dimensions=1024,
+    )
 
 
 def _agent_result() -> AgentWorkflowResult:
@@ -66,20 +89,17 @@ def _agent_result() -> AgentWorkflowResult:
     )
 
 
-def test_run_agent_cli_prints_json_and_writes_output(tmp_path: Path, monkeypatch, capsys):
-    output_path = tmp_path / "agent-report.json"
-    monkeypatch.setattr(run_agent_script, "run_agent_workflow", lambda query, data_dir=None, settings=None: _agent_result())
+def test_streamlit_entrypoint_imports_without_side_effects():
+    assert hasattr(streamlit_app, "main")
 
-    exit_code = run_agent_script.main([
-        "--query",
-        "asthma corticosteroids",
-        "--output",
-        str(output_path),
-    ])
 
-    captured = capsys.readouterr()
+def test_load_demo_payload_builds_comparison_view(monkeypatch, tmp_path: Path):
+    settings = _settings(tmp_path)
+    monkeypatch.setattr(streamlit_app, "load_settings", lambda: settings)
+    monkeypatch.setattr(streamlit_app, "run_agent_workflow", lambda query, data_dir=None, settings=None: _agent_result())
 
-    assert exit_code == 0
-    assert '"query": "asthma corticosteroids"' in captured.out
-    assert output_path.exists()
-    assert '"branch_count": 0' in output_path.read_text(encoding="utf-8")
+    payload = streamlit_app.load_demo_payload("asthma corticosteroids", data_dir=str(tmp_path))
+
+    assert payload["baseline"]["query"] == "asthma corticosteroids"
+    assert payload["agent"]["retrieval_source"] == "agent:local_corpus"
+    assert payload["agent_notice"] is None

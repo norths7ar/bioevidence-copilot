@@ -10,6 +10,7 @@ from urllib.error import URLError
 from bioevidence.agent.workflow import run_agent_workflow
 from bioevidence.config import load_settings
 from bioevidence.ingestion.pubmed_client import PubMedRequestError
+from bioevidence.presentation import build_agent_comparison_payload
 from bioevidence.schemas.query import Query
 
 
@@ -50,7 +51,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         logging.getLogger(__name__).warning("Agent workflow unavailable in the current environment: %s", exc)
         return 1
 
-    payload = result.to_dict()
+    payload = build_agent_comparison_payload(result)
     print(json.dumps(payload, indent=2, sort_keys=True))
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)

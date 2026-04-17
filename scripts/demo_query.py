@@ -43,7 +43,7 @@ def main() -> int:
         print()
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
-    payload = build_demo_payload(query, result)
+    payload = build_demo_payload(result)
     print(render_demo_output(result))
     print()
     print(json.dumps(payload, indent=2, sort_keys=True))
