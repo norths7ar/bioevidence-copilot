@@ -8,10 +8,6 @@ from bioevidence.config import Settings, load_settings
 from bioevidence.retrieval.scoring import document_text
 from bioevidence.schemas.document import Document
 
-
-DEFAULT_QWEN_EMBEDDING_MODEL = "text-embedding-v4"
-DEFAULT_QWEN_EMBEDDING_DIMENSIONS = 1024
-DEFAULT_QWEN_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 EMBEDDING_BATCH_SIZE = 64
 
 
@@ -21,9 +17,11 @@ class DenseRetrievalError(RuntimeError):
 
 def create_embedding_client(settings: Settings | None = None) -> OpenAI:
     settings = settings or load_settings()
-    if not settings.qwen_api_key:
-        raise DenseRetrievalError("QWEN_API_KEY or DASHSCOPE_API_KEY is required for dense retrieval")
-    return OpenAI(api_key=settings.qwen_api_key, base_url=settings.qwen_base_url or DEFAULT_QWEN_BASE_URL)
+    if not settings.embedding_api_key:
+        raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_API_KEY is required for dense retrieval")
+    if not settings.embedding_base_url:
+        raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_BASE_URL is required for dense retrieval")
+    return OpenAI(api_key=settings.embedding_api_key, base_url=settings.embedding_base_url)
 
 
 def embed_texts(
@@ -35,15 +33,21 @@ def embed_texts(
     if not texts:
         return []
     settings = settings or load_settings()
+    if not settings.embedding_model:
+        raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_MODEL is required for dense retrieval")
+    if settings.embedding_dimensions is None:
+        raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_DIMENSIONS is required for dense retrieval")
+    if settings.embedding_dimensions <= 0:
+        raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_DIMENSIONS must be a positive integer")
     client = client or create_embedding_client(settings)
     embeddings: list[list[float]] = []
     for start_index in range(0, len(texts), EMBEDDING_BATCH_SIZE):
         batch = list(texts[start_index : start_index + EMBEDDING_BATCH_SIZE])
         try:
             response = client.embeddings.create(
-                model=settings.qwen_embedding_model or DEFAULT_QWEN_EMBEDDING_MODEL,
+                model=settings.embedding_model,
                 input=batch,
-                dimensions=settings.qwen_embedding_dimensions or DEFAULT_QWEN_EMBEDDING_DIMENSIONS,
+                dimensions=settings.embedding_dimensions,
             )
         except Exception as exc:  # pragma: no cover - backend-specific failure path
             raise DenseRetrievalError(f"Embedding request failed: {exc}") from exc
