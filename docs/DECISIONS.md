@@ -23,7 +23,7 @@
 
 - Load the baseline corpus from local `processed/*.documents.jsonl` artifacts under the configured corpus directory rather than introducing a database or external index.
 - Use BM25-style lexical scoring over document title plus abstract, plus a deterministic overlap-based dense adapter so the hybrid retriever has two inspectable signals.
-- Keep merge and rerank behavior deterministic, and return the ranked candidates alongside the final answer so the app can expose intermediate artifacts.
+- Keep merge and final ranking behavior deterministic, and return the ranked candidates alongside the final answer so the app can expose intermediate artifacts.
 
 ## 2026-04-15: Dense embedding backend
 
@@ -36,7 +36,7 @@
 
 - Keep evidence extraction deterministic for milestone 3 and derive structured `EvidenceRecord` rows directly from ranked retrieval output.
 - Surface the evidence table in the app and demo output as a first-class artifact, alongside the final answer and citations.
-- Store a curated example output under `examples/` so reviewers can inspect the evidence-table shape without running the pipeline.
+- Store real demo corpus and evaluation artifacts under `data/` so reviewers can inspect the evidence-table shape without relying on fabricated examples.
 
 ## 2026-04-17: Local evaluation harness
 
@@ -50,14 +50,14 @@
 - Use generic `BIOEVIDENCE_AGENT_*` environment variables for the agent backend so provider choice stays in `.env` rather than in code.
 - Keep the agent backend OpenAI-compatible so DeepSeek, Qwen Chat, MiMo, and similar providers can be swapped without code changes.
 - Keep sufficiency deterministic: stop when the loop has accumulated enough unique PMIDs with a minimum relevance floor, otherwise continue until max iterations.
-- Surface the agent report in CLI / JSON form and keep a tracked example artifact under `examples/` for reviewability.
+- Surface the agent report in CLI / JSON form and let callers write real report artifacts for reviewability.
 
 ## 2026-04-17: Streamlit presentation layer
 
 - Use Streamlit only as a thin presentation layer on top of the existing workflow outputs, not as a second place for business logic.
 - Show baseline RAG and agent outputs in tabs so the comparison is easy to inspect in a browser.
 - Keep the browser demo aligned with the CLI/demo helpers by normalizing workflow results into shared presentation payloads.
-- Document baseline answer generation honestly as evidence stitching / templated synthesis and keep the rerank step explicitly deterministic rather than learned.
+- Document baseline answer generation honestly as evidence stitching / templated synthesis and keep the final ranking step explicitly deterministic rather than learned.
 
 ## 2026-05-29: Demo evaluation and quality checks
 
@@ -86,3 +86,10 @@
 - Keep retrieval, generation, extraction, evaluation, and agent orchestration in `src/bioevidence/`.
 - Expose baseline and agent query endpoints first; defer evaluation endpoints, background jobs, auth, Docker, and Streamlit API-client conversion.
 - Treat the API as an additional backend interface, not a replacement for the local CLI and Streamlit demo paths.
+
+## 2026-06-02: Interface and workflow cleanup
+
+- Move external entrypoints under `interfaces/` so the Streamlit UI and FastAPI API are clearly separate from core package logic.
+- Move baseline and agent orchestration into `src/bioevidence/workflows/`, keeping `src/bioevidence/agent/` focused on agent-specific planner, state, tools, and LLM helpers.
+- Rename the deterministic ranking step from `rerank.py` to `ranking.py` to avoid implying a learned reranking model.
+- Remove placeholder notebooks, fake milestone examples, empty app pages, stale bytecode caches, and unused scaffold scripts.

@@ -3,7 +3,7 @@ param(
 )
 
 switch ($Task) {
-  "demo" { python .\scripts\demo_query.py }
+  "demo" { python .\scripts\run_baseline.py }
   "eval" { python .\scripts\run_eval.py }
   default { Write-Host "Unknown task: $Task" }
 }
