@@ -29,6 +29,7 @@ def _settings(tmp_path: Path) -> Settings:
         embedding_base_url="https://example.invalid/v1",
         embedding_model="text-embedding-v4",
         embedding_dimensions=1024,
+        embedding_batch_size=10,
     )
 
 

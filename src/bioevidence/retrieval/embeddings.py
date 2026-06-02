@@ -8,9 +8,6 @@ from bioevidence.config import Settings, load_settings
 from bioevidence.retrieval.scoring import document_text
 from bioevidence.schemas.document import Document
 
-EMBEDDING_BATCH_SIZE = 64
-
-
 class DenseRetrievalError(RuntimeError):
     pass
 
@@ -39,10 +36,12 @@ def embed_texts(
         raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_DIMENSIONS is required for dense retrieval")
     if settings.embedding_dimensions <= 0:
         raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_DIMENSIONS must be a positive integer")
+    if settings.embedding_batch_size <= 0:
+        raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_BATCH_SIZE must be a positive integer")
     client = client or create_embedding_client(settings)
     embeddings: list[list[float]] = []
-    for start_index in range(0, len(texts), EMBEDDING_BATCH_SIZE):
-        batch = list(texts[start_index : start_index + EMBEDDING_BATCH_SIZE])
+    for start_index in range(0, len(texts), settings.embedding_batch_size):
+        batch = list(texts[start_index : start_index + settings.embedding_batch_size])
         try:
             response = client.embeddings.create(
                 model=settings.embedding_model,

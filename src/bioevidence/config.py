@@ -43,6 +43,7 @@ class Settings:
     embedding_base_url: str
     embedding_model: str
     embedding_dimensions: int | None
+    embedding_batch_size: int
 
 
 def load_settings() -> Settings:
@@ -65,4 +66,5 @@ def load_settings() -> Settings:
         embedding_base_url=os.getenv("BIOEVIDENCE_EMBEDDING_BASE_URL", ""),
         embedding_model=os.getenv("BIOEVIDENCE_EMBEDDING_MODEL", ""),
         embedding_dimensions=_env_optional_int("BIOEVIDENCE_EMBEDDING_DIMENSIONS"),
+        embedding_batch_size=_env_int("BIOEVIDENCE_EMBEDDING_BATCH_SIZE", "10"),
     )

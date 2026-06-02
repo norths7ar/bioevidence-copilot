@@ -289,6 +289,7 @@ def test_run_evaluation_preloads_settings_data_dir_when_data_dir_not_explicit(tm
         embedding_base_url="",
         embedding_model="",
         embedding_dimensions=None,
+        embedding_batch_size=10,
     )
     calls = {"load": 0}
 

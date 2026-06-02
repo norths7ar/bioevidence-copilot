@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from bioevidence.config import Settings
 from bioevidence.retrieval.dense import dense_retrieve
+from bioevidence.retrieval.embeddings import DenseRetrievalError, embed_texts
 from bioevidence.schemas.document import Document
 from bioevidence.schemas.query import Query
 
@@ -72,6 +74,7 @@ def _settings(tmp_path: Path) -> Settings:
         embedding_base_url="https://example.invalid/v1",
         embedding_model="text-embedding-v4",
         embedding_dimensions=1024,
+        embedding_batch_size=10,
     )
 
 
@@ -145,3 +148,79 @@ def test_dense_retrieve_reuses_cached_embeddings(monkeypatch, tmp_path: Path):
     cache = json.loads(cache_file.read_text(encoding="utf-8"))
     assert cache["model"] == "text-embedding-v4"
     assert cache["dimensions"] == 1024
+
+
+def test_embed_texts_uses_configured_batch_size(tmp_path: Path):
+    class FakeEmbeddings:
+        def __init__(self) -> None:
+            self.inputs: list[tuple[str, ...]] = []
+
+        def create(self, *, model, input, dimensions):
+            del model, dimensions
+            self.inputs.append(tuple(input))
+            return SimpleNamespace(
+                data=[SimpleNamespace(embedding=[float(index), 0.0]) for index, _ in enumerate(input)]
+            )
+
+    class FakeClient:
+        def __init__(self) -> None:
+            self.embeddings = FakeEmbeddings()
+
+    settings = _settings(tmp_path)
+    settings = Settings(
+        data_dir=settings.data_dir,
+        embedding_cache_dir=settings.embedding_cache_dir,
+        agent_api_key=settings.agent_api_key,
+        agent_base_url=settings.agent_base_url,
+        agent_max_iterations=settings.agent_max_iterations,
+        agent_max_output_tokens=settings.agent_max_output_tokens,
+        agent_min_relevance_score=settings.agent_min_relevance_score,
+        agent_min_unique_pmids=settings.agent_min_unique_pmids,
+        agent_model=settings.agent_model,
+        agent_temperature=settings.agent_temperature,
+        log_level=settings.log_level,
+        pubmed_email=settings.pubmed_email,
+        pubmed_tool_name=settings.pubmed_tool_name,
+        embedding_api_key=settings.embedding_api_key,
+        embedding_base_url=settings.embedding_base_url,
+        embedding_model=settings.embedding_model,
+        embedding_dimensions=settings.embedding_dimensions,
+        embedding_batch_size=2,
+    )
+    client = FakeClient()
+
+    embeddings = embed_texts(["a", "b", "c", "d", "e"], client=client, settings=settings)
+
+    assert client.embeddings.inputs == [("a", "b"), ("c", "d"), ("e",)]
+    assert len(embeddings) == 5
+
+
+def test_embed_texts_rejects_invalid_batch_size(tmp_path: Path):
+    settings = _settings(tmp_path)
+    settings = Settings(
+        data_dir=settings.data_dir,
+        embedding_cache_dir=settings.embedding_cache_dir,
+        agent_api_key=settings.agent_api_key,
+        agent_base_url=settings.agent_base_url,
+        agent_max_iterations=settings.agent_max_iterations,
+        agent_max_output_tokens=settings.agent_max_output_tokens,
+        agent_min_relevance_score=settings.agent_min_relevance_score,
+        agent_min_unique_pmids=settings.agent_min_unique_pmids,
+        agent_model=settings.agent_model,
+        agent_temperature=settings.agent_temperature,
+        log_level=settings.log_level,
+        pubmed_email=settings.pubmed_email,
+        pubmed_tool_name=settings.pubmed_tool_name,
+        embedding_api_key=settings.embedding_api_key,
+        embedding_base_url=settings.embedding_base_url,
+        embedding_model=settings.embedding_model,
+        embedding_dimensions=settings.embedding_dimensions,
+        embedding_batch_size=0,
+    )
+
+    try:
+        embed_texts(["a"], client=object(), settings=settings)
+    except DenseRetrievalError as exc:
+        assert "BIOEVIDENCE_EMBEDDING_BATCH_SIZE" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("Expected DenseRetrievalError")
