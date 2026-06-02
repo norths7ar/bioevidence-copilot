@@ -48,7 +48,7 @@ class Settings:
 def load_settings() -> Settings:
     load_dotenv()
     return Settings(
-        data_dir=_env_path("BIOEVIDENCE_DATA_DIR", "data"),
+        data_dir=_env_path("BIOEVIDENCE_DATA_DIR", "data/corpora/demo"),
         embedding_cache_dir=_env_path("BIOEVIDENCE_EMBEDDING_CACHE_DIR", "data/cache"),
         agent_api_key=os.getenv("BIOEVIDENCE_AGENT_API_KEY", ""),
         agent_base_url=os.getenv("BIOEVIDENCE_AGENT_BASE_URL", ""),

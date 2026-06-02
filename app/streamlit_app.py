@@ -17,6 +17,7 @@ except ModuleNotFoundError:  # pragma: no cover - import smoke test path
 
 
 DEFAULT_QUERY = "What evidence exists for asthma corticosteroids?"
+DEFAULT_DATA_DIR = "data/corpora/demo"
 
 
 def _cache_data(*decorator_args, **decorator_kwargs) -> Callable[[Callable[..., object]], Callable[..., object]]:
@@ -91,7 +92,7 @@ def main() -> None:
 
     with st.form("query_form", clear_on_submit=False):
         query_text = st.text_input("Biomedical question", value=DEFAULT_QUERY)
-        data_dir = st.text_input("Optional data directory", value="")
+        data_dir = st.text_input("Optional data directory", value=DEFAULT_DATA_DIR)
         submitted = st.form_submit_button("Run demo")
 
     if not submitted:

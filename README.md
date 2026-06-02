@@ -98,15 +98,25 @@ Implementation note:
 - the baseline RAG answer path is evidence stitching / templated synthesis over structured evidence
 - the agent path is the LLM-backed synthesis path
 - `rerank.py` is a deterministic post-process, not a learned cross-encoder reranker
+- the FastAPI service is a thin backend boundary over the same workflow functions;
+  Streamlit remains a lightweight local presentation surface and does not need
+  to call the API for the current local demo
 
 ## Evaluation
 The evaluation harness is file-based and local:
 
-- runtime datasets live under `data/eval/`
+- runtime evaluation datasets live under `data/evaluations/`
 - a schema reference dataset is tracked at `examples/milestone4_eval_dataset.jsonl`
-- run the harness with `python scripts/run_eval.py --dataset data/eval/dataset.jsonl`
+- the demo evaluation dataset is tracked at `data/evaluations/demo/demo_eval_dataset.jsonl`
+- an example demo report is tracked at `data/evaluations/demo/demo_eval_report.json`
+- seed a real PubMed demo corpus with `scripts/seed_demo_corpus.py`
+- convert BioASQ Task B data with `scripts/convert_bioasq.py`
+- run the harness with `python scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl`
+- add `--data-dir data/corpora/demo` to evaluate against the seeded demo corpus
+- add `--mode agent` to evaluate the agent workflow instead of the baseline
+- add `--limit N` for BioASQ smoke runs before attempting the full dataset
 - optionally add `--output path/to/report.json` to write the full report artifact
-- run the agent workflow directly with `python scripts/run_agent.py --query "asthma corticosteroids" --output data/eval/agent-report.json`
+- run the agent workflow directly with `python scripts/run_agent.py --query "asthma corticosteroids" --data-dir data/corpora/demo --output data/evaluations/demo/agent-report.json`
 
 Each JSONL dataset row uses:
 
@@ -118,15 +128,41 @@ Each JSONL dataset row uses:
 
 The agent report fixture lives at `examples/milestone5_agent_report.json`.
 
-The ingestion script writes raw artifacts under `data/raw/` and processed
-documents under `data/processed/`.
+The ingestion script writes raw artifacts and processed documents under the
+configured corpus directory, such as `data/corpora/demo/raw/` and
+`data/corpora/demo/processed/`.
 
 The milestone 2 retrieval baseline reads the local corpus from
-`data/processed/*.documents.jsonl` when available and falls back to live
-PubMed search only when the local corpus is empty.
+`processed/*.documents.jsonl` under the configured corpus directory and falls
+back to live PubMed search only when the local corpus is empty.
 
 Dense embeddings are cached locally under the configured data directory so
 repeated queries do not re-embed the same corpus documents.
+
+See `docs/EVALUATION.md` for demo evaluation commands, real PubMed/BioASQ
+data preparation, metric definitions, and deterministic evidence quality checks.
+
+## API
+The FastAPI service exposes the core workflow without moving business logic out
+of `src/bioevidence/`.
+
+Install the service runtime extra when needed:
+
+```powershell
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e .[dev,serve]
+```
+
+Run the API locally:
+
+```powershell
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m uvicorn api.main:app --reload
+```
+
+Initial endpoints:
+
+- `GET /api/v1/health`
+- `POST /api/v1/query/baseline`
+- `POST /api/v1/query/agent`
 
 ## Project structure
 
@@ -136,7 +172,7 @@ src/bioevidence/    importable package stubs
 docs/               project brief, architecture, roadmap, decisions
 scripts/            small helper scripts for local workflows and ingestion runs
 tests/              placeholder test shape
-data/               local-only raw, processed, and eval artifacts
+data/               curated eval/corpus artifacts plus ignored local downloads
 notebooks/          exploration notebook
 ```
 

@@ -10,7 +10,10 @@ def generate_answer(query: Query, evidence_records: list[EvidenceRecord]) -> Ans
     citations = tuple(record.pmid for record in evidence_records)
     citation_text = format_citations(citations)
     if not evidence_records:
-        answer_text = f"No local evidence was retrieved for '{query.text}'."
+        answer_text = (
+            f"Insufficient evidence: no local evidence was retrieved for '{query.text}'. "
+            "A citation-grounded answer cannot be generated from the current corpus."
+        )
     else:
         lead_records = evidence_records[:3]
         lead_sentences = []
