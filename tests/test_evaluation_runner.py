@@ -6,7 +6,9 @@ from pathlib import Path
 
 from bioevidence.agent.state import AgentState
 from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult
+from bioevidence.config import Settings
 from bioevidence.evaluation.dataset import EvaluationItem
+from bioevidence.evaluation.quality import check_answer_quality
 from bioevidence.evaluation.runner import EvaluationItemResult, EvaluationReport, run_evaluation, write_report
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
@@ -69,8 +71,8 @@ def test_run_evaluation_produces_summary_and_items(tmp_path: Path):
         encoding="utf-8",
     )
 
-    def fake_pipeline(query: Query, *, data_dir=None, settings=None):
-        del data_dir, settings
+    def fake_pipeline(query: Query, *, data_dir=None, documents=None, settings=None):
+        del data_dir, documents, settings
         if query.text == "asthma corticosteroids":
             return _build_workflow_result(query.text, ("111", "999"), ("111",), "local_corpus")
         return _build_workflow_result(query.text, ("999", "222"), ("222", "999"), "local_corpus")
@@ -83,6 +85,7 @@ def test_run_evaluation_produces_summary_and_items(tmp_path: Path):
     assert report.items[0].predicted_pmids == ("111",)
     assert report.items[0].retrieval_metrics["mrr"] == 1.0
     assert report.items[0].evidence_table[0]["pmid"] == "111"
+    assert report.items[0].quality_checks.is_faithful is True
     assert report.items[0].answer_metrics["exact_match"] == 1.0
     assert report.items[1].answer_metrics["exact_match"] is None
     assert report.items[1].citation_metrics["precision"] == 0.5
@@ -90,7 +93,8 @@ def test_run_evaluation_produces_summary_and_items(tmp_path: Path):
 
 def test_report_round_trips_to_json(tmp_path: Path):
     report = EvaluationReport(
-        dataset_path=Path("data/eval/dataset.jsonl"),
+        dataset_path=Path("data/evaluations/demo/dataset.jsonl"),
+        mode="baseline",
         generated_at=datetime.now(timezone.utc),
         summary={
             "items": 1,
@@ -129,6 +133,18 @@ def test_report_round_trips_to_json(tmp_path: Path):
                         "relevance_score": 1.0,
                     },
                 ),
+                quality_checks=check_answer_quality(
+                    AnswerBundle(answer_text="Answer for asthma corticosteroids [111]", citations=("111",)),
+                    (
+                        EvidenceRecord(
+                            pmid="111",
+                            title="Title 111",
+                            year=2024,
+                            journal="Journal",
+                            summary="Abstract 111",
+                        ),
+                    ),
+                ),
                 answer_text="Answer for asthma corticosteroids",
                 rewritten_query="asthma corticosteroids",
                 retrieval_source="local_corpus",
@@ -141,7 +157,9 @@ def test_report_round_trips_to_json(tmp_path: Path):
     loaded = json.loads(output.read_text(encoding="utf-8"))
 
     assert loaded["summary"]["items"] == 1
+    assert loaded["mode"] == "baseline"
     assert loaded["items"][0]["retrieval_source"] == "local_corpus"
+    assert loaded["items"][0]["quality_checks"]["is_faithful"] is True
 
 
 def test_run_evaluation_accepts_agent_workflow_results(tmp_path: Path):
@@ -194,7 +212,121 @@ def test_run_evaluation_accepts_agent_workflow_results(tmp_path: Path):
         comparison={"branch_count": 0, "stop_reason": "sufficient_evidence"},
     )
 
-    report = run_evaluation(dataset, pipeline=lambda query, *, data_dir=None, settings=None: agent_result)
+    report = run_evaluation(dataset, mode="agent", pipeline=lambda query, *, data_dir=None, documents=None, settings=None: agent_result)
 
     assert report.summary["items"] == 1
+    assert report.mode == "agent"
     assert report.items[0].retrieval_source == "agent:local_corpus"
+
+
+def test_run_evaluation_preloads_local_documents_once(tmp_path: Path, monkeypatch):
+    dataset = tmp_path / "dataset.jsonl"
+    dataset.write_text(
+        "\n".join(
+            [
+                '{"id": "item-1", "query": "asthma corticosteroids", "gold_pmids": ["111"]}',
+                '{"id": "item-2", "query": "melanoma immunotherapy", "gold_pmids": ["111"]}',
+            ]
+        ),
+        encoding="utf-8",
+    )
+    document = Document(
+        pmid="111",
+        title="Title 111",
+        abstract="Abstract 111",
+        journal="Journal",
+        year=2024,
+    )
+    calls = {"load": 0, "pipeline": 0}
+
+    def fake_load_local_documents(data_dir, *, settings=None):
+        del data_dir, settings
+        calls["load"] += 1
+        return [document]
+
+    def fake_pipeline(query: Query, *, data_dir=None, documents=None, settings=None):
+        del data_dir, settings
+        calls["pipeline"] += 1
+        assert documents == (document,)
+        return _build_workflow_result(query.text, ("111",), ("111",), "local_corpus")
+
+    monkeypatch.setattr("bioevidence.evaluation.runner.load_local_documents", fake_load_local_documents)
+
+    report = run_evaluation(tmp_path / "dataset.jsonl", data_dir=tmp_path, pipeline=fake_pipeline)
+
+    assert calls == {"load": 1, "pipeline": 2}
+    assert report.summary["items"] == 2
+
+
+def test_run_evaluation_preloads_settings_data_dir_when_data_dir_not_explicit(tmp_path: Path, monkeypatch):
+    dataset = tmp_path / "dataset.jsonl"
+    dataset.write_text(
+        '{"id": "item-1", "query": "asthma corticosteroids", "gold_pmids": ["111"]}\n',
+        encoding="utf-8",
+    )
+    document = Document(
+        pmid="111",
+        title="Title 111",
+        abstract="Abstract 111",
+        journal="Journal",
+        year=2024,
+    )
+    settings = Settings(
+        data_dir=tmp_path / "default-data",
+        embedding_cache_dir=tmp_path / "cache",
+        agent_api_key="",
+        agent_base_url="",
+        agent_max_iterations=3,
+        agent_max_output_tokens=256,
+        agent_min_relevance_score=0.6,
+        agent_min_unique_pmids=3,
+        agent_model="",
+        agent_temperature=0.0,
+        log_level="INFO",
+        pubmed_email="",
+        pubmed_tool_name="BioEvidence Copilot",
+        embedding_api_key="",
+        embedding_base_url="",
+        embedding_model="",
+        embedding_dimensions=None,
+    )
+    calls = {"load": 0}
+
+    def fake_load_local_documents(data_dir, *, settings=None):
+        calls["load"] += 1
+        assert data_dir == tmp_path / "default-data"
+        return [document]
+
+    def fake_pipeline(query: Query, *, data_dir=None, documents=None, settings=None):
+        del data_dir, settings
+        assert documents == (document,)
+        return _build_workflow_result(query.text, ("111",), ("111",), "local_corpus")
+
+    monkeypatch.setattr("bioevidence.evaluation.runner.load_local_documents", fake_load_local_documents)
+
+    report = run_evaluation(dataset, settings=settings, pipeline=fake_pipeline)
+
+    assert calls["load"] == 1
+    assert report.summary["items"] == 1
+
+
+def test_run_evaluation_limit_slices_dataset(tmp_path: Path):
+    dataset = tmp_path / "dataset.jsonl"
+    dataset.write_text(
+        "\n".join(
+            [
+                '{"id": "item-1", "query": "asthma corticosteroids", "gold_pmids": ["111"]}',
+                '{"id": "item-2", "query": "melanoma immunotherapy", "gold_pmids": ["222"]}',
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    def fake_pipeline(query: Query, *, data_dir=None, documents=None, settings=None):
+        del data_dir, documents, settings
+        return _build_workflow_result(query.text, ("111",), ("111",), "local_corpus")
+
+    report = run_evaluation(dataset, pipeline=fake_pipeline, limit=1)
+
+    assert report.summary["items"] == 1
+    assert report.items[0].item.id == "item-1"

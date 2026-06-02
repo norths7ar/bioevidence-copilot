@@ -58,8 +58,8 @@ def _evidence(pmid: str, score: float) -> EvidenceRecord:
 
 
 def test_run_agent_workflow_accumulates_branches_and_stops(monkeypatch):
-    def fake_retrieval_stack(query: Query, *, data_dir=None, settings=None):
-        del data_dir, settings
+    def fake_retrieval_stack(query: Query, *, data_dir=None, documents=None, settings=None):
+        del data_dir, documents, settings
         if query.text == "asthma corticosteroids":
             documents = [
                 Document(pmid="111", title="Title 111", abstract="Abstract 111", journal="Journal", year=2024),

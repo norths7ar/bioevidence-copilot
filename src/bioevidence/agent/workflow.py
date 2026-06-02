@@ -115,10 +115,16 @@ def run_rag_pipeline(
     query: Query,
     *,
     data_dir: Path | None = None,
+    documents: tuple[Document, ...] | list[Document] | None = None,
     settings: Settings | None = None,
 ) -> WorkflowResult:
     settings = settings or load_settings()
-    documents, ranked_candidates, evidence_records, source = _run_retrieval_stack(query, data_dir=data_dir, settings=settings)
+    documents, ranked_candidates, evidence_records, source = _run_retrieval_stack(
+        query,
+        data_dir=data_dir,
+        documents=documents,
+        settings=settings,
+    )
     answer = generate_answer(query, evidence_records)
     return WorkflowResult(
         query=query,
@@ -134,6 +140,7 @@ def run_agent_workflow(
     query: Query,
     *,
     data_dir: Path | None = None,
+    documents: tuple[Document, ...] | list[Document] | None = None,
     settings: Settings | None = None,
 ) -> AgentWorkflowResult:
     settings = settings or load_settings()
@@ -141,7 +148,7 @@ def run_agent_workflow(
         agent_client = create_agent_client(settings)
     except AgentLLMError:
         agent_client = None
-    baseline = run_rag_pipeline(query, data_dir=data_dir, settings=settings)
+    baseline = run_rag_pipeline(query, data_dir=data_dir, documents=documents, settings=settings)
     state = AgentState(query=query, max_iterations=settings.agent_max_iterations)
     state.record_branch_query(query.text)
     state.merge_candidates(baseline.retrieved_candidates)
@@ -177,6 +184,7 @@ def run_agent_workflow(
             documents, ranked_candidates, evidence_records, source = _run_retrieval_stack(
                 branch_query_obj,
                 data_dir=data_dir,
+                documents=documents,
                 settings=settings,
             )
             branch_result = AgentBranchResult(
@@ -231,19 +239,21 @@ def run_workflow(
     query: Query,
     *,
     data_dir: Path | None = None,
+    documents: tuple[Document, ...] | list[Document] | None = None,
     settings: Settings | None = None,
 ) -> AnswerBundle:
-    return run_rag_pipeline(query, data_dir=data_dir, settings=settings).answer
+    return run_rag_pipeline(query, data_dir=data_dir, documents=documents, settings=settings).answer
 
 
 def _run_retrieval_stack(
     query: Query,
     *,
     data_dir: Path | None = None,
+    documents: tuple[Document, ...] | list[Document] | None = None,
     settings: Settings | None = None,
 ) -> tuple[list[Document], list[RetrievedCandidate], list[EvidenceRecord], str]:
     settings = settings or load_settings()
-    documents = load_local_documents(data_dir or settings.data_dir, settings=settings)
+    documents = list(documents) if documents is not None else load_local_documents(data_dir or settings.data_dir, settings=settings)
     source = "local_corpus"
     if not documents:
         documents = search_pubmed(query, settings=settings)

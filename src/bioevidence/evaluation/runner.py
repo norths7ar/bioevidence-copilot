@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from collections.abc import Callable, Iterable
 
-from bioevidence.agent.workflow import WorkflowResult, run_rag_pipeline
+from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult, run_agent_workflow, run_rag_pipeline
 from bioevidence.config import Settings, load_settings
 from bioevidence.evaluation.dataset import EvaluationItem, load_dataset
 from bioevidence.evaluation.metrics import (
@@ -14,11 +14,14 @@ from bioevidence.evaluation.metrics import (
     compute_citation_metrics,
     compute_retrieval_metrics,
 )
+from bioevidence.evaluation.quality import QualityCheckResult, check_answer_quality
 from bioevidence.extraction.table import evidence_table_rows
+from bioevidence.retrieval.corpus import load_local_documents
+from bioevidence.schemas.document import Document
 from bioevidence.schemas.query import Query
 
 
-PipelineFn = Callable[..., WorkflowResult]
+PipelineFn = Callable[..., WorkflowResult | AgentWorkflowResult]
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,6 +33,7 @@ class EvaluationItemResult:
     citation_metrics: dict[str, float]
     answer_metrics: dict[str, float | None]
     evidence_table: tuple[dict[str, object], ...]
+    quality_checks: QualityCheckResult
     answer_text: str
     rewritten_query: str
     retrieval_source: str
@@ -49,6 +53,7 @@ class EvaluationItemResult:
             "citation_metrics": self.citation_metrics,
             "answer_metrics": self.answer_metrics,
             "evidence_table": list(self.evidence_table),
+            "quality_checks": self.quality_checks.to_dict(),
             "answer_text": self.answer_text,
             "rewritten_query": self.rewritten_query,
             "retrieval_source": self.retrieval_source,
@@ -58,6 +63,7 @@ class EvaluationItemResult:
 @dataclass(frozen=True, slots=True)
 class EvaluationReport:
     dataset_path: Path
+    mode: str
     generated_at: datetime
     summary: dict[str, float | int | None]
     items: tuple[EvaluationItemResult, ...] = field(default_factory=tuple)
@@ -65,6 +71,7 @@ class EvaluationReport:
     def to_dict(self) -> dict[str, object]:
         return {
             "dataset_path": str(self.dataset_path),
+            "mode": self.mode,
             "generated_at": self.generated_at.isoformat(),
             "summary": self.summary,
             "items": [item.to_dict() for item in self.items],
@@ -74,25 +81,35 @@ class EvaluationReport:
 def run_evaluation(
     dataset_path: Path,
     *,
-    pipeline: PipelineFn = run_rag_pipeline,
+    mode: str = "baseline",
+    pipeline: PipelineFn | None = None,
     data_dir: Path | None = None,
+    limit: int | None = None,
     settings: Settings | None = None,
 ) -> EvaluationReport:
-    if settings is None and pipeline is run_rag_pipeline:
+    pipeline = pipeline or _pipeline_for_mode(mode)
+    if settings is None and pipeline in (run_rag_pipeline, run_agent_workflow):
         settings = load_settings()
     items = load_dataset(dataset_path)
+    if limit is not None:
+        if limit <= 0:
+            raise ValueError("limit must be a positive integer")
+        items = items[:limit]
+    documents = _preload_documents(data_dir, settings=settings)
     results: list[EvaluationItemResult] = []
 
     for item in items:
         workflow_result = pipeline(
             Query(text=item.query, top_k=item.top_k),
             data_dir=data_dir,
+            documents=documents,
             settings=settings,
         )
         results.append(_evaluate_item(item, workflow_result))
 
     return EvaluationReport(
         dataset_path=dataset_path,
+        mode=mode,
         generated_at=datetime.now(timezone.utc),
         summary=_summarize(results),
         items=tuple(results),
@@ -110,6 +127,7 @@ def format_report(report: EvaluationReport) -> str:
     lines = [
         "Evaluation report",
         f"Dataset: {report.dataset_path}",
+        f"Mode: {report.mode}",
         f"Items: {_format_metric(report.summary.get('items', 0))}",
         f"Reference answers: {_format_metric(report.summary.get('reference_items', 0))}",
         "Retrieval:",
@@ -123,6 +141,10 @@ def format_report(report: EvaluationReport) -> str:
         "Answers:",
         f"  exact_match: {_format_metric(report.summary.get('mean_answer_exact_match', None))}",
         f"  token_overlap: {_format_metric(report.summary.get('mean_answer_token_overlap', None))}",
+        "Quality:",
+        f"  faithful_rate: {_format_metric(report.summary.get('faithful_rate', 0.0))}",
+        f"  unsupported_citations: {_format_metric(report.summary.get('unsupported_citation_count', 0))}",
+        f"  forced_conclusions: {_format_metric(report.summary.get('forced_conclusion_count', 0))}",
     ]
     return "\n".join(lines)
 
@@ -134,6 +156,7 @@ def _evaluate_item(item: EvaluationItem, workflow_result: WorkflowResult) -> Eva
     retrieval_metrics = compute_retrieval_metrics(predicted_pmids, item.gold_pmids)
     citation_metrics = compute_citation_metrics(predicted_citations, item.gold_pmids)
     answer_metrics = _answer_metrics(workflow_result.answer.answer_text, item.reference_answer)
+    quality_checks = check_answer_quality(workflow_result.answer, workflow_result.evidence_records)
 
     return EvaluationItemResult(
         item=item,
@@ -143,6 +166,7 @@ def _evaluate_item(item: EvaluationItem, workflow_result: WorkflowResult) -> Eva
         citation_metrics=citation_metrics,
         answer_metrics=answer_metrics,
         evidence_table=tuple(evidence_table_rows(workflow_result.evidence_records)),
+        quality_checks=quality_checks,
         answer_text=workflow_result.answer.answer_text,
         rewritten_query=workflow_result.answer.rewritten_query or item.query,
         retrieval_source=workflow_result.source,
@@ -179,11 +203,35 @@ def _summarize(results: list[EvaluationItemResult]) -> dict[str, float | int | N
             for result in results
             if result.answer_metrics["token_overlap"] is not None
         ),
+        "faithful_rate": _mean(1.0 if result.quality_checks.is_faithful else 0.0 for result in results),
+        "unsupported_citation_count": sum(len(result.quality_checks.unsupported_citations) for result in results),
+        "missing_citation_count": sum(len(result.quality_checks.missing_citations) for result in results),
+        "forced_conclusion_count": sum(1 for result in results if result.quality_checks.forced_conclusion_without_evidence),
     }
     if summary["reference_items"] == 0:
         summary["mean_answer_exact_match"] = None
         summary["mean_answer_token_overlap"] = None
     return summary
+
+
+def _pipeline_for_mode(mode: str) -> PipelineFn:
+    if mode == "baseline":
+        return run_rag_pipeline
+    if mode == "agent":
+        return run_agent_workflow
+    raise ValueError("mode must be 'baseline' or 'agent'")
+
+
+def _preload_documents(
+    data_dir: Path | None,
+    *,
+    settings: Settings | None,
+) -> tuple[Document, ...] | None:
+    if data_dir is None and settings is None:
+        return None
+    corpus_dir = data_dir or settings.data_dir
+    documents = load_local_documents(corpus_dir, settings=settings)
+    return tuple(documents) if documents else None
 
 
 def _mean(values: Iterable[float]) -> float:

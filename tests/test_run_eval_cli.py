@@ -5,7 +5,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from bioevidence.evaluation.dataset import EvaluationItem
+from bioevidence.evaluation.quality import check_answer_quality
 from bioevidence.evaluation.runner import EvaluationItemResult, EvaluationReport
+from bioevidence.schemas.answer import AnswerBundle
+from bioevidence.schemas.evidence import EvidenceRecord
 import scripts.run_eval as run_eval_script
 
 
@@ -38,12 +41,25 @@ def test_run_eval_cli_prints_summary_and_writes_report(tmp_path: Path, capsys, m
                 "relevance_score": 1.0,
             },
         ),
+        quality_checks=check_answer_quality(
+            AnswerBundle(answer_text="Answer for asthma corticosteroids [111]", citations=("111",)),
+            (
+                EvidenceRecord(
+                    pmid="111",
+                    title="Title 111",
+                    year=2024,
+                    journal="Journal",
+                    summary="Abstract 111",
+                ),
+            ),
+        ),
         answer_text="Answer for asthma corticosteroids",
         rewritten_query="asthma corticosteroids",
         retrieval_source="local_corpus",
     )
     report = EvaluationReport(
         dataset_path=dataset,
+        mode="baseline",
         generated_at=datetime.now(timezone.utc),
         summary={
             "items": 1,
@@ -60,15 +76,41 @@ def test_run_eval_cli_prints_summary_and_writes_report(tmp_path: Path, capsys, m
         items=(item,),
     )
 
-    monkeypatch.setattr(run_eval_script, "run_evaluation", lambda dataset_path: report)
+    calls = {}
 
-    exit_code = run_eval_script.main(["--dataset", str(dataset), "--output", str(output)])
+    def fake_run_evaluation(dataset_path, *, mode, data_dir, limit):
+        calls["dataset_path"] = dataset_path
+        calls["mode"] = mode
+        calls["data_dir"] = data_dir
+        calls["limit"] = limit
+        return report
+
+    monkeypatch.setattr(run_eval_script, "run_evaluation", fake_run_evaluation)
+
+    exit_code = run_eval_script.main(
+        [
+            "--dataset",
+            str(dataset),
+            "--output",
+            str(output),
+            "--mode",
+            "baseline",
+            "--data-dir",
+            "data/corpora/demo",
+            "--limit",
+            "1",
+        ]
+    )
 
     captured = capsys.readouterr()
     assert exit_code == 0
     assert "Evaluation report" in captured.out
     assert "hit@k" in captured.out
     assert output.exists()
+    assert calls["mode"] == "baseline"
+    assert str(calls["data_dir"]) == "data\\corpora\\demo" or str(calls["data_dir"]) == "data/corpora/demo"
+    assert calls["limit"] == 1
     loaded = json.loads(output.read_text(encoding="utf-8"))
     assert loaded["summary"]["items"] == 1
+    assert loaded["mode"] == "baseline"
     assert loaded["items"][0]["retrieval_source"] == "local_corpus"

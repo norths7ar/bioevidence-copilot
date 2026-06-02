@@ -2,6 +2,7 @@ from pathlib import Path
 
 import bioevidence.agent.workflow as workflow_module
 from bioevidence.agent.workflow import run_rag_pipeline, run_workflow
+from bioevidence.schemas.document import Document
 from bioevidence.schemas.query import Query
 
 
@@ -76,3 +77,35 @@ def test_run_workflow_returns_answer_bundle(tmp_path: Path, monkeypatch):
 
     assert answer.answer_text
     assert answer.citations == ("12345678",)
+
+
+def test_run_rag_pipeline_accepts_preloaded_documents(monkeypatch):
+    document = Document(
+        pmid="12345678",
+        title="Corticosteroids for asthma control",
+        abstract="Corticosteroids reduce asthma exacerbations.",
+        journal="Journal A",
+        year=2024,
+    )
+
+    def fake_embed_texts(texts, *, client=None, settings=None):
+        del client, settings
+        vector_map = {
+            "asthma corticosteroids": [1.0, 0.0],
+        }
+        return [vector_map[text] for text in texts]
+
+    def fake_embed_documents(documents, *, client=None, settings=None):
+        del client, settings
+        return [[1.0, 0.0] for _ in documents]
+
+    monkeypatch.setattr(workflow_module, "load_local_documents", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("documents should be preloaded")))
+    monkeypatch.setattr(workflow_module, "search_pubmed", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("search_pubmed should not be used")))
+    monkeypatch.setattr("bioevidence.retrieval.dense.create_embedding_client", lambda settings: object())
+    monkeypatch.setattr("bioevidence.retrieval.dense.embed_documents", fake_embed_documents)
+    monkeypatch.setattr("bioevidence.retrieval.dense.embed_texts", fake_embed_texts)
+
+    result = run_rag_pipeline(Query(text="asthma corticosteroids"), documents=[document])
+
+    assert result.source == "local_corpus"
+    assert result.retrieved_candidates[0].document.pmid == "12345678"
