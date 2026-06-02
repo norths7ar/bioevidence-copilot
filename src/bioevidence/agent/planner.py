@@ -32,7 +32,7 @@ def plan_next_steps(
             temperature=settings.agent_temperature,
         )
         branch_queries = _normalize_branch_queries(payload.get("branch_queries"))
-    except (AgentLLMError, ValueError, TypeError):
+    except (AgentLLMError, ValueError, TypeError, Exception):
         branch_queries = _fallback_branch_queries(state, branch_count=branch_count)
 
     return _deduplicate_queries(branch_queries, state.branch_queries)[:branch_count]
