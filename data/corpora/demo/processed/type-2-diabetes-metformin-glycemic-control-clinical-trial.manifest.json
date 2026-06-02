@@ -1,0 +1,42 @@
+{
+  "query": "type 2 diabetes metformin glycemic control clinical trial",
+  "retmax": 30,
+  "document_count": 30,
+  "pmids": [
+    "42185896",
+    "42184419",
+    "42077353",
+    "42070788",
+    "42036072",
+    "41925680",
+    "41913696",
+    "41888924",
+    "41883295",
+    "41859618",
+    "41795462",
+    "41771166",
+    "41623136",
+    "41557987",
+    "41523285",
+    "41521023",
+    "41504525",
+    "41485450",
+    "41417560",
+    "41381685",
+    "41363914",
+    "41282288",
+    "41263457",
+    "41262261",
+    "41260459",
+    "41239448",
+    "41236870",
+    "41233363",
+    "41223492",
+    "41198011"
+  ],
+  "artifacts": {
+    "esearch_json": "data\\corpora\\demo\\raw\\type-2-diabetes-metformin-glycemic-control-clinical-trial.esearch.json",
+    "efetch_xml": "data\\corpora\\demo\\raw\\type-2-diabetes-metformin-glycemic-control-clinical-trial.efetch.xml",
+    "documents_jsonl": "data\\corpora\\demo\\processed\\type-2-diabetes-metformin-glycemic-control-clinical-trial.documents.jsonl"
+  }
+}

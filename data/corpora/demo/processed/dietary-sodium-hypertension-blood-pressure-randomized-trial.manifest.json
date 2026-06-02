@@ -1,0 +1,42 @@
+{
+  "query": "dietary sodium hypertension blood pressure randomized trial",
+  "retmax": 30,
+  "document_count": 29,
+  "pmids": [
+    "42090672",
+    "42084728",
+    "41906877",
+    "41877571",
+    "41761767",
+    "41747920",
+    "41736122",
+    "41635921",
+    "41619653",
+    "41578335",
+    "41573998",
+    "41571229",
+    "41499691",
+    "41345453",
+    "41340057",
+    "29494120",
+    "41275512",
+    "41263071",
+    "41243115",
+    "41232772",
+    "41206973",
+    "41188917",
+    "41161590",
+    "41100086",
+    "41089588",
+    "40997343",
+    "40944674",
+    "40931546",
+    "40895849",
+    "40671805"
+  ],
+  "artifacts": {
+    "esearch_json": "data\\corpora\\demo\\raw\\dietary-sodium-hypertension-blood-pressure-randomized-trial.esearch.json",
+    "efetch_xml": "data\\corpora\\demo\\raw\\dietary-sodium-hypertension-blood-pressure-randomized-trial.efetch.xml",
+    "documents_jsonl": "data\\corpora\\demo\\processed\\dietary-sodium-hypertension-blood-pressure-randomized-trial.documents.jsonl"
+  }
+}

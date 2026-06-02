@@ -1,0 +1,9 @@
+{
+  "source": "bioasq_task_b",
+  "input": "tmp\\BioASQ-training13b\\training13b.json",
+  "question_count": 5389,
+  "eval_item_count": 5389,
+  "document_count": 41299,
+  "eval_jsonl": "data\\evaluations\\bioasq\\bioasq13b_eval.jsonl",
+  "documents_jsonl": "data\\corpora\\bioasq\\processed\\bioasq13b_snippets.documents.jsonl"
+}

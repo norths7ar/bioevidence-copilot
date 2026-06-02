@@ -1,0 +1,42 @@
+{
+  "query": "statins cardiovascular risk primary prevention meta analysis",
+  "retmax": 30,
+  "document_count": 30,
+  "pmids": [
+    "42068528",
+    "41952094",
+    "41887268",
+    "41887159",
+    "41788651",
+    "41775617",
+    "41553395",
+    "41401202",
+    "41282843",
+    "41260242",
+    "41102113",
+    "41082048",
+    "40855419",
+    "40824117",
+    "40794911",
+    "40688824",
+    "40611785",
+    "40552187",
+    "40503512",
+    "40416032",
+    "40411656",
+    "40403434",
+    "40391859",
+    "40350318",
+    "40254096",
+    "40204376",
+    "39818637",
+    "39798939",
+    "39639295",
+    "39567875"
+  ],
+  "artifacts": {
+    "esearch_json": "data\\corpora\\demo\\raw\\statins-cardiovascular-risk-primary-prevention-meta-analysis.esearch.json",
+    "efetch_xml": "data\\corpora\\demo\\raw\\statins-cardiovascular-risk-primary-prevention-meta-analysis.efetch.xml",
+    "documents_jsonl": "data\\corpora\\demo\\processed\\statins-cardiovascular-risk-primary-prevention-meta-analysis.documents.jsonl"
+  }
+}

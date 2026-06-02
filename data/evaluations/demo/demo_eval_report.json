@@ -1,0 +1,942 @@
+{
+  "dataset_path": "data\\evaluations\\demo\\demo_eval_dataset.jsonl",
+  "generated_at": "2026-05-29T09:05:35.258057+00:00",
+  "items": [
+    {
+      "answer_metrics": {
+        "exact_match": 0.0,
+        "token_overlap": 0.09523809523809523
+      },
+      "answer_text": "Top retrieved evidence for 'asthma corticosteroids exacerbations randomized trial': Inhaled Corticosteroids Plus Tiotropium Compared to Inhaled Corticosteroids Plus Montelukast in Children with Partly Controlled/Uncontrolled Asthma: A Non-Inferiority Trial. (2026) suggests OBJECTIVES: To compare the efficacy and safety of oral montelukast and inhaled tiotropium as add-on drugs to inhaled corticosteroids (ICS) in children with partly controlled/uncontrolled asthma [41772161] The usefulness of the new SOBIstat-F\u00ae device in children with severe acute asthma attacks in the emergency department: a randomized clinical trial. (2026) suggests OBJECTIVE: To evaluate the effectiveness of a new device (SOBIstat-F\u00ae) for bronchodilator administration via pMDI compared with the conventional method [41837861] Exploring Oxygen Therapy as a Supporting Treatment for Asthma: Current Insights and Perspectives. (2025) suggests Asthma is a chronic inflammatory disorder of the airways affecting over 260 million people worldwide and remains a major clinical and socioeconomic challenge [41515904] Citations: [41772161] [41837861] [41515904] [41775584] [41852620]",
+      "citation_metrics": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0
+      },
+      "evidence_table": [
+        {
+          "entities": [
+            "asthma",
+            "corticosteroids",
+            "exacerbations",
+            "randomized",
+            "trial"
+          ],
+          "journal": "Indian J Pediatr",
+          "pmid": "41772161",
+          "relevance_score": 0.76,
+          "summary": "OBJECTIVES: To compare the efficacy and safety of oral montelukast and inhaled tiotropium as add-on drugs to inhaled corticosteroids (ICS) in children with partly controlled/uncontrolled asthma",
+          "title": "Inhaled Corticosteroids Plus Tiotropium Compared to Inhaled Corticosteroids Plus Montelukast in Children with Partly Controlled/Uncontrolled Asthma: A Non-Inferiority Trial.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "asthma",
+            "corticosteroids",
+            "exacerbations",
+            "randomized",
+            "trial"
+          ],
+          "journal": "J Asthma",
+          "pmid": "41837861",
+          "relevance_score": 0.6086,
+          "summary": "OBJECTIVE: To evaluate the effectiveness of a new device (SOBIstat-F\u00ae) for bronchodilator administration via pMDI compared with the conventional method",
+          "title": "The usefulness of the new SOBIstat-F\u00ae device in children with severe acute asthma attacks in the emergency department: a randomized clinical trial.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "asthma",
+            "corticosteroids",
+            "exacerbations",
+            "randomized",
+            "trial"
+          ],
+          "journal": "Int J Mol Sci",
+          "pmid": "41515904",
+          "relevance_score": 0.5428,
+          "summary": "Asthma is a chronic inflammatory disorder of the airways affecting over 260 million people worldwide and remains a major clinical and socioeconomic challenge",
+          "title": "Exploring Oxygen Therapy as a Supporting Treatment for Asthma: Current Insights and Perspectives.",
+          "year": 2025
+        },
+        {
+          "entities": [
+            "asthma",
+            "corticosteroids",
+            "exacerbations",
+            "trial"
+          ],
+          "journal": "Paediatr Respir Rev",
+          "pmid": "41775584",
+          "relevance_score": 0.5042,
+          "summary": "BACKGROUND: This scoping review examines the recommendations for short-acting beta-agonists (SABA) in discharge and weaning plans following acute asthma exacerbations in children",
+          "title": "The need to restudy SABA regimens on discharge of children with an acute asthma exacerbation: A scoping review.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "asthma",
+            "corticosteroids",
+            "exacerbations",
+            "randomized",
+            "trial"
+          ],
+          "journal": "J Inflamm Res",
+          "pmid": "41852620",
+          "relevance_score": 0.4852,
+          "summary": "Severe eosinophilic asthma represents a relatively small proportion of the overall asthma population but accounts for a disproportionate burden of exacerbations, oral corticosteroid (OCS) exposure and",
+          "title": "Predictive Factors And Treatments Associated with Clinical Remission in Severe Eosinophilic Asthma.",
+          "year": 2026
+        }
+      ],
+      "item": {
+        "gold_pmids": [
+          "42189350",
+          "42173441",
+          "42125304"
+        ],
+        "id": "asthma-corticosteroids",
+        "query": "asthma corticosteroids exacerbations randomized trial",
+        "reference_answer": "Summarize whether corticosteroid-related evidence reduces asthma exacerbations, with citations to the retrieved PubMed abstracts.",
+        "top_k": 5
+      },
+      "predicted_citations": [
+        "41772161",
+        "41837861",
+        "41515904",
+        "41775584",
+        "41852620"
+      ],
+      "predicted_pmids": [
+        "41772161",
+        "41837861",
+        "41515904",
+        "41775584",
+        "41852620"
+      ],
+      "quality_checks": {
+        "evidence_metadata": [
+          {
+            "effect_direction": "unspecified",
+            "pmid": "41772161",
+            "study_type": "trial"
+          },
+          {
+            "effect_direction": "unspecified",
+            "pmid": "41837861",
+            "study_type": "trial"
+          },
+          {
+            "effect_direction": "unspecified",
+            "pmid": "41515904",
+            "study_type": "unspecified"
+          },
+          {
+            "effect_direction": "unspecified",
+            "pmid": "41775584",
+            "study_type": "unspecified"
+          },
+          {
+            "effect_direction": "unspecified",
+            "pmid": "41852620",
+            "study_type": "unspecified"
+          }
+        ],
+        "evidence_pmids": [
+          "41772161",
+          "41837861",
+          "41515904",
+          "41775584",
+          "41852620"
+        ],
+        "forced_conclusion_without_evidence": false,
+        "has_evidence": true,
+        "inline_citations": [
+          "41772161",
+          "41837861",
+          "41515904",
+          "41775584",
+          "41852620"
+        ],
+        "insufficient_evidence": false,
+        "is_faithful": true,
+        "missing_citations": [],
+        "notes": [],
+        "supported_citations": [
+          "41772161",
+          "41837861",
+          "41515904",
+          "41775584",
+          "41852620"
+        ],
+        "unsupported_citations": []
+      },
+      "retrieval_metrics": {
+        "hit_at_k": 0.0,
+        "mrr": 0.0,
+        "recall_at_k": 0.0
+      },
+      "retrieval_source": "local_corpus",
+      "rewritten_query": "asthma corticosteroids exacerbations randomized trial"
+    },
+    {
+      "answer_metrics": {
+        "exact_match": 0.0,
+        "token_overlap": 0.12206572769953053
+      },
+      "answer_text": "Top retrieved evidence for 'type 2 diabetes metformin glycemic control clinical trial': Comparative effectiveness of metformin and alogliptin combination therapy versus metformin monotherapy in patients with type 2 diabetes: an emulated target trial. (2025) suggests BACKGROUND: As type 2 diabetes mellitus (T2DM) has emerged as a global health challenge, various treatment strategies, such as the use of metformin and dipeptidyl peptidase-4 (DPP-4) inhibitors, have [41239448] Metformin dose up-titration and glycemic control in type 2 diabetes in a resource-limited setting, northern Ethiopia: a retrospective cohort study. (2026) suggests BACKGROUND: Metformin is the preferred initial therapy for type 2 diabetes mellitus (T2DM) and gradual upward dose titration is recommended to reach target blood glucose levels [42185896] Study protocol of a multicenter, randomized, non-inferiority, open-label study investigating the efficacy of a fixed-dose combination regimen of dapagliflozin/metformin versus co-administered dual therapy based on glycemic control, satisfaction and adherence in patients with newly diagnosed type 2 diabetes mellitus. (2025) suggests INTRODUCTION: The combination of dapagliflozin and metformin is commonly used as an initial therapy for patients with type 2 diabetes mellitus (T2DM) with high glycated hemoglobin (HbA1c) levels [41262261] Citations: [41239448] [42185896] [41262261] [41523285] [41198011]",
+      "citation_metrics": {
+        "f1": 0.25,
+        "precision": 0.2,
+        "recall": 0.3333333333333333
+      },
+      "evidence_table": [
+        {
+          "entities": [
+            "type",
+            "diabetes",
+            "metformin",
+            "glycemic",
+            "control",
+            "clinical",
+            "trial"
+          ],
+          "journal": "BMC Endocr Disord",
+          "pmid": "41239448",
+          "relevance_score": 0.76,
+          "summary": "BACKGROUND: As type 2 diabetes mellitus (T2DM) has emerged as a global health challenge, various treatment strategies, such as the use of metformin and dipeptidyl peptidase-4 (DPP-4) inhibitors, have ",
+          "title": "Comparative effectiveness of metformin and alogliptin combination therapy versus metformin monotherapy in patients with type 2 diabetes: an emulated target trial.",
+          "year": 2025
+        },
+        {
+          "entities": [
+            "type",
+            "diabetes",
+            "metformin",
+            "glycemic",
+            "control",
+            "clinical",
+            "trial"
+          ],
+          "journal": "BMC Endocr Disord",
+          "pmid": "42185896",
+          "relevance_score": 0.6553,
+          "summary": "BACKGROUND: Metformin is the preferred initial therapy for type 2 diabetes mellitus (T2DM) and gradual upward dose titration is recommended to reach target blood glucose levels",
+          "title": "Metformin dose up-titration and glycemic control in type 2 diabetes in a resource-limited setting, northern Ethiopia: a retrospective cohort study.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "type",
+            "diabetes",
+            "metformin",
+            "glycemic",
+            "control",
+            "clinical",
+            "trial"
+          ],
+          "journal": "Front Endocrinol (Lausanne)",
+          "pmid": "41262261",
+          "relevance_score": 0.6188,
+          "summary": "INTRODUCTION: The combination of dapagliflozin and metformin is commonly used as an initial therapy for patients with type 2 diabetes mellitus (T2DM) with high glycated hemoglobin (HbA1c) levels",
+          "title": "Study protocol of a multicenter, randomized, non-inferiority, open-label study investigating the efficacy of a fixed-dose combination regimen of dapagliflozin/metformin versus co-administered dual therapy based on glycemic control, satisfaction and adherence in patients with newly diagnosed type 2 diabetes mellitus.",
+          "year": 2025
+        },
+        {
+          "entities": [
+            "type",
+            "diabetes",
+            "metformin",
+            "glycemic",
+            "control",
+            "clinical",
+            "trial"
+          ],
+          "journal": "Food Sci Nutr",
+          "pmid": "41523285",
+          "relevance_score": 0.5915,
+          "summary": "Type 2 diabetes mellitus (T2DM) remains a major global health challenge, with emerging evidence highlighting the therapeutic potential of gut microbiota modulation",
+          "title": "Probiotic Supplementation With Bifidobacterium longum Subsp. Longum BL21 Improves Glycemic Control and Modulates Gut Microbiota in Type 2 Diabetes: A Randomized Controlled Trial.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "type",
+            "diabetes",
+            "metformin",
+            "glycemic",
+            "control",
+            "clinical",
+            "trial"
+          ],
+          "journal": "Am J Med",
+          "pmid": "41198011",
+          "relevance_score": 0.5811,
+          "summary": "BACKGROUND: People with diabetes have elevated dementia risk",
+          "title": "Early glycemic control and subsequent risk of incident dementia among new metformin users.",
+          "year": 2026
+        }
+      ],
+      "item": {
+        "gold_pmids": [
+          "42185896",
+          "42184419",
+          "42077353"
+        ],
+        "id": "diabetes-metformin",
+        "query": "type 2 diabetes metformin glycemic control clinical trial",
+        "reference_answer": "Summarize the retrieved clinical evidence on metformin and glycemic control in type 2 diabetes.",
+        "top_k": 5
+      },
+      "predicted_citations": [
+        "41239448",
+        "42185896",
+        "41262261",
+        "41523285",
+        "41198011"
+      ],
+      "predicted_pmids": [
+        "41239448",
+        "42185896",
+        "41262261",
+        "41523285",
+        "41198011"
+      ],
+      "quality_checks": {
+        "evidence_metadata": [
+          {
+            "effect_direction": "unspecified",
+            "pmid": "41239448",
+            "study_type": "trial"
+          },
+          {
+            "effect_direction": "unspecified",
+            "pmid": "42185896",
+            "study_type": "observational"
+          },
+          {
+            "effect_direction": "unspecified",
+            "pmid": "41262261",
+            "study_type": "trial"
+          },
+          {
+            "effect_direction": "benefit",
+            "pmid": "41523285",
+            "study_type": "trial"
+          },
+          {
+            "effect_direction": "unspecified",
+            "pmid": "41198011",
+            "study_type": "unspecified"
+          }
+        ],
+        "evidence_pmids": [
+          "41239448",
+          "42185896",
+          "41262261",
+          "41523285",
+          "41198011"
+        ],
+        "forced_conclusion_without_evidence": false,
+        "has_evidence": true,
+        "inline_citations": [
+          "41239448",
+          "42185896",
+          "41262261",
+          "41523285",
+          "41198011"
+        ],
+        "insufficient_evidence": false,
+        "is_faithful": true,
+        "missing_citations": [],
+        "notes": [],
+        "supported_citations": [
+          "41239448",
+          "42185896",
+          "41262261",
+          "41523285",
+          "41198011"
+        ],
+        "unsupported_citations": []
+      },
+      "retrieval_metrics": {
+        "hit_at_k": 1.0,
+        "mrr": 0.5,
+        "recall_at_k": 0.3333333333333333
+      },
+      "retrieval_source": "local_corpus",
+      "rewritten_query": "type 2 diabetes metformin glycemic control clinical trial"
+    },
+    {
+      "answer_metrics": {
+        "exact_match": 0.0,
+        "token_overlap": 0.1437908496732026
+      },
+      "answer_text": "Top retrieved evidence for 'statins cardiovascular risk primary prevention meta analysis': Identifying optimal primary prevention interventions for major cardiovascular disease events and all-cause mortality: a systematic review and hierarchical network meta-analysis of RCTs. (2025) suggests BACKGROUND: Cardiovascular disease accounts for substantial mortality and healthcare costs worldwide [40611785] Meta-analysis of the impact of statins on change in renal function in patients with moderate or severe chronic kidney disease. (2025) suggests OBJECTIVE: Chronic kidney disease (CKD) patients have an elevated risk of atherosclerotic cardiovascular disease (ASCVD)-statins remain the cornerstone in reducing this increased risk [41102113] Lipid-lowering therapy for cardiovascular risk management in the older patients: How far should we go? (2026) suggests Age is a nonmodifiable risk factor for atherosclerosis and cardiovascular disease (CVD), with their prevalence increasing over time [41553395] Citations: [40611785] [41102113] [41553395] [42068528] [40824117]",
+      "citation_metrics": {
+        "f1": 0.25,
+        "precision": 0.2,
+        "recall": 0.3333333333333333
+      },
+      "evidence_table": [
+        {
+          "entities": [
+            "statins",
+            "cardiovascular",
+            "risk",
+            "primary",
+            "prevention",
+            "meta",
+            "analysis"
+          ],
+          "journal": "Health Technol Assess",
+          "pmid": "40611785",
+          "relevance_score": 0.76,
+          "summary": "BACKGROUND: Cardiovascular disease accounts for substantial mortality and healthcare costs worldwide",
+          "title": "Identifying optimal primary prevention interventions for major cardiovascular disease events and all-cause mortality: a systematic review and hierarchical network meta-analysis of RCTs.",
+          "year": 2025
+        },
+        {
+          "entities": [
+            "statins",
+            "cardiovascular",
+            "risk",
+            "primary",
+            "prevention",
+            "meta",
+            "analysis"
+          ],
+          "journal": "J Clin Lipidol",
+          "pmid": "41102113",
+          "relevance_score": 0.6495,
+          "summary": "OBJECTIVE: Chronic kidney disease (CKD) patients have an elevated risk of atherosclerotic cardiovascular disease (ASCVD)-statins remain the cornerstone in reducing this increased risk",
+          "title": "Meta-analysis of the impact of statins on change in renal function in patients with moderate or severe chronic kidney disease.",
+          "year": 2025
+        },
+        {
+          "entities": [
+            "statins",
+            "cardiovascular",
+            "risk",
+            "primary",
+            "prevention",
+            "meta",
+            "analysis"
+          ],
+          "journal": "Eur J Prev Cardiol",
+          "pmid": "41553395",
+          "relevance_score": 0.616,
+          "summary": "Age is a nonmodifiable risk factor for atherosclerosis and cardiovascular disease (CVD), with their prevalence increasing over time",
+          "title": "Lipid-lowering therapy for cardiovascular risk management in the older patients: How far should we go?",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "statins",
+            "cardiovascular",
+            "risk",
+            "primary",
+            "prevention",
+            "meta",
+            "analysis"
+          ],
+          "journal": "Cardiovasc Drugs Ther",
+          "pmid": "42068528",
+          "relevance_score": 0.5986,
+          "summary": "PURPOSE: Evidence regarding sources of heterogeneity in the efficacy of statins for primary prevention of cardiovascular disease (CVD) remains limited",
+          "title": "Sources of Heterogeneity in the Efficacy of Statins for Primary Prevention of Cardiovascular Diseases: A Systematic Review with Meta-Regression and Meta-Analysis of Within-Study Subgroup Differences.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "statins",
+            "cardiovascular",
+            "risk",
+            "primary",
+            "prevention",
+            "meta",
+            "analysis"
+          ],
+          "journal": "Health Technol Assess",
+          "pmid": "40824117",
+          "relevance_score": 0.5576,
+          "summary": "BACKGROUND: Cardiovascular disease remains a leading cause of morbidity and mortality worldwide",
+          "title": "Determining optimal strategies for primary prevention of cardiovascular disease: a synopsis of an evidence synthesis study.",
+          "year": 2025
+        }
+      ],
+      "item": {
+        "gold_pmids": [
+          "42068528",
+          "41952094",
+          "41887268"
+        ],
+        "id": "statins-cardiovascular",
+        "query": "statins cardiovascular risk primary prevention meta analysis",
+        "reference_answer": "Summarize the retrieved evidence on statins for cardiovascular risk reduction in primary prevention.",
+        "top_k": 5
+      },
+      "predicted_citations": [
+        "40611785",
+        "41102113",
+        "41553395",
+        "42068528",
+        "40824117"
+      ],
+      "predicted_pmids": [
+        "40611785",
+        "41102113",
+        "41553395",
+        "42068528",
+        "40824117"
+      ],
+      "quality_checks": {
+        "evidence_metadata": [
+          {
+            "effect_direction": "unspecified",
+            "pmid": "40611785",
+            "study_type": "review"
+          },
+          {
+            "effect_direction": "harm",
+            "pmid": "41102113",
+            "study_type": "review"
+          },
+          {
+            "effect_direction": "unspecified",
+            "pmid": "41553395",
+            "study_type": "unspecified"
+          },
+          {
+            "effect_direction": "unspecified",
+            "pmid": "42068528",
+            "study_type": "review"
+          },
+          {
+            "effect_direction": "unspecified",
+            "pmid": "40824117",
+            "study_type": "unspecified"
+          }
+        ],
+        "evidence_pmids": [
+          "40611785",
+          "41102113",
+          "41553395",
+          "42068528",
+          "40824117"
+        ],
+        "forced_conclusion_without_evidence": false,
+        "has_evidence": true,
+        "inline_citations": [
+          "40611785",
+          "41102113",
+          "41553395",
+          "42068528",
+          "40824117"
+        ],
+        "insufficient_evidence": false,
+        "is_faithful": true,
+        "missing_citations": [],
+        "notes": [],
+        "supported_citations": [
+          "40611785",
+          "41102113",
+          "41553395",
+          "42068528",
+          "40824117"
+        ],
+        "unsupported_citations": []
+      },
+      "retrieval_metrics": {
+        "hit_at_k": 1.0,
+        "mrr": 0.25,
+        "recall_at_k": 0.3333333333333333
+      },
+      "retrieval_source": "local_corpus",
+      "rewritten_query": "statins cardiovascular risk primary prevention meta analysis"
+    },
+    {
+      "answer_metrics": {
+        "exact_match": 0.0,
+        "token_overlap": 0.12328767123287672
+      },
+      "answer_text": "Top retrieved evidence for 'melanoma immunotherapy survival checkpoint inhibitors': Efficacy of radiotherapy in stabilization of oligoprogressive lesions of malignant melanoma treated with immunotherapy. (2026) suggests BACKGROUND: This study aims to evaluate the effectiveness of radiotherapy (RT) in stabilizing oligoprogressive disease (OPD) in melanoma patients undergoing immunotherapy [42131458] Adjuvant and neoadjuvant treatment for melanoma: integrating immunotherapy, radiation and systemic therapies into surgical practice. (2026) suggests Systemic therapies have transformed melanoma care, delivering durable responses and survival benefits in metastatic and resected high-risk disease [42179835] Immune checkpoint inhibitor-associated uveitis in metastatic melanoma: case report and literature review. (2026) suggests Immune checkpoint inhibitors (ICIs), including programmed cell death-1 inhibitors such as nivolumab and cytotoxic T-lymphocyte-associated antigen-4 inhibitors such as ipilimumab, have become a corners [42200697] Citations: [42131458] [42179835] [42200697] [41973518] [42181194]",
+      "citation_metrics": {
+        "f1": 0.25,
+        "precision": 0.2,
+        "recall": 0.3333333333333333
+      },
+      "evidence_table": [
+        {
+          "entities": [
+            "melanoma",
+            "immunotherapy",
+            "survival",
+            "checkpoint",
+            "inhibitors"
+          ],
+          "journal": "Rep Pract Oncol Radiother",
+          "pmid": "42131458",
+          "relevance_score": 0.76,
+          "summary": "BACKGROUND: This study aims to evaluate the effectiveness of radiotherapy (RT) in stabilizing oligoprogressive disease (OPD) in melanoma patients undergoing immunotherapy",
+          "title": "Efficacy of radiotherapy in stabilization of oligoprogressive lesions of malignant melanoma treated with immunotherapy.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "melanoma",
+            "immunotherapy",
+            "survival",
+            "checkpoint",
+            "inhibitors"
+          ],
+          "journal": "Oper Tech Otolayngol Head Neck Surg",
+          "pmid": "42179835",
+          "relevance_score": 0.6458,
+          "summary": "Systemic therapies have transformed melanoma care, delivering durable responses and survival benefits in metastatic and resected high-risk disease",
+          "title": "Adjuvant and neoadjuvant treatment for melanoma: integrating immunotherapy, radiation and systemic therapies into surgical practice.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "melanoma",
+            "immunotherapy",
+            "survival",
+            "checkpoint",
+            "inhibitors"
+          ],
+          "journal": "Melanoma Res",
+          "pmid": "42200697",
+          "relevance_score": 0.5725,
+          "summary": "Immune checkpoint inhibitors (ICIs), including programmed cell death-1 inhibitors such as nivolumab and cytotoxic T-lymphocyte-associated antigen-4 inhibitors such as ipilimumab, have become a corners",
+          "title": "Immune checkpoint inhibitor-associated uveitis in metastatic melanoma: case report and literature review.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "melanoma",
+            "immunotherapy",
+            "survival",
+            "checkpoint",
+            "inhibitors"
+          ],
+          "journal": "Intern Med J",
+          "pmid": "41973518",
+          "relevance_score": 0.4955,
+          "summary": "BACKGROUND: Checkpoint inhibitors (CPIs) have changed the treatment paradigm for patients with advanced melanoma, with significant improvement in overall survival",
+          "title": "Outcomes of patients with unresectable or metastatic melanoma after cessation of immunotherapy following complete metabolic response or toxicities.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "melanoma",
+            "immunotherapy",
+            "survival",
+            "checkpoint",
+            "inhibitors"
+          ],
+          "journal": "Front Endocrinol (Lausanne)",
+          "pmid": "42181194",
+          "relevance_score": 0.4645,
+          "summary": "INTRODUCTION: Combination immunotherapy with ipilimumab and nivolumab has improved long-term progression-free and overall survival in patients with metastatic melanoma",
+          "title": "Systematic monitoring identified a high incidence of hypopituitarism following combined ipilimumab plus nivolumab therapy for metastatic melanoma.",
+          "year": 2026
+        }
+      ],
+      "item": {
+        "gold_pmids": [
+          "42203264",
+          "42200697",
+          "42195213"
+        ],
+        "id": "melanoma-immunotherapy",
+        "query": "melanoma immunotherapy survival checkpoint inhibitors",
+        "reference_answer": "Summarize the retrieved evidence on checkpoint inhibitor immunotherapy and melanoma survival outcomes.",
+        "top_k": 5
+      },
+      "predicted_citations": [
+        "42131458",
+        "42179835",
+        "42200697",
+        "41973518",
+        "42181194"
+      ],
+      "predicted_pmids": [
+        "42131458",
+        "42179835",
+        "42200697",
+        "41973518",
+        "42181194"
+      ],
+      "quality_checks": {
+        "evidence_metadata": [
+          {
+            "effect_direction": "unspecified",
+            "pmid": "42131458",
+            "study_type": "unspecified"
+          },
+          {
+            "effect_direction": "benefit",
+            "pmid": "42179835",
+            "study_type": "unspecified"
+          },
+          {
+            "effect_direction": "unspecified",
+            "pmid": "42200697",
+            "study_type": "unspecified"
+          },
+          {
+            "effect_direction": "benefit",
+            "pmid": "41973518",
+            "study_type": "unspecified"
+          },
+          {
+            "effect_direction": "benefit",
+            "pmid": "42181194",
+            "study_type": "unspecified"
+          }
+        ],
+        "evidence_pmids": [
+          "42131458",
+          "42179835",
+          "42200697",
+          "41973518",
+          "42181194"
+        ],
+        "forced_conclusion_without_evidence": false,
+        "has_evidence": true,
+        "inline_citations": [
+          "42131458",
+          "42179835",
+          "42200697",
+          "41973518",
+          "42181194"
+        ],
+        "insufficient_evidence": false,
+        "is_faithful": true,
+        "missing_citations": [],
+        "notes": [],
+        "supported_citations": [
+          "42131458",
+          "42179835",
+          "42200697",
+          "41973518",
+          "42181194"
+        ],
+        "unsupported_citations": []
+      },
+      "retrieval_metrics": {
+        "hit_at_k": 1.0,
+        "mrr": 0.3333333333333333,
+        "recall_at_k": 0.3333333333333333
+      },
+      "retrieval_source": "local_corpus",
+      "rewritten_query": "melanoma immunotherapy survival checkpoint inhibitors"
+    },
+    {
+      "answer_metrics": {
+        "exact_match": 0.0,
+        "token_overlap": 0.12500000000000003
+      },
+      "answer_text": "Top retrieved evidence for 'dietary sodium hypertension blood pressure randomized trial': [Potassium substitution: is replacing sodium with potassium-enriched salts beneficial?]. (2026) suggests BACKGROUND: Hypertension is the leading cause of premature death globally, and acute decompensated heart failure is among the most common causes of hospitalization [42084728] Remote dietitian counseling with short-term meal delivery improves DASH diet adherence and lowers blood pressure in veterans with hypertension and obesity. (2026) suggests BACKGROUND: Hypertension and obesity disproportionately affect veterans and contribute to cardiovascular disease [41747920] A just-in-time adaptive mobile application intervention to reduce sodium intake and blood pressure in patients with hypertension: Rationale and design of the LowSalt4Life 2 trial. (2026) suggests BACKGROUND: Excess dietary sodium intake is a major contributor to hypertension (HTN) and cardiovascular disease in the U.S., yet most Americans exceed recommended sodium intake levels [41161590] Citations: [42084728] [41747920] [41161590] [41571229] [41345453]",
+      "citation_metrics": {
+        "f1": 0.25,
+        "precision": 0.2,
+        "recall": 0.3333333333333333
+      },
+      "evidence_table": [
+        {
+          "entities": [
+            "dietary",
+            "sodium",
+            "hypertension",
+            "blood",
+            "pressure",
+            "randomized",
+            "trial"
+          ],
+          "journal": "Inn Med (Heidelb)",
+          "pmid": "42084728",
+          "relevance_score": 0.76,
+          "summary": "BACKGROUND: Hypertension is the leading cause of premature death globally, and acute decompensated heart failure is among the most common causes of hospitalization",
+          "title": "[Potassium substitution: is replacing sodium with potassium-enriched salts beneficial?].",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "dietary",
+            "sodium",
+            "hypertension",
+            "blood",
+            "pressure",
+            "randomized",
+            "trial"
+          ],
+          "journal": "Am Heart J",
+          "pmid": "41747920",
+          "relevance_score": 0.6163,
+          "summary": "BACKGROUND: Hypertension and obesity disproportionately affect veterans and contribute to cardiovascular disease",
+          "title": "Remote dietitian counseling with short-term meal delivery improves DASH diet adherence and lowers blood pressure in veterans with hypertension and obesity.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "dietary",
+            "sodium",
+            "hypertension",
+            "blood",
+            "pressure",
+            "randomized",
+            "trial"
+          ],
+          "journal": "Am Heart J",
+          "pmid": "41161590",
+          "relevance_score": 0.5821,
+          "summary": "BACKGROUND: Excess dietary sodium intake is a major contributor to hypertension (HTN) and cardiovascular disease in the U.S., yet most Americans exceed recommended sodium intake levels",
+          "title": "A just-in-time adaptive mobile application intervention to reduce sodium intake and blood pressure in patients with hypertension: Rationale and design of the LowSalt4Life 2 trial.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "dietary",
+            "sodium",
+            "hypertension",
+            "blood",
+            "pressure",
+            "randomized",
+            "trial"
+          ],
+          "journal": "Contemp Clin Trials",
+          "pmid": "41571229",
+          "relevance_score": 0.5553,
+          "summary": "BACKGROUND: Dietary sodium reduction and potassium enrichment are recommended non-pharmacological strategies for blood pressure (BP) control; however, randomized evidence evaluating potassium-enriched",
+          "title": "The impact of a potassium-enriched salt substitute on blood pressure control in patients with resistant arterial hypertension: A randomized pilot trial.",
+          "year": 2026
+        },
+        {
+          "entities": [
+            "dietary",
+            "sodium",
+            "hypertension",
+            "blood",
+            "pressure",
+            "randomized",
+            "trial"
+          ],
+          "journal": "J Hum Hypertens",
+          "pmid": "41345453",
+          "relevance_score": 0.5271,
+          "summary": "Dietary interventions are recommended as part of hypertension (HTN) treatment",
+          "title": "Sodium reduction is the key ingredient in dietary treatment of hypertension - a randomized controlled trial on sodium, potassium and nitrate.",
+          "year": 2026
+        }
+      ],
+      "item": {
+        "gold_pmids": [
+          "42090672",
+          "42084728",
+          "41906877"
+        ],
+        "id": "hypertension-salt",
+        "query": "dietary sodium hypertension blood pressure randomized trial",
+        "reference_answer": "Summarize the retrieved evidence on dietary sodium reduction and blood pressure in hypertension.",
+        "top_k": 5
+      },
+      "predicted_citations": [
+        "42084728",
+        "41747920",
+        "41161590",
+        "41571229",
+        "41345453"
+      ],
+      "predicted_pmids": [
+        "42084728",
+        "41747920",
+        "41161590",
+        "41571229",
+        "41345453"
+      ],
+      "quality_checks": {
+        "evidence_metadata": [
+          {
+            "effect_direction": "unspecified",
+            "pmid": "42084728",
+            "study_type": "unspecified"
+          },
+          {
+            "effect_direction": "benefit",
+            "pmid": "41747920",
+            "study_type": "unspecified"
+          },
+          {
+            "effect_direction": "benefit",
+            "pmid": "41161590",
+            "study_type": "trial"
+          },
+          {
+            "effect_direction": "harm",
+            "pmid": "41571229",
+            "study_type": "trial"
+          },
+          {
+            "effect_direction": "unspecified",
+            "pmid": "41345453",
+            "study_type": "trial"
+          }
+        ],
+        "evidence_pmids": [
+          "42084728",
+          "41747920",
+          "41161590",
+          "41571229",
+          "41345453"
+        ],
+        "forced_conclusion_without_evidence": false,
+        "has_evidence": true,
+        "inline_citations": [
+          "42084728",
+          "41747920",
+          "41161590",
+          "41571229",
+          "41345453"
+        ],
+        "insufficient_evidence": false,
+        "is_faithful": true,
+        "missing_citations": [],
+        "notes": [],
+        "supported_citations": [
+          "42084728",
+          "41747920",
+          "41161590",
+          "41571229",
+          "41345453"
+        ],
+        "unsupported_citations": []
+      },
+      "retrieval_metrics": {
+        "hit_at_k": 1.0,
+        "mrr": 1.0,
+        "recall_at_k": 0.3333333333333333
+      },
+      "retrieval_source": "local_corpus",
+      "rewritten_query": "dietary sodium hypertension blood pressure randomized trial"
+    }
+  ],
+  "mode": "baseline",
+  "summary": {
+    "faithful_rate": 1.0,
+    "forced_conclusion_count": 0,
+    "items": 5,
+    "mean_answer_exact_match": 0.0,
+    "mean_answer_token_overlap": 0.12187646876874103,
+    "mean_citation_f1": 0.2,
+    "mean_citation_precision": 0.16,
+    "mean_citation_recall": 0.26666666666666666,
+    "mean_hit_at_k": 0.8,
+    "mean_mrr": 0.4166666666666667,
+    "mean_recall_at_k": 0.26666666666666666,
+    "missing_citation_count": 0,
+    "reference_items": 5,
+    "unsupported_citation_count": 0
+  }
+}

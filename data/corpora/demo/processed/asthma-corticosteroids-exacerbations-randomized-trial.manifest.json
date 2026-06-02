@@ -1,0 +1,42 @@
+{
+  "query": "asthma corticosteroids exacerbations randomized trial",
+  "retmax": 30,
+  "document_count": 30,
+  "pmids": [
+    "42189350",
+    "42173441",
+    "42125304",
+    "42095998",
+    "41963073",
+    "41859385",
+    "41852620",
+    "41837861",
+    "41830543",
+    "41806279",
+    "41804386",
+    "41791845",
+    "41775584",
+    "41772161",
+    "41711394",
+    "41707916",
+    "41692019",
+    "41673353",
+    "41656979",
+    "41652440",
+    "41616871",
+    "41587637",
+    "41561108",
+    "41520676",
+    "41515904",
+    "41482990",
+    "41442024",
+    "41419233",
+    "41407390",
+    "41376929"
+  ],
+  "artifacts": {
+    "esearch_json": "data\\corpora\\demo\\raw\\asthma-corticosteroids-exacerbations-randomized-trial.esearch.json",
+    "efetch_xml": "data\\corpora\\demo\\raw\\asthma-corticosteroids-exacerbations-randomized-trial.efetch.xml",
+    "documents_jsonl": "data\\corpora\\demo\\processed\\asthma-corticosteroids-exacerbations-randomized-trial.documents.jsonl"
+  }
+}

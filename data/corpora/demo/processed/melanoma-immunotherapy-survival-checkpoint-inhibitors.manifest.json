@@ -1,0 +1,42 @@
+{
+  "query": "melanoma immunotherapy survival checkpoint inhibitors",
+  "retmax": 30,
+  "document_count": 30,
+  "pmids": [
+    "42203264",
+    "42200697",
+    "42195213",
+    "42193027",
+    "42189229",
+    "42183244",
+    "42181194",
+    "42179835",
+    "42177374",
+    "42168665",
+    "42168180",
+    "42152277",
+    "42140743",
+    "42131458",
+    "42096666",
+    "42084869",
+    "42083265",
+    "42083059",
+    "42082273",
+    "42079618",
+    "42075514",
+    "42070986",
+    "42067310",
+    "42058122",
+    "42047827",
+    "42045690",
+    "42004970",
+    "41991257",
+    "41981447",
+    "41973518"
+  ],
+  "artifacts": {
+    "esearch_json": "data\\corpora\\demo\\raw\\melanoma-immunotherapy-survival-checkpoint-inhibitors.esearch.json",
+    "efetch_xml": "data\\corpora\\demo\\raw\\melanoma-immunotherapy-survival-checkpoint-inhibitors.efetch.xml",
+    "documents_jsonl": "data\\corpora\\demo\\processed\\melanoma-immunotherapy-survival-checkpoint-inhibitors.documents.jsonl"
+  }
+}
