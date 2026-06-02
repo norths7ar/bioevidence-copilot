@@ -39,24 +39,24 @@ Suggested local setup:
 
 1. create and activate a Python 3.12 environment
 2. install the project in editable mode with test extras
-3. run the app as a module or run the tests
+3. run the baseline CLI, Streamlit UI, API, or tests
 
 Example commands:
 
 ```powershell
 python -m pip install -e .[dev]
-python -m app.main
-streamlit run app/streamlit_app.py
+python scripts/run_baseline.py
+streamlit run interfaces/web/streamlit_app.py
 python scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
 pytest
 ```
 
-For a portfolio or interview demo, `streamlit run app/streamlit_app.py` is the
+For a portfolio or interview demo, `streamlit run interfaces/web/streamlit_app.py` is the
 best first command because it shows the baseline/agent comparison in tabs.
 The CLI entrypoints remain useful for debugging and automated checks.
 
-Editable install is the supported local workflow. Direct execution via
-`python app/main.py` is intentionally not the primary path.
+Editable install is the supported local workflow. CLI entrypoints live under
+`scripts/`, and external interfaces live under `interfaces/`.
 
 To enable the dense retriever, configure the embedding backend via the generic
 `.env` fields:
@@ -97,7 +97,7 @@ The agent CLI adds:
 Implementation note:
 - the baseline RAG answer path is evidence stitching / templated synthesis over structured evidence
 - the agent path is the LLM-backed synthesis path
-- `rerank.py` is a deterministic post-process, not a learned cross-encoder reranker
+- `ranking.py` is a deterministic final ordering step, not a learned cross-encoder reranker
 - the FastAPI service is a thin backend boundary over the same workflow functions;
   Streamlit remains a lightweight local presentation surface and does not need
   to call the API for the current local demo
@@ -106,7 +106,6 @@ Implementation note:
 The evaluation harness is file-based and local:
 
 - runtime evaluation datasets live under `data/evaluations/`
-- a schema reference dataset is tracked at `examples/milestone4_eval_dataset.jsonl`
 - the demo evaluation dataset is tracked at `data/evaluations/demo/demo_eval_dataset.jsonl`
 - an example demo report is tracked at `data/evaluations/demo/demo_eval_report.json`
 - seed a real PubMed demo corpus with `scripts/seed_demo_corpus.py`
@@ -125,8 +124,6 @@ Each JSONL dataset row uses:
 - `gold_pmids` or `gold_citations`
 - optional `reference_answer`
 - optional `top_k`
-
-The agent report fixture lives at `examples/milestone5_agent_report.json`.
 
 The ingestion script writes raw artifacts and processed documents under the
 configured corpus directory, such as `data/corpora/demo/raw/` and
@@ -155,7 +152,7 @@ C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e 
 Run the API locally:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m uvicorn api.main:app --reload
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m uvicorn interfaces.api.main:app --reload
 ```
 
 Initial endpoints:
@@ -167,13 +164,12 @@ Initial endpoints:
 ## Project structure
 
 ```text
-app/                lightweight application entrypoint
-src/bioevidence/    importable package stubs
-docs/               project brief, architecture, roadmap, decisions
-scripts/            small helper scripts for local workflows and ingestion runs
-tests/              placeholder test shape
-data/               curated eval/corpus artifacts plus ignored local downloads
-notebooks/          exploration notebook
+interfaces/         external API and Streamlit UI entrypoints
+src/bioevidence/    importable package with retrieval, extraction, generation, agent, and workflow layers
+docs/               project brief, architecture, roadmap, decisions, and evaluation notes
+scripts/            local CLI helpers for baseline, agent, ingestion, conversion, and evaluation
+tests/              unit and integration tests
+data/               curated corpora/evaluation artifacts plus ignored runtime cache
 ```
 
 ## Notes

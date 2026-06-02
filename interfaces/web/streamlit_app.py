@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Callable
 from urllib.error import URLError
 
-from bioevidence.agent.workflow import run_agent_workflow
+from bioevidence.workflows import run_agent_workflow
 from bioevidence.config import load_settings
 from bioevidence.ingestion.pubmed_client import PubMedRequestError
 from bioevidence.presentation import build_agent_comparison_payload

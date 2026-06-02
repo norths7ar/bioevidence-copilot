@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult, run_agent_workflow, run_rag_pipeline
+from bioevidence.workflows import AgentWorkflowResult, WorkflowResult, run_agent_workflow, run_rag_pipeline
 from bioevidence.extraction.table import evidence_table_rows
 from bioevidence.schemas.query import Query
 

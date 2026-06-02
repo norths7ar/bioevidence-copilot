@@ -20,7 +20,7 @@ User query
 -> retrieval query normalization
 -> PubMed candidate fetch / local index lookup
 -> hybrid retrieval
--> rerank
+-> deterministic final ranking
 -> evidence extraction
 -> answer generation
 -> app output
@@ -60,6 +60,17 @@ The app should make intermediate artifacts visible:
 The browser demo is a thin Streamlit presentation layer that renders baseline
 and agent outputs in tabs while reusing the same normalized view payloads as
 the CLI and demo scripts.
+
+## Interface layout
+
+External entrypoints are grouped under `interfaces/`:
+
+- `interfaces/web/`: Streamlit browser demo
+- `interfaces/api/`: FastAPI service boundary
+
+Core workflow orchestration lives under `src/bioevidence/workflows/` so the
+baseline RAG path, agent workflow, and retrieval stack are not coupled to the
+UI, API, or agent-specific helper modules.
 
 ## Evaluation flow
 Evaluation should stay local and file-based:

@@ -1,8 +1,8 @@
 from pathlib import Path
 
-import app.streamlit_app as streamlit_app
+import interfaces.web.streamlit_app as streamlit_app
 from bioevidence.agent.state import AgentState
-from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult
+from bioevidence.workflows import AgentWorkflowResult, WorkflowResult
 from bioevidence.config import Settings
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from bioevidence.agent.state import AgentState
-from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult
+from bioevidence.workflows import AgentWorkflowResult, WorkflowResult
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.evidence import EvidenceRecord
@@ -44,7 +44,7 @@ def _workflow_result(query_text: str = "asthma corticosteroids") -> WorkflowResu
 def test_health_endpoint():
     from fastapi.testclient import TestClient
 
-    from api.main import app
+    from interfaces.api.main import app
 
     client = TestClient(app)
     response = client.get("/api/v1/health")
@@ -56,7 +56,7 @@ def test_health_endpoint():
 def test_baseline_endpoint_returns_workflow_shape(monkeypatch):
     from fastapi.testclient import TestClient
 
-    import api.main as api_main
+    import interfaces.api.main as api_main
 
     monkeypatch.setattr(api_main, "run_rag_pipeline", lambda query, *, data_dir=None: _workflow_result(query.text))
     client = TestClient(api_main.app)
@@ -75,7 +75,7 @@ def test_baseline_endpoint_returns_workflow_shape(monkeypatch):
 def test_agent_endpoint_returns_trace_shape(monkeypatch):
     from fastapi.testclient import TestClient
 
-    import api.main as api_main
+    import interfaces.api.main as api_main
 
     baseline = _workflow_result()
     agent_result = AgentWorkflowResult(
@@ -106,7 +106,7 @@ def test_agent_endpoint_returns_trace_shape(monkeypatch):
 def test_baseline_endpoint_rejects_empty_query():
     from fastapi.testclient import TestClient
 
-    from api.main import app
+    from interfaces.api.main import app
 
     client = TestClient(app)
     response = client.post("/api/v1/query/baseline", json={"query": ""})
