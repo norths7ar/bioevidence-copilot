@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from bioevidence.agent.state import AgentState
-from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult
+from bioevidence.workflows import AgentWorkflowResult, WorkflowResult
 from bioevidence.config import Settings
 from bioevidence.evaluation.dataset import EvaluationItem
 from bioevidence.evaluation.quality import check_answer_quality

@@ -7,7 +7,7 @@ from bioevidence.retrieval.bm25 import bm25_retrieve
 from bioevidence.retrieval.corpus import load_local_documents
 from bioevidence.retrieval.hybrid import hybrid_retrieve
 from bioevidence.retrieval.embeddings import DenseRetrievalError
-from bioevidence.retrieval.rerank import rerank_candidates
+from bioevidence.retrieval.ranking import finalize_ranking
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.query import Query
 
@@ -87,7 +87,7 @@ def test_bm25_retrieve_orders_relevant_documents_first():
     assert [candidate.rank for candidate in candidates] == [1, 2]
 
 
-def test_hybrid_retrieve_merges_sources_and_rerank_is_stable(monkeypatch):
+def test_hybrid_retrieve_merges_sources_and_final_ranking_is_stable(monkeypatch):
     query = Query(text="asthma corticosteroids")
     documents = _build_documents()
 
@@ -104,7 +104,7 @@ def test_hybrid_retrieve_merges_sources_and_rerank_is_stable(monkeypatch):
     monkeypatch.setattr("bioevidence.retrieval.hybrid.dense_retrieve", lambda *args, **kwargs: dense_candidates)
 
     merged_candidates = hybrid_retrieve(query, documents=documents)
-    reranked_candidates = rerank_candidates(
+    ranked_candidates = finalize_ranking(
         [
             RetrievedCandidate(document=documents[1], score=0.5, rank=1),
             RetrievedCandidate(document=documents[0], score=0.5, rank=2),
@@ -114,8 +114,8 @@ def test_hybrid_retrieve_merges_sources_and_rerank_is_stable(monkeypatch):
     assert [candidate.document.pmid for candidate in merged_candidates] == ["1", "2"]
     assert merged_candidates[0].score > merged_candidates[1].score
     assert [candidate.rank for candidate in merged_candidates] == [1, 2]
-    assert [candidate.document.pmid for candidate in reranked_candidates] == ["1", "2"]
-    assert [candidate.rank for candidate in reranked_candidates] == [1, 2]
+    assert [candidate.document.pmid for candidate in ranked_candidates] == ["1", "2"]
+    assert [candidate.rank for candidate in ranked_candidates] == [1, 2]
 
 
 def test_hybrid_retrieve_falls_back_when_dense_is_unavailable(monkeypatch):

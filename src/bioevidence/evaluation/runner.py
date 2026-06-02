@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from collections.abc import Callable, Iterable
 
-from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult, run_agent_workflow, run_rag_pipeline
+from bioevidence.workflows import AgentWorkflowResult, WorkflowResult, run_agent_workflow, run_rag_pipeline
 from bioevidence.config import Settings, load_settings
 from bioevidence.evaluation.dataset import EvaluationItem, load_dataset
 from bioevidence.evaluation.metrics import (

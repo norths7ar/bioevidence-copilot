@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Sequence
 from urllib.error import URLError
 
-from bioevidence.agent.workflow import run_agent_workflow
+from bioevidence.workflows import run_agent_workflow
 from bioevidence.config import load_settings
 from bioevidence.ingestion.pubmed_client import PubMedRequestError
 from bioevidence.presentation import build_agent_comparison_payload
@@ -25,8 +25,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--data-dir",
         type=Path,
-        default=None,
-        help="Optional local data directory for corpus and cache artifacts.",
+        default=Path("data/corpora/demo"),
+        help="Local corpus data directory. The workflow reads processed/*.documents.jsonl under this path.",
     )
     parser.add_argument(
         "--output",

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult
+from bioevidence.workflows import AgentWorkflowResult, WorkflowResult
 from bioevidence.extraction.table import evidence_table_rows, render_evidence_table
 
 

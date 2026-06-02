@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import bioevidence.agent.workflow as workflow_module
+import bioevidence.workflows.agent as agent_workflow
 from bioevidence.agent.state import AgentState
 from bioevidence.config import Settings
 from bioevidence.schemas.answer import AnswerBundle
@@ -89,12 +89,34 @@ def test_run_agent_workflow_accumulates_branches_and_stops(monkeypatch):
             rewritten_query="asthma biomarkers",
         )
 
-    monkeypatch.setattr(workflow_module, "_run_retrieval_stack", fake_retrieval_stack)
-    monkeypatch.setattr(workflow_module, "plan_next_steps", fake_plan_next_steps)
-    monkeypatch.setattr(workflow_module, "synthesize_agent_answer", fake_synthesize)
-    monkeypatch.setattr(workflow_module, "create_agent_client", lambda settings: object())
+    def fake_run_rag_pipeline(query: Query, *, data_dir=None, documents=None, settings=None):
+        documents, candidates, evidence, source = fake_retrieval_stack(
+            query,
+            data_dir=data_dir,
+            documents=documents,
+            settings=settings,
+        )
+        return agent_workflow.WorkflowResult(
+            query=query,
+            documents=tuple(documents),
+            retrieved_candidates=tuple(candidates),
+            evidence_records=tuple(evidence),
+            answer=AnswerBundle(
+                answer_text="Baseline answer",
+                citations=tuple(record.pmid for record in evidence),
+                evidence_records=tuple(evidence),
+                rewritten_query=query.text,
+            ),
+            source=source,
+        )
 
-    result = workflow_module.run_agent_workflow(Query(text="asthma corticosteroids"), settings=_settings())
+    monkeypatch.setattr(agent_workflow, "run_rag_pipeline", fake_run_rag_pipeline)
+    monkeypatch.setattr(agent_workflow, "run_retrieval_stack", fake_retrieval_stack)
+    monkeypatch.setattr(agent_workflow, "plan_next_steps", fake_plan_next_steps)
+    monkeypatch.setattr(agent_workflow, "synthesize_agent_answer", fake_synthesize)
+    monkeypatch.setattr(agent_workflow, "create_agent_client", lambda settings: object())
+
+    result = agent_workflow.run_agent_workflow(Query(text="asthma corticosteroids"), settings=_settings())
 
     assert result.branch_results
     assert len(result.branch_results) == 1

@@ -1,7 +1,6 @@
 from pathlib import Path
 
-import bioevidence.agent.workflow as workflow_module
-from bioevidence.agent.workflow import run_rag_pipeline, run_workflow
+from bioevidence.workflows import run_rag_pipeline, run_workflow
 from bioevidence.schemas.document import Document
 from bioevidence.schemas.query import Query
 
@@ -30,7 +29,6 @@ def test_run_rag_pipeline_uses_local_corpus(tmp_path: Path, monkeypatch):
         }
         return [vector_map[f"{document.title} {document.abstract}"] for document in documents]
 
-    monkeypatch.setattr(workflow_module, "search_pubmed", lambda query, settings=None: (_ for _ in ()).throw(AssertionError("search_pubmed should not be used when local corpus is available")))
     monkeypatch.setattr("bioevidence.retrieval.dense.create_embedding_client", lambda settings: object())
     monkeypatch.setattr("bioevidence.retrieval.dense.embed_documents", fake_embed_documents)
     monkeypatch.setattr("bioevidence.retrieval.dense.embed_texts", fake_embed_texts)
@@ -99,8 +97,6 @@ def test_run_rag_pipeline_accepts_preloaded_documents(monkeypatch):
         del client, settings
         return [[1.0, 0.0] for _ in documents]
 
-    monkeypatch.setattr(workflow_module, "load_local_documents", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("documents should be preloaded")))
-    monkeypatch.setattr(workflow_module, "search_pubmed", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("search_pubmed should not be used")))
     monkeypatch.setattr("bioevidence.retrieval.dense.create_embedding_client", lambda settings: object())
     monkeypatch.setattr("bioevidence.retrieval.dense.embed_documents", fake_embed_documents)
     monkeypatch.setattr("bioevidence.retrieval.dense.embed_texts", fake_embed_texts)

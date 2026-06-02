@@ -1,5 +1,5 @@
 from bioevidence.agent.state import AgentState
-from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult
+from bioevidence.workflows import AgentWorkflowResult, WorkflowResult
 from bioevidence.presentation import build_agent_comparison_payload, build_result_view
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate

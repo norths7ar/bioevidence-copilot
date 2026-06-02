@@ -2,7 +2,7 @@ from pathlib import Path
 
 import scripts.run_agent as run_agent_script
 from bioevidence.agent.state import AgentState
-from bioevidence.agent.workflow import AgentWorkflowResult, WorkflowResult
+from bioevidence.workflows import AgentWorkflowResult, WorkflowResult
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.evidence import EvidenceRecord
