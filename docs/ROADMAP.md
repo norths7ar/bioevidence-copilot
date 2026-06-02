@@ -1,6 +1,6 @@
 # ROADMAP
 
-## Milestone 0: Scaffold
+## Milestone 0: Scaffold ✅
 - create repository layout
 - create importable package
 - add pyproject.toml
@@ -8,36 +8,36 @@
 - add basic app entrypoint
 - add docs
 
-## Milestone 1: PubMed ingestion
+## Milestone 1: PubMed ingestion ✅
 - implement PubMed search client
 - normalize metadata into internal schema
 - save sample raw and processed artifacts
 
-## Milestone 2: RAG baseline
+## Milestone 2: RAG baseline ✅
 - implement lexical retrieval
 - implement dense retrieval interface
 - implement hybrid merge
-- implement rerank stub
+- implement deterministic final ranking
 - implement answer generation with citations
 - show results in app
 
-## Milestone 3: Structured evidence
+## Milestone 3: Structured evidence ✅
 - implement evidence extraction
 - render evidence table in app
-- store example outputs
+- store real demo/evaluation artifacts
 
-## Milestone 4: Evaluation
+## Milestone 4: Evaluation ✅
 - define small eval dataset format
 - add retrieval and answer checks
 - implement evaluation runner
 
-## Milestone 5: Agentic orchestration
+## Milestone 5: Agentic orchestration ✅
 - add a custom LLM-backed planner and synthesis path
 - add multi-query branch execution over the existing retrieval stack
 - add deduplication, deterministic stopping, and baseline comparison
 - expose agent reports through CLI / JSON artifacts instead of a heavier UI
 
-## Milestone 6: Streamlit demo surface
+## Milestone 6: Streamlit demo surface ✅
 - add a thin browser UI for baseline vs agent comparison
 - reuse the existing presentation helpers and workflow outputs
 - keep the browser view presentation-only and read-only
@@ -57,7 +57,7 @@ the project into a generic chatbot or framework-first demo.
 
 ## Track A: Product depth
 
-### Milestone 7: Reproducible demo and evaluation suite
+### Milestone 7: Reproducible demo and evaluation suite ✅
 - define a fixed interview/demo query set
 - build or document a fixed local PubMed abstract corpus for repeatable demos
 - expand the evaluation dataset beyond the minimal example fixture
@@ -65,7 +65,7 @@ the project into a generic chatbot or framework-first demo.
 - compare baseline, hybrid retrieval, and agent workflow outputs
 - document expected demo commands and sample outputs
 
-### Milestone 8: Evidence quality and faithfulness
+### Milestone 8: Evidence quality and faithfulness ✅
 - add citation faithfulness checks for generated answers
 - detect answers that cite unsupported or weakly supported claims
 - add an explicit insufficient-evidence outcome where appropriate
@@ -91,7 +91,7 @@ the project into a generic chatbot or framework-first demo.
 
 ## Track B: Engineering stack expansion
 
-### Milestone 11: FastAPI service layer
+### Milestone 11: FastAPI service layer ✅
 - add a thin FastAPI API layer around the existing core package
 - keep retrieval, generation, extraction, evaluation, and agent logic in
   `src/bioevidence/`
@@ -141,6 +141,16 @@ POST /api/v1/evaluations/run
 - add `docs/DEMO_SCRIPT.md` for interview or portfolio walkthroughs
 - add `docs/LIMITATIONS.md` to document medical, data, and model limitations
 - keep README focused on the shortest practical demo path first
+
+### Engineering hygiene ✅
+- split `agent/workflow.py` into `workflows/` package: `models.py`,
+  `baseline.py`, `agent.py`, `retrieval_stack.py`
+- move `retrieval/rerank.py` into `retrieval/ranking.py` with a cleaner name
+- consolidate `api/` and `app/` into `interfaces/api/` and `interfaces/web/`
+- remove placeholder files: `examples/milestone*.json`, `notebooks/exploration.ipynb`,
+  `scripts/bootstrap.py`, `scripts/build_index.py`, `scripts/demo_query.py`
+- align `data/` layout to a source-first naming convention:
+  `data/corpora/` for corpora, `data/evaluations/` for eval sets
 
 ## Priority guidance
 
