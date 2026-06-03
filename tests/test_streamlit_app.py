@@ -104,3 +104,30 @@ def test_load_demo_payload_builds_comparison_view(monkeypatch, tmp_path: Path):
     assert payload["baseline"]["query"] == "asthma corticosteroids"
     assert payload["agent"]["retrieval_source"] == "agent:local_corpus"
     assert payload["agent_notice"] is None
+
+
+def test_build_run_summary_marks_agent_expansion():
+    payload = {
+        "baseline": {"retrieval_source": "local_corpus"},
+        "agent": {"retrieval_source": "agent:local_corpus"},
+        "branches": [{"query": "dietary sodium hypertension trial"}],
+        "state": {"iterations": 1, "stop_reason": "sufficient_evidence"},
+        "comparison": {
+            "branch_count": 2,
+            "iterations": 1,
+            "stop_reason": "sufficient_evidence",
+            "agent_backend_ready": True,
+        },
+    }
+
+    summary = streamlit_app._build_run_summary(payload)
+
+    assert summary == {
+        "baseline_source": "local_corpus",
+        "agent_source": "agent:local_corpus",
+        "agent_status": "expanded",
+        "agent_backend": "configured",
+        "branch_count": 2,
+        "iterations": 1,
+        "stop_reason": "sufficient_evidence",
+    }

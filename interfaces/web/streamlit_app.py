@@ -80,6 +80,74 @@ def _render_result_tab(title: str, payload: dict[str, object]) -> None:
     st.table(payload["evidence_table"])
 
 
+def _build_run_summary(payload: dict[str, object]) -> dict[str, object]:
+    baseline = payload.get("baseline")
+    agent = payload.get("agent")
+    comparison = payload.get("comparison")
+    state = payload.get("state")
+    branches = payload.get("branches", [])
+
+    baseline_source = baseline.get("retrieval_source") if isinstance(baseline, dict) else "unavailable"
+    agent_source = agent.get("retrieval_source") if isinstance(agent, dict) else "unavailable"
+    comparison = comparison if isinstance(comparison, dict) else {}
+    state = state if isinstance(state, dict) else {}
+    branches = branches if isinstance(branches, list) else []
+
+    branch_count = int(comparison.get("branch_count", len(branches)) or 0)
+    iterations = int(comparison.get("iterations", state.get("iterations", 0)) or 0)
+    stop_reason = str(comparison.get("stop_reason", state.get("stop_reason", "unknown")) or "unknown")
+    backend_ready = bool(comparison.get("agent_backend_ready", False))
+    agent_status = "expanded" if branch_count > 0 else "baseline sufficient"
+
+    return {
+        "baseline_source": baseline_source,
+        "agent_source": agent_source,
+        "agent_status": agent_status,
+        "agent_backend": "configured" if backend_ready else "fallback",
+        "branch_count": branch_count,
+        "iterations": iterations,
+        "stop_reason": stop_reason,
+    }
+
+
+def _render_run_summary(payload: dict[str, object]) -> None:
+    summary = _build_run_summary(payload)
+    st.markdown("**Run diagnostics**")
+    metric_columns = st.columns(4)
+    metric_columns[0].metric("Data source", str(summary["baseline_source"]))
+    metric_columns[1].metric("Agent status", str(summary["agent_status"]))
+    metric_columns[2].metric("Branches", int(summary["branch_count"]))
+    metric_columns[3].metric("Iterations", int(summary["iterations"]))
+
+    st.caption(
+        "Agent backend: "
+        f"{summary['agent_backend']} | Agent source: {summary['agent_source']} | Stop reason: {summary['stop_reason']}"
+    )
+
+
+def _render_agent_diagnostics(payload: dict[str, object]) -> None:
+    summary = _build_run_summary(payload)
+    branch_count = int(summary["branch_count"])
+    iterations = int(summary["iterations"])
+    stop_reason = str(summary["stop_reason"])
+
+    if branch_count > 0:
+        st.success(f"Agent expanded retrieval with {branch_count} branch queries over {iterations} iteration(s).")
+    else:
+        st.info(f"Agent did not add branch retrieval because the baseline evidence was sufficient. Stop reason: {stop_reason}.")
+
+    st.markdown("**Agent run summary**")
+    st.table(
+        [
+            {"signal": "Agent backend", "value": summary["agent_backend"]},
+            {"signal": "Agent status", "value": summary["agent_status"]},
+            {"signal": "Branch queries", "value": str(branch_count)},
+            {"signal": "Iterations", "value": str(iterations)},
+            {"signal": "Stop reason", "value": stop_reason},
+        ]
+    )
+
+
 def main() -> None:
     _require_streamlit()
     st.set_page_config(
@@ -119,6 +187,8 @@ def main() -> None:
         st.error("Could not build a demo result for this query in the current environment.")
         return
 
+    _render_run_summary(payload)
+
     baseline_tabs = st.tabs(["Baseline", "Agent"])
 
     with baseline_tabs[0]:
@@ -128,6 +198,7 @@ def main() -> None:
         if agent is None:
             st.info("Agent result is unavailable for this query.")
         else:
+            _render_agent_diagnostics(payload)
             _render_result_tab("Agent workflow", agent)
             comparison = payload.get("comparison")
             if comparison:
