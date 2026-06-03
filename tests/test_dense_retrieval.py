@@ -150,6 +150,44 @@ def test_dense_retrieve_reuses_cached_embeddings(monkeypatch, tmp_path: Path):
     assert cache["dimensions"] == 1024
 
 
+def test_dense_retrieve_uses_configured_cache_dir_when_data_dir_is_explicit(monkeypatch, tmp_path: Path):
+    documents = _build_documents()
+    monkeypatch.setattr("bioevidence.retrieval.dense.embed_documents", _fake_embed_documents)
+    monkeypatch.setattr("bioevidence.retrieval.dense.embed_texts", _fake_embed_texts)
+    corpus_dir = tmp_path / "corpus"
+    settings = Settings(
+        data_dir=corpus_dir,
+        embedding_cache_dir=tmp_path / "central-cache",
+        agent_api_key="test",
+        agent_base_url="https://example.invalid/v1",
+        agent_max_iterations=3,
+        agent_max_output_tokens=256,
+        agent_min_relevance_score=0.6,
+        agent_min_unique_pmids=3,
+        agent_model="test-model",
+        agent_temperature=0.0,
+        log_level="INFO",
+        pubmed_email="",
+        pubmed_tool_name="BioEvidence Copilot",
+        embedding_api_key="test-embedding-key",
+        embedding_base_url="https://example.invalid/v1",
+        embedding_model="text-embedding-v4",
+        embedding_dimensions=1024,
+        embedding_batch_size=10,
+    )
+
+    dense_retrieve(
+        Query(text="asthma corticosteroids"),
+        documents=documents,
+        data_dir=corpus_dir,
+        client=object(),
+        settings=settings,
+    )
+
+    assert (tmp_path / "central-cache" / "dense_embeddings.cache.json").exists()
+    assert not (corpus_dir / "cache" / "dense_embeddings.cache.json").exists()
+
+
 def test_embed_texts_uses_configured_batch_size(tmp_path: Path):
     class FakeEmbeddings:
         def __init__(self) -> None:

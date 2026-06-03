@@ -34,7 +34,7 @@ def dense_retrieve(
     if not query.text.strip():
         return []
 
-    cache_path = _cache_path(data_dir, settings)
+    cache_path = _cache_path(settings)
     corpus_signature = _corpus_signature(documents)
     cache = _load_cache(cache_path)
     if not _cache_matches(cache, corpus_signature, settings):
@@ -96,9 +96,7 @@ def dense_retrieve(
     ]
 
 
-def _cache_path(base_dir: Path | None, settings: Settings) -> Path:
-    if base_dir is not None:
-        return Path(base_dir) / "cache" / DEFAULT_CACHE_FILENAME
+def _cache_path(settings: Settings) -> Path:
     return Path(settings.embedding_cache_dir) / DEFAULT_CACHE_FILENAME
 
 
