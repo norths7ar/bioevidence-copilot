@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from bioevidence.workflows import AgentWorkflowResult, WorkflowResult, run_agent_workflow, run_rag_pipeline
 from bioevidence.extraction.table import evidence_table_rows
+from bioevidence.presentation import build_agent_trace_payload
 from bioevidence.schemas.query import Query
 
 
@@ -88,6 +89,7 @@ def _agent_response(result: AgentWorkflowResult) -> dict[str, Any]:
                 "stop_reason": result.state.stop_reason,
             },
             "comparison": result.comparison,
+            "trace": build_agent_trace_payload(result),
         }
     )
     return response

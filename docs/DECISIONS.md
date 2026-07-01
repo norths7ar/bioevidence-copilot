@@ -93,3 +93,10 @@
 - Move baseline and agent orchestration into `src/bioevidence/workflows/`, keeping `src/bioevidence/agent/` focused on agent-specific planner, state, tools, and LLM helpers.
 - Rename the deterministic ranking step from `rerank.py` to `ranking.py` to avoid implying a learned reranking model.
 - Remove placeholder notebooks, fake milestone examples, empty app pages, stale bytecode caches, and unused scaffold scripts.
+
+## 2026-07-01: Agent traceability surface
+
+- Keep agent traceability as structured workflow output instead of adding a separate tracing framework.
+- Preserve the existing agent report shape while adding a `trace` payload with original query, rewritten query, planning steps, branch diagnostics, retrieval coverage, and deterministic stop metadata.
+- Keep planner compatibility by retaining the list-returning `plan_next_steps()` helper and adding a traced planner result for workflow use.
+- Surface the same trace payload through CLI JSON, FastAPI responses, and the Streamlit review console so branch planning and coverage improvements are inspectable from every demo path.

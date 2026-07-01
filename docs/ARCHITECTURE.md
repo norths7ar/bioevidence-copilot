@@ -29,6 +29,7 @@ User query
 User query
 -> planner
 -> one or more retrieval branches
+-> planning and branch diagnostics
 -> deduplication / merge
 -> sufficiency check
 -> evidence extraction
@@ -38,8 +39,11 @@ User query
 The agent implementation should remain a custom controller over the existing
 retrieval and extraction layers. The baseline templated answer path remains
 available for comparison, while the agent uses an OpenAI-compatible LLM backend
-for planning and final synthesis. The app surface stays lightweight; agent
-comparison is exposed through CLI / JSON report artifacts rather than a heavier
+for planning and final synthesis. Agent workflow output includes a structured
+trace payload with planning steps, branch-level retrieval diagnostics, coverage
+comparison against the baseline, and deterministic stopping metadata. The app
+surface stays lightweight; agent comparison is exposed through CLI / JSON report
+artifacts and a read-only Streamlit review console rather than a heavier
 interactive UI.
 
 ## Data model expectations
@@ -60,6 +64,13 @@ The app should make intermediate artifacts visible:
 The browser demo is a thin Streamlit presentation layer that renders baseline
 and agent outputs in tabs while reusing the same normalized view payloads as
 the CLI and demo scripts.
+
+Agent demo payloads should also expose:
+- original and rewritten query
+- planner source and rationale for each planning step
+- accepted branch queries
+- branch-level new / overlapping PMIDs
+- stopping reason and evidence sufficiency status
 
 ## Interface layout
 

@@ -64,6 +64,7 @@ def build_agent_comparison_payload(result: AgentWorkflowResult) -> dict[str, obj
         "agent": build_result_view(result).to_dict(),
         "comparison": result.comparison,
         "branches": [branch.to_dict() for branch in result.branch_results],
+        "trace": build_agent_trace_payload(result),
         "state": {
             "iterations": result.state.iterations,
             "max_iterations": result.state.max_iterations,
@@ -71,6 +72,22 @@ def build_agent_comparison_payload(result: AgentWorkflowResult) -> dict[str, obj
             "unique_pmids": sorted(result.state.seen_pmids),
             "sufficient": result.state.sufficient,
             "stop_reason": result.state.stop_reason,
+        },
+    }
+
+
+def build_agent_trace_payload(result: AgentWorkflowResult) -> dict[str, object]:
+    return {
+        "original_query": result.query.text,
+        "rewritten_query": result.answer.rewritten_query or result.query.text,
+        "planning_steps": [step.to_dict() for step in result.planning_steps],
+        "branch_diagnostics": [branch.to_dict() for branch in result.branch_results],
+        "retrieval_coverage": result.comparison.get("retrieval_coverage", {}),
+        "stop": {
+            "reason": result.state.stop_reason,
+            "sufficient": result.state.sufficient,
+            "iterations": result.state.iterations,
+            "max_iterations": result.state.max_iterations,
         },
     }
 

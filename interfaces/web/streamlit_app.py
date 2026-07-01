@@ -148,6 +148,58 @@ def _render_agent_diagnostics(payload: dict[str, object]) -> None:
     )
 
 
+def _render_agent_trace(payload: dict[str, object]) -> None:
+    trace = payload.get("trace")
+    if not isinstance(trace, dict):
+        return
+
+    st.markdown("**Search trace**")
+    st.table(
+        [
+            {"signal": "Original query", "value": trace.get("original_query", "")},
+            {"signal": "Rewritten query", "value": trace.get("rewritten_query", "")},
+            {"signal": "Stop reason", "value": (trace.get("stop") or {}).get("reason", "")},
+            {"signal": "Evidence sufficient", "value": str((trace.get("stop") or {}).get("sufficient", False))},
+        ]
+    )
+
+    planning_steps = trace.get("planning_steps", [])
+    if isinstance(planning_steps, list) and planning_steps:
+        st.markdown("**Planning steps**")
+        st.table(
+            [
+                {
+                    "iteration": step.get("iteration"),
+                    "source": step.get("source"),
+                    "accepted_queries": ", ".join(step.get("accepted_queries", [])),
+                    "rationale": step.get("rationale"),
+                }
+                for step in planning_steps
+                if isinstance(step, dict)
+            ]
+        )
+
+    branches = trace.get("branch_diagnostics", [])
+    if isinstance(branches, list) and branches:
+        st.markdown("**Branch diagnostics**")
+        st.table(
+            [
+                {
+                    "query": branch.get("query"),
+                    "new_pmids": ", ".join(diagnostics.get("new_pmids", [])),
+                    "overlap_pmids": ", ".join(diagnostics.get("overlap_pmids", [])),
+                    "retrieved_count": diagnostics.get("retrieved_count"),
+                    "top_relevance_score": diagnostics.get("top_relevance_score"),
+                    "stop_reason_after_branch": diagnostics.get("stop_reason_after_branch"),
+                }
+                for branch in branches
+                if isinstance(branch, dict)
+                for diagnostics in [branch.get("diagnostics", {})]
+                if isinstance(diagnostics, dict)
+            ]
+        )
+
+
 def main() -> None:
     _require_streamlit()
     st.set_page_config(
@@ -200,6 +252,7 @@ def main() -> None:
         else:
             _render_agent_diagnostics(payload)
             _render_result_tab("Agent workflow", agent)
+            _render_agent_trace(payload)
             comparison = payload.get("comparison")
             if comparison:
                 st.markdown("**Comparison metadata**")

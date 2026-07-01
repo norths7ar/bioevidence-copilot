@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from bioevidence.agent.state import AgentState
 from bioevidence.schemas.answer import AnswerBundle
@@ -26,6 +26,7 @@ class AgentBranchResult:
     retrieved_candidates: tuple[RetrievedCandidate, ...]
     evidence_records: tuple[EvidenceRecord, ...]
     source: str
+    diagnostics: dict[str, object] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -34,6 +35,27 @@ class AgentBranchResult:
             "source": self.source,
             "retrieved_pmids": [candidate.document.pmid for candidate in self.retrieved_candidates],
             "evidence_pmids": [record.pmid for record in self.evidence_records],
+            "diagnostics": dict(self.diagnostics),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class AgentPlanningStep:
+    iteration: int
+    existing_queries: tuple[str, ...]
+    proposed_queries: tuple[str, ...]
+    accepted_queries: tuple[str, ...]
+    rationale: str
+    source: str
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "iteration": self.iteration,
+            "existing_queries": list(self.existing_queries),
+            "proposed_queries": list(self.proposed_queries),
+            "accepted_queries": list(self.accepted_queries),
+            "rationale": self.rationale,
+            "source": self.source,
         }
 
 
@@ -49,6 +71,7 @@ class AgentWorkflowResult:
     source: str
     state: AgentState
     comparison: dict[str, object]
+    planning_steps: tuple[AgentPlanningStep, ...] = tuple()
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -60,6 +83,19 @@ class AgentWorkflowResult:
                 "retrieved_pmids": [candidate.document.pmid for candidate in self.baseline.retrieved_candidates],
             },
             "branches": [branch.to_dict() for branch in self.branch_results],
+            "trace": {
+                "original_query": self.query.text,
+                "rewritten_query": self.answer.rewritten_query or self.query.text,
+                "planning_steps": [step.to_dict() for step in self.planning_steps],
+                "branch_diagnostics": [branch.to_dict() for branch in self.branch_results],
+                "retrieval_coverage": self.comparison.get("retrieval_coverage", {}),
+                "stop": {
+                    "reason": self.state.stop_reason,
+                    "sufficient": self.state.sufficient,
+                    "iterations": self.state.iterations,
+                    "max_iterations": self.state.max_iterations,
+                },
+            },
             "state": {
                 "iterations": self.state.iterations,
                 "max_iterations": self.state.max_iterations,

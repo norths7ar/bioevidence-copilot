@@ -101,6 +101,8 @@ def test_agent_endpoint_returns_trace_shape(monkeypatch):
     assert payload["baseline"]["source"] == "local_corpus"
     assert payload["state"]["stop_reason"] == "sufficient_evidence"
     assert payload["comparison"]["branch_count"] == 0
+    assert payload["trace"]["original_query"] == "asthma corticosteroids"
+    assert payload["trace"]["stop"]["reason"] == "sufficient_evidence"
 
 
 def test_baseline_endpoint_rejects_empty_query():

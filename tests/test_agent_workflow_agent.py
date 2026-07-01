@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import bioevidence.workflows.agent as agent_workflow
+import bioevidence.agent.planner as planner_module
 from bioevidence.agent.state import AgentState
 from bioevidence.config import Settings
 from bioevidence.schemas.answer import AnswerBundle
@@ -77,9 +78,14 @@ def test_run_agent_workflow_accumulates_branches_and_stops(monkeypatch):
         evidence = [_evidence("333", 0.95), _evidence("222", 0.73)]
         return documents, candidates, evidence, "branch"
 
-    def fake_plan_next_steps(state: AgentState, *, settings=None, client=None, branch_count=2):
+    def fake_plan_next_steps_with_trace(state: AgentState, *, settings=None, client=None, branch_count=2):
         del settings, client, branch_count
-        return ["asthma biomarkers"]
+        return planner_module.PlanningResult(
+            proposed_queries=("asthma biomarkers",),
+            accepted_queries=("asthma biomarkers",),
+            rationale="Search for biomarker evidence that may add coverage.",
+            source="model",
+        )
 
     def fake_synthesize(state: AgentState, baseline_answer: str, *, settings=None, client=None):
         del state, baseline_answer, settings, client
@@ -113,7 +119,7 @@ def test_run_agent_workflow_accumulates_branches_and_stops(monkeypatch):
 
     monkeypatch.setattr(agent_workflow, "run_rag_pipeline", fake_run_rag_pipeline)
     monkeypatch.setattr(agent_workflow, "run_retrieval_stack", fake_retrieval_stack)
-    monkeypatch.setattr(agent_workflow, "plan_next_steps", fake_plan_next_steps)
+    monkeypatch.setattr(agent_workflow, "plan_next_steps_with_trace", fake_plan_next_steps_with_trace)
     monkeypatch.setattr(agent_workflow, "synthesize_agent_answer", fake_synthesize)
     monkeypatch.setattr(agent_workflow, "create_agent_client", lambda settings: object())
 
@@ -126,5 +132,11 @@ def test_run_agent_workflow_accumulates_branches_and_stops(monkeypatch):
     assert result.answer.answer_text == "Agent synthesis"
     assert result.comparison["branch_count"] == 1
     assert result.comparison["unique_pmid_coverage"] == 3
+    assert result.comparison["agent_improved_retrieval_coverage"] is True
+    assert result.comparison["new_pmids_over_baseline"] == ["333"]
     assert result.comparison["baseline_citations"] == ["111", "222"]
     assert result.comparison["agent_citations"] == ["111", "333"]
+    assert result.planning_steps[0].rationale == "Search for biomarker evidence that may add coverage."
+    assert result.branch_results[0].diagnostics["new_pmids"] == ["333"]
+    assert result.branch_results[0].diagnostics["overlap_pmids"] == ["222"]
+    assert result.branch_results[0].diagnostics["stop_reason_after_branch"] == "sufficient_evidence"

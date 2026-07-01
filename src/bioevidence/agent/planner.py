@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from collections.abc import Sequence
 
 from bioevidence.agent.llm import AgentLLMError, create_agent_client, chat_json
@@ -9,6 +10,14 @@ from bioevidence.config import Settings, load_settings
 from bioevidence.schemas.evidence import EvidenceRecord
 
 
+@dataclass(frozen=True, slots=True)
+class PlanningResult:
+    proposed_queries: tuple[str, ...]
+    accepted_queries: tuple[str, ...]
+    rationale: str
+    source: str
+
+
 def plan_next_steps(
     state: AgentState,
     *,
@@ -16,14 +25,36 @@ def plan_next_steps(
     client=None,
     branch_count: int = 2,
 ) -> list[str]:
+    return list(
+        plan_next_steps_with_trace(
+            state,
+            settings=settings,
+            client=client,
+            branch_count=branch_count,
+        ).accepted_queries
+    )
+
+
+def plan_next_steps_with_trace(
+    state: AgentState,
+    *,
+    settings: Settings | None = None,
+    client=None,
+    branch_count: int = 2,
+) -> PlanningResult:
     if state.sufficient or state.iterations >= state.max_iterations:
-        return []
+        return PlanningResult(
+            proposed_queries=tuple(),
+            accepted_queries=tuple(),
+            rationale="Planning skipped because the agent stop condition is already met.",
+            source="skipped",
+        )
 
     settings = settings or load_settings()
-    client = client or create_agent_client(settings)
-    if not settings.agent_model:
-        raise AgentLLMError("BIOEVIDENCE_AGENT_MODEL is required for agent planning")
     try:
+        client = client or create_agent_client(settings)
+        if not settings.agent_model:
+            raise AgentLLMError("BIOEVIDENCE_AGENT_MODEL is required for agent planning")
         payload = chat_json(
             client,
             model=settings.agent_model,
@@ -32,10 +63,20 @@ def plan_next_steps(
             temperature=settings.agent_temperature,
         )
         branch_queries = _normalize_branch_queries(payload.get("branch_queries"))
+        rationale = _normalize_rationale(payload.get("rationale"))
+        source = "model"
     except (AgentLLMError, ValueError, TypeError, Exception):
         branch_queries = _fallback_branch_queries(state, branch_count=branch_count)
+        rationale = _fallback_rationale(state)
+        source = "fallback"
 
-    return _deduplicate_queries(branch_queries, state.branch_queries)[:branch_count]
+    accepted_queries = _deduplicate_queries(branch_queries, state.branch_queries)[:branch_count]
+    return PlanningResult(
+        proposed_queries=tuple(branch_queries),
+        accepted_queries=tuple(accepted_queries),
+        rationale=rationale,
+        source=source,
+    )
 
 
 def _normalize_branch_queries(raw_queries: object) -> list[str]:
@@ -53,6 +94,13 @@ def _normalize_branch_queries(raw_queries: object) -> list[str]:
     return normalized
 
 
+def _normalize_rationale(raw_rationale: object) -> str:
+    text = " ".join(str(raw_rationale or "").split()).strip()
+    if text:
+        return text
+    return "Planner proposed follow-up queries to cover evidence gaps in the current retrieval set."
+
+
 def _fallback_branch_queries(state: AgentState, *, branch_count: int) -> list[str]:
     base_query = state.query.text.strip()
     evidence_hint = _evidence_hint(state.evidence_records)
@@ -64,6 +112,12 @@ def _fallback_branch_queries(state: AgentState, *, branch_count: int) -> list[st
         f"{base_query} evidence {evidence_hint}".strip(),
     ]
     return variants[:branch_count]
+
+
+def _fallback_rationale(state: AgentState) -> str:
+    if not state.evidence_records:
+        return "Fallback planning broadened the original query because no evidence records were available yet."
+    return "Fallback planning broadened the original query using generic review, recency, and clinical-evidence variants."
 
 
 def _evidence_hint(records: Sequence[EvidenceRecord]) -> str:

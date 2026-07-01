@@ -63,6 +63,28 @@ def test_plan_next_steps_uses_model_queries(monkeypatch):
     assert branch_queries == ["asthma mechanisms", "asthma biomarkers"]
 
 
+def test_plan_next_steps_with_trace_includes_rationale(monkeypatch):
+    state = AgentState(query=Query(text="asthma corticosteroids"))
+
+    monkeypatch.setattr(planner_module, "load_settings", _settings)
+    monkeypatch.setattr(planner_module, "create_agent_client", lambda settings: object())
+    monkeypatch.setattr(
+        planner_module,
+        "chat_json",
+        lambda client, *, model, messages, max_tokens, temperature: {
+            "branch_queries": ["asthma exacerbation trial"],
+            "rationale": "Target clinical trial evidence for exacerbation outcomes.",
+        },
+    )
+
+    result = planner_module.plan_next_steps_with_trace(state, branch_count=2)
+
+    assert result.proposed_queries == ("asthma exacerbation trial",)
+    assert result.accepted_queries == ("asthma exacerbation trial",)
+    assert result.rationale == "Target clinical trial evidence for exacerbation outcomes."
+    assert result.source == "model"
+
+
 def test_plan_next_steps_falls_back_when_llm_unavailable(monkeypatch):
     state = AgentState(query=Query(text="asthma corticosteroids"))
 
@@ -76,3 +98,17 @@ def test_plan_next_steps_falls_back_when_llm_unavailable(monkeypatch):
         "asthma corticosteroids review",
         "asthma corticosteroids recent literature",
     ]
+
+
+def test_plan_next_steps_with_trace_marks_fallback(monkeypatch):
+    state = AgentState(query=Query(text="asthma corticosteroids"))
+
+    monkeypatch.setattr(planner_module, "load_settings", _settings)
+    monkeypatch.setattr(planner_module, "create_agent_client", lambda settings: object())
+    monkeypatch.setattr(planner_module, "chat_json", lambda *args, **kwargs: (_ for _ in ()).throw(AgentLLMError("boom")))
+
+    result = planner_module.plan_next_steps_with_trace(state, branch_count=1)
+
+    assert result.accepted_queries == ("asthma corticosteroids review",)
+    assert result.source == "fallback"
+    assert "Fallback planning" in result.rationale

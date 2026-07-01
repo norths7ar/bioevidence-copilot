@@ -1,5 +1,5 @@
 from bioevidence.agent.state import AgentState
-from bioevidence.workflows import AgentWorkflowResult, WorkflowResult
+from bioevidence.workflows import AgentPlanningStep, AgentWorkflowResult, WorkflowResult
 from bioevidence.presentation import build_agent_comparison_payload, build_result_view
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
@@ -64,7 +64,23 @@ def _agent_result() -> AgentWorkflowResult:
             "agent_citations": ["111"],
             "stop_reason": "sufficient_evidence",
             "agent_backend_ready": True,
+            "retrieval_coverage": {
+                "baseline_unique_pmids": ["111"],
+                "agent_unique_pmids": ["111"],
+                "new_pmids_over_baseline": [],
+                "overlap_pmids": ["111"],
+            },
         },
+        planning_steps=(
+            AgentPlanningStep(
+                iteration=0,
+                existing_queries=("asthma corticosteroids",),
+                proposed_queries=tuple(),
+                accepted_queries=tuple(),
+                rationale="Planning skipped because baseline evidence was sufficient.",
+                source="skipped",
+            ),
+        ),
     )
 
 
@@ -85,3 +101,6 @@ def test_build_agent_comparison_payload_includes_baseline_and_agent():
     assert payload["agent"]["retrieval_source"] == "agent:local_corpus"
     assert payload["comparison"]["agent_backend_ready"] is True
     assert payload["state"]["stop_reason"] == "sufficient_evidence"
+    assert payload["trace"]["original_query"] == "asthma corticosteroids"
+    assert payload["trace"]["planning_steps"][0]["source"] == "skipped"
+    assert payload["trace"]["retrieval_coverage"]["overlap_pmids"] == ["111"]
