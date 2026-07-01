@@ -81,7 +81,7 @@ the project into a generic chatbot or framework-first demo.
 - report whether the agent improved retrieval coverage over the baseline
 - keep agent stopping deterministic and tied to evidence sufficiency
 
-### Milestone 10: Demo console polish
+### Milestone 10: Demo console polish ✅
 - improve the Streamlit demo as a lightweight review console
 - prioritize evidence table filtering, sorting, and readable trace views
 - add export paths for Markdown, JSON, or CSV reports

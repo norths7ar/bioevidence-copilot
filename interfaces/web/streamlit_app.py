@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Callable
 from urllib.error import URLError
@@ -7,7 +8,7 @@ from urllib.error import URLError
 from bioevidence.workflows import run_agent_workflow
 from bioevidence.config import load_settings
 from bioevidence.ingestion.pubmed_client import PubMedRequestError
-from bioevidence.presentation import build_agent_comparison_payload
+from bioevidence.presentation import build_agent_comparison_payload, build_evidence_csv, build_markdown_report
 from bioevidence.schemas.query import Query
 
 try:  # pragma: no cover - optional runtime dependency
@@ -74,10 +75,45 @@ def _render_result_tab(title: str, payload: dict[str, object]) -> None:
     st.write(payload["answer"])
 
     st.markdown("**Retrieved papers**")
-    st.table(payload["retrieved_papers"])
+    st.dataframe(payload["retrieved_papers"], hide_index=True, use_container_width=True)
 
     st.markdown("**Structured evidence**")
-    st.table(payload["evidence_table"])
+    _render_evidence_console(payload, key_prefix=title.lower().replace(" ", "_"))
+
+
+def _render_evidence_console(payload: dict[str, object], *, key_prefix: str) -> None:
+    rows = _normalize_rows(payload.get("evidence_table", []))
+    if not rows:
+        st.info("No structured evidence rows are available.")
+        return
+
+    controls = st.columns([1, 1, 1, 1])
+    entity_options = _entity_options(rows)
+    journal_options = _journal_options(rows)
+    selected_entities = controls[0].multiselect("Entity", entity_options, key=f"{key_prefix}_entities")
+    selected_journal = controls[1].selectbox("Journal", ["All", *journal_options], key=f"{key_prefix}_journal")
+    min_relevance = controls[2].slider(
+        "Minimum relevance",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0,
+        step=0.05,
+        key=f"{key_prefix}_min_relevance",
+    )
+    sort_by = controls[3].selectbox(
+        "Sort",
+        ["Relevance high to low", "Year newest", "Year oldest", "PMID"],
+        key=f"{key_prefix}_sort",
+    )
+    filtered_rows = _filter_sort_evidence_rows(
+        rows,
+        selected_entities=selected_entities,
+        selected_journal=selected_journal,
+        min_relevance=min_relevance,
+        sort_by=sort_by,
+    )
+    st.caption(f"Showing {len(filtered_rows)} of {len(rows)} evidence rows.")
+    st.dataframe(filtered_rows, hide_index=True, use_container_width=True)
 
 
 def _build_run_summary(payload: dict[str, object]) -> dict[str, object]:
@@ -108,6 +144,71 @@ def _build_run_summary(payload: dict[str, object]) -> dict[str, object]:
         "iterations": iterations,
         "stop_reason": stop_reason,
     }
+
+
+def _normalize_rows(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        return []
+    return [row for row in value if isinstance(row, dict)]
+
+
+def _entity_options(rows: list[dict[str, object]]) -> list[str]:
+    entities: set[str] = set()
+    for row in rows:
+        row_entities = row.get("entities", [])
+        if isinstance(row_entities, list):
+            entities.update(str(entity) for entity in row_entities if str(entity).strip())
+    return sorted(entities)
+
+
+def _journal_options(rows: list[dict[str, object]]) -> list[str]:
+    return sorted({str(row.get("journal", "")).strip() for row in rows if str(row.get("journal", "")).strip()})
+
+
+def _filter_sort_evidence_rows(
+    rows: list[dict[str, object]],
+    *,
+    selected_entities: list[str],
+    selected_journal: str,
+    min_relevance: float,
+    sort_by: str,
+) -> list[dict[str, object]]:
+    selected_entity_set = set(selected_entities)
+    filtered: list[dict[str, object]] = []
+    for row in rows:
+        row_entities = row.get("entities", [])
+        row_entity_set = set(str(entity) for entity in row_entities) if isinstance(row_entities, list) else set()
+        relevance = _as_float(row.get("relevance_score"))
+        journal = str(row.get("journal", ""))
+        if selected_entity_set and not selected_entity_set.intersection(row_entity_set):
+            continue
+        if selected_journal != "All" and journal != selected_journal:
+            continue
+        if relevance < min_relevance:
+            continue
+        filtered.append(row)
+
+    if sort_by == "Year newest":
+        return sorted(filtered, key=lambda row: (_as_int(row.get("year")), str(row.get("pmid", ""))), reverse=True)
+    if sort_by == "Year oldest":
+        return sorted(filtered, key=lambda row: (_as_int(row.get("year")), str(row.get("pmid", ""))))
+    if sort_by == "PMID":
+        return sorted(filtered, key=lambda row: str(row.get("pmid", "")))
+    return sorted(filtered, key=lambda row: (_as_float(row.get("relevance_score")), str(row.get("pmid", ""))), reverse=True)
+
+
+def _as_float(value: object) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _as_int(value: object) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
 
 
 def _render_run_summary(payload: dict[str, object]) -> None:
@@ -154,50 +255,108 @@ def _render_agent_trace(payload: dict[str, object]) -> None:
         return
 
     st.markdown("**Search trace**")
-    st.table(
-        [
-            {"signal": "Original query", "value": trace.get("original_query", "")},
-            {"signal": "Rewritten query", "value": trace.get("rewritten_query", "")},
-            {"signal": "Stop reason", "value": (trace.get("stop") or {}).get("reason", "")},
-            {"signal": "Evidence sufficient", "value": str((trace.get("stop") or {}).get("sufficient", False))},
-        ]
-    )
+    trace_summary = _build_trace_summary(payload)
+    metric_columns = st.columns(4)
+    metric_columns[0].metric("Baseline PMIDs", int(trace_summary["baseline_unique_pmids"]))
+    metric_columns[1].metric("Agent PMIDs", int(trace_summary["agent_unique_pmids"]))
+    metric_columns[2].metric("New PMIDs", int(trace_summary["new_pmids"]))
+    metric_columns[3].metric("Stop reason", str(trace_summary["stop_reason"]))
+    st.table(_build_trace_rows(trace))
 
     planning_steps = trace.get("planning_steps", [])
     if isinstance(planning_steps, list) and planning_steps:
         st.markdown("**Planning steps**")
-        st.table(
-            [
-                {
-                    "iteration": step.get("iteration"),
-                    "source": step.get("source"),
-                    "accepted_queries": ", ".join(step.get("accepted_queries", [])),
-                    "rationale": step.get("rationale"),
-                }
-                for step in planning_steps
-                if isinstance(step, dict)
-            ]
-        )
+        st.dataframe(_build_planning_rows(planning_steps), hide_index=True, use_container_width=True)
 
     branches = trace.get("branch_diagnostics", [])
     if isinstance(branches, list) and branches:
         st.markdown("**Branch diagnostics**")
-        st.table(
-            [
-                {
-                    "query": branch.get("query"),
-                    "new_pmids": ", ".join(diagnostics.get("new_pmids", [])),
-                    "overlap_pmids": ", ".join(diagnostics.get("overlap_pmids", [])),
-                    "retrieved_count": diagnostics.get("retrieved_count"),
-                    "top_relevance_score": diagnostics.get("top_relevance_score"),
-                    "stop_reason_after_branch": diagnostics.get("stop_reason_after_branch"),
-                }
-                for branch in branches
-                if isinstance(branch, dict)
-                for diagnostics in [branch.get("diagnostics", {})]
-                if isinstance(diagnostics, dict)
-            ]
+        st.dataframe(_build_branch_rows(branches), hide_index=True, use_container_width=True)
+
+
+def _build_trace_summary(payload: dict[str, object]) -> dict[str, object]:
+    trace = payload.get("trace") if isinstance(payload.get("trace"), dict) else {}
+    coverage = trace.get("retrieval_coverage") if isinstance(trace.get("retrieval_coverage"), dict) else {}
+    stop = trace.get("stop") if isinstance(trace.get("stop"), dict) else {}
+    return {
+        "baseline_unique_pmids": len(coverage.get("baseline_unique_pmids", [])),
+        "agent_unique_pmids": len(coverage.get("agent_unique_pmids", [])),
+        "new_pmids": len(coverage.get("new_pmids_over_baseline", [])),
+        "stop_reason": stop.get("reason", "unknown"),
+    }
+
+
+def _build_trace_rows(trace: dict[str, object]) -> list[dict[str, object]]:
+    stop = trace.get("stop") if isinstance(trace.get("stop"), dict) else {}
+    return [
+        {"signal": "Original query", "value": trace.get("original_query", "")},
+        {"signal": "Rewritten query", "value": trace.get("rewritten_query", "")},
+        {"signal": "Evidence sufficient", "value": str(stop.get("sufficient", False))},
+        {"signal": "Iterations", "value": f"{stop.get('iterations', 0)} / {stop.get('max_iterations', 0)}"},
+    ]
+
+
+def _build_planning_rows(planning_steps: list[object]) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for step in planning_steps:
+        if not isinstance(step, dict):
+            continue
+        rows.append(
+            {
+                "iteration": step.get("iteration"),
+                "source": step.get("source"),
+                "proposed_queries": ", ".join(str(query) for query in step.get("proposed_queries", [])),
+                "accepted_queries": ", ".join(str(query) for query in step.get("accepted_queries", [])),
+                "rationale": step.get("rationale"),
+            }
         )
+    return rows
+
+
+def _build_branch_rows(branches: list[object]) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for branch in branches:
+        if not isinstance(branch, dict):
+            continue
+        diagnostics = branch.get("diagnostics", {})
+        if not isinstance(diagnostics, dict):
+            diagnostics = {}
+        rows.append(
+            {
+                "query": branch.get("query"),
+                "new_pmids": ", ".join(str(pmid) for pmid in diagnostics.get("new_pmids", [])),
+                "overlap_pmids": ", ".join(str(pmid) for pmid in diagnostics.get("overlap_pmids", [])),
+                "retrieved_count": diagnostics.get("retrieved_count"),
+                "evidence_count": diagnostics.get("evidence_count"),
+                "top_relevance_score": diagnostics.get("top_relevance_score"),
+                "stop_reason_after_branch": diagnostics.get("stop_reason_after_branch"),
+            }
+        )
+    return rows
+
+
+def _render_exports(payload: dict[str, object]) -> None:
+    agent = payload.get("agent") if isinstance(payload.get("agent"), dict) else {}
+    evidence_rows = _normalize_rows(agent.get("evidence_table", []))
+    export_columns = st.columns(3)
+    export_columns[0].download_button(
+        "Download JSON",
+        data=json.dumps(payload, indent=2, sort_keys=True),
+        file_name="bioevidence-report.json",
+        mime="application/json",
+    )
+    export_columns[1].download_button(
+        "Download Markdown",
+        data=build_markdown_report(payload),
+        file_name="bioevidence-report.md",
+        mime="text/markdown",
+    )
+    export_columns[2].download_button(
+        "Download evidence CSV",
+        data=build_evidence_csv(evidence_rows),
+        file_name="bioevidence-evidence.csv",
+        mime="text/csv",
+    )
 
 
 def main() -> None:
@@ -240,6 +399,7 @@ def main() -> None:
         return
 
     _render_run_summary(payload)
+    _render_exports(payload)
 
     baseline_tabs = st.tabs(["Baseline", "Agent"])
 

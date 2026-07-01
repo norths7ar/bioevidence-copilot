@@ -1,6 +1,6 @@
 from bioevidence.agent.state import AgentState
 from bioevidence.workflows import AgentPlanningStep, AgentWorkflowResult, WorkflowResult
-from bioevidence.presentation import build_agent_comparison_payload, build_result_view
+from bioevidence.presentation import build_agent_comparison_payload, build_evidence_csv, build_markdown_report, build_result_view
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.evidence import EvidenceRecord
@@ -104,3 +104,24 @@ def test_build_agent_comparison_payload_includes_baseline_and_agent():
     assert payload["trace"]["original_query"] == "asthma corticosteroids"
     assert payload["trace"]["planning_steps"][0]["source"] == "skipped"
     assert payload["trace"]["retrieval_coverage"]["overlap_pmids"] == ["111"]
+
+
+def test_build_markdown_report_includes_answers_and_trace():
+    payload = build_agent_comparison_payload(_agent_result())
+
+    report = build_markdown_report(payload)
+
+    assert "# BioEvidence Copilot Report" in report
+    assert "## Baseline Answer" in report
+    assert "## Agent Answer" in report
+    assert "Planning skipped because baseline evidence was sufficient." in report
+    assert "| 111 | 2024 | Journal A | 0.92 | Corticosteroids for asthma control |" in report
+
+
+def test_build_evidence_csv_flattens_entities():
+    payload = build_agent_comparison_payload(_agent_result())
+
+    csv_text = build_evidence_csv(payload["agent"]["evidence_table"])
+
+    assert csv_text.splitlines()[0] == "pmid,year,journal,relevance_score,entities,title,summary"
+    assert "111,2024,Journal A,0.92,asthma,Corticosteroids for asthma control" in csv_text

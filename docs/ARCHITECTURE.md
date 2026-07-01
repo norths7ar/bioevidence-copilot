@@ -72,6 +72,11 @@ Agent demo payloads should also expose:
 - branch-level new / overlapping PMIDs
 - stopping reason and evidence sufficiency status
 
+The Streamlit interface can add review-console ergonomics such as evidence
+filtering, sorting, summary metrics, and report exports, but should continue to
+consume presentation payloads rather than calling lower-level retrieval,
+generation, or agent helpers directly.
+
 ## Interface layout
 
 External entrypoints are grouped under `interfaces/`:

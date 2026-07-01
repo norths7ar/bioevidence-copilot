@@ -131,3 +131,91 @@ def test_build_run_summary_marks_agent_expansion():
         "iterations": 1,
         "stop_reason": "sufficient_evidence",
     }
+
+
+def test_filter_sort_evidence_rows_applies_entity_journal_and_relevance():
+    rows = [
+        {
+            "pmid": "111",
+            "year": 2022,
+            "journal": "Journal A",
+            "entities": ["asthma"],
+            "relevance_score": 0.7,
+        },
+        {
+            "pmid": "222",
+            "year": 2024,
+            "journal": "Journal B",
+            "entities": ["diabetes"],
+            "relevance_score": 0.95,
+        },
+        {
+            "pmid": "333",
+            "year": 2023,
+            "journal": "Journal A",
+            "entities": ["asthma", "corticosteroids"],
+            "relevance_score": 0.91,
+        },
+    ]
+
+    filtered = streamlit_app._filter_sort_evidence_rows(
+        rows,
+        selected_entities=["asthma"],
+        selected_journal="Journal A",
+        min_relevance=0.8,
+        sort_by="Year newest",
+    )
+
+    assert [row["pmid"] for row in filtered] == ["333"]
+
+
+def test_build_trace_summary_counts_coverage():
+    payload = {
+        "trace": {
+            "retrieval_coverage": {
+                "baseline_unique_pmids": ["111"],
+                "agent_unique_pmids": ["111", "222"],
+                "new_pmids_over_baseline": ["222"],
+            },
+            "stop": {"reason": "sufficient_evidence"},
+        }
+    }
+
+    summary = streamlit_app._build_trace_summary(payload)
+
+    assert summary == {
+        "baseline_unique_pmids": 1,
+        "agent_unique_pmids": 2,
+        "new_pmids": 1,
+        "stop_reason": "sufficient_evidence",
+    }
+
+
+def test_build_branch_rows_flattens_diagnostics():
+    rows = streamlit_app._build_branch_rows(
+        [
+            {
+                "query": "asthma trial",
+                "diagnostics": {
+                    "new_pmids": ["222"],
+                    "overlap_pmids": ["111"],
+                    "retrieved_count": 2,
+                    "evidence_count": 1,
+                    "top_relevance_score": 0.92,
+                    "stop_reason_after_branch": "sufficient_evidence",
+                },
+            }
+        ]
+    )
+
+    assert rows == [
+        {
+            "query": "asthma trial",
+            "new_pmids": "222",
+            "overlap_pmids": "111",
+            "retrieved_count": 2,
+            "evidence_count": 1,
+            "top_relevance_score": 0.92,
+            "stop_reason_after_branch": "sufficient_evidence",
+        }
+    ]

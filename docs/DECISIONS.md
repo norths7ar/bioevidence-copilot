@@ -100,3 +100,10 @@
 - Preserve the existing agent report shape while adding a `trace` payload with original query, rewritten query, planning steps, branch diagnostics, retrieval coverage, and deterministic stop metadata.
 - Keep planner compatibility by retaining the list-returning `plan_next_steps()` helper and adding a traced planner result for workflow use.
 - Surface the same trace payload through CLI JSON, FastAPI responses, and the Streamlit review console so branch planning and coverage improvements are inspectable from every demo path.
+
+## 2026-07-01: Streamlit review console polish
+
+- Keep Streamlit as a read-only review console over normalized presentation payloads, not as a second workflow implementation.
+- Add evidence-table filtering, sorting, and wider dataframe views in the web interface while keeping the underlying evidence rows unchanged.
+- Add Markdown, JSON, and CSV exports from presentation payloads so demo results can be shared without rerunning the workflow.
+- Keep trace summaries and branch diagnostics table-shaped for reviewer inspection instead of relying on raw JSON as the primary view.
