@@ -88,6 +88,11 @@ Core workflow orchestration lives under `src/bioevidence/workflows/` so the
 baseline RAG path, agent workflow, and retrieval stack are not coupled to the
 UI, API, or agent-specific helper modules.
 
+The FastAPI service is the deployable backend boundary for portfolio purposes.
+Docker packages that API service with the curated local demo corpus and a health
+check, while the Streamlit review console remains a local presentation surface
+over normalized workflow payloads.
+
 ## Evaluation flow
 Evaluation should stay local and file-based:
 
@@ -96,8 +101,20 @@ Evaluation should stay local and file-based:
 - compute retrieval and answer metrics
 - emit a summary report plus per-item results that can be written as JSON
 
-## Initial implementation constraints
-- start with local development only
+## Implementation constraints
+- keep local development first-class
 - use environment variables for secrets
 - keep external dependencies moderate
+- keep Docker focused on FastAPI service packaging, not as the only workflow
 - do not commit to a heavyweight framework too early
+
+## Quality gates
+CI should remain lightweight and deterministic:
+
+- lint with Ruff
+- run focused mypy checks over stable schema, evaluation, and workflow modules
+- run the pytest suite
+- run a small evaluation smoke test over tracked demo artifacts
+
+These checks are intended to catch regressions in the code and evidence workflow
+without requiring external model-provider credentials.

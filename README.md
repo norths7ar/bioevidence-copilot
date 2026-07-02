@@ -24,15 +24,21 @@ It is intentionally built in two stages:
 4. system returns a final answer with citations
 
 ## Repository status
-Milestone 6 Streamlit browser demo is now in place on top of milestone 5 agent orchestration, milestone 4 evaluation, milestone 3 structured evidence output, milestone 2 RAG baseline, and milestone 1 PubMed ingestion scaffold.
+The project now includes the Stage 1 RAG baseline, Stage 2 custom agentic
+orchestration, reproducible demo/evaluation artifacts, evidence faithfulness
+checks, agent traceability, a polished Streamlit review console, a FastAPI
+service boundary, Docker packaging for the API, and GitHub Actions quality
+gates.
 
-## Planned modules
+## Implemented modules
 - ingestion
 - retrieval
 - generation
 - extraction
 - agent
 - evaluation
+- API
+- web review console
 
 ## Quickstart
 This repository uses a `src/` layout and targets Python 3.12.
@@ -46,11 +52,11 @@ Suggested local setup:
 Example commands:
 
 ```powershell
-python -m pip install -e .[dev]
-python scripts/run_baseline.py
-streamlit run interfaces/web/streamlit_app.py
-python scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
-pytest
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e ".[dev,serve]"
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_baseline.py
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m streamlit run interfaces/web/streamlit_app.py
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pytest
 ```
 
 For a portfolio or interview demo, `streamlit run interfaces/web/streamlit_app.py` is the
@@ -89,6 +95,7 @@ The demo app now shows:
 - a structured evidence table with PMID, title, year, journal, entities, summary, and relevance score
 - the final answer and citation list
 - baseline and agent comparisons in browser tabs via Streamlit
+- evidence filtering, sorting, readable trace tables, and JSON / Markdown / CSV exports
 
 The agent CLI adds:
 - multi-step branch planning
@@ -112,12 +119,12 @@ The evaluation harness is file-based and local:
 - an example demo report is tracked at `data/evaluations/demo/demo_eval_report.json`
 - seed a real PubMed demo corpus with `scripts/seed_demo_corpus.py`
 - convert BioASQ Task B data with `scripts/convert_bioasq.py`
-- run the harness with `python scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl`
+- run the harness with `C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl`
 - add `--data-dir data/corpora/demo` to evaluate against the seeded demo corpus
 - add `--mode agent` to evaluate the agent workflow instead of the baseline
 - add `--limit N` for BioASQ smoke runs before attempting the full dataset
 - optionally add `--output path/to/report.json` to write the full report artifact
-- run the agent workflow directly with `python scripts/run_agent.py --query "asthma corticosteroids" --data-dir data/corpora/demo --output data/evaluations/demo/agent-report.json`
+- run the agent workflow directly with `C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_agent.py --query "asthma corticosteroids" --data-dir data/corpora/demo --output data/evaluations/demo/agent-report.json`
 
 Each JSONL dataset row uses:
 
@@ -141,6 +148,23 @@ repeated queries do not re-embed the same corpus documents.
 See `docs/EVALUATION.md` for demo evaluation commands, real PubMed/BioASQ
 data preparation, metric definitions, and deterministic evidence quality checks.
 
+## Quality gates
+GitHub Actions runs the project quality gate on push and pull request:
+
+- `ruff` lint checks
+- focused `mypy` type checks over stable schema, evaluation, and workflow modules
+- the full pytest suite
+- a one-item baseline evaluation smoke test over the tracked demo dataset
+
+Run the same checks locally:
+
+```powershell
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m ruff check --no-cache .
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m mypy src/bioevidence/schemas src/bioevidence/evaluation src/bioevidence/workflows --no-sqlite-cache --no-incremental
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pytest
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --limit 1
+```
+
 ## API
 The FastAPI service exposes the core workflow without moving business logic out
 of `src/bioevidence/`.
@@ -148,7 +172,7 @@ of `src/bioevidence/`.
 Install the service runtime extra when needed:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e .[dev,serve]
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e ".[dev,serve]"
 ```
 
 Run the API locally:
@@ -184,11 +208,19 @@ Initial endpoints:
 ```text
 interfaces/         external API and Streamlit UI entrypoints
 src/bioevidence/    importable package with retrieval, extraction, generation, agent, and workflow layers
-docs/               project brief, architecture, roadmap, decisions, and evaluation notes
+docs/               project brief, architecture, roadmap, decisions, evaluation, demo, and limitation notes
 scripts/            local CLI helpers for baseline, agent, ingestion, conversion, and evaluation
 tests/              unit and integration tests
 data/               curated corpora/evaluation artifacts plus ignored runtime cache
 ```
+
+## Documentation
+- `docs/DEMO_SCRIPT.md`: portfolio and interview walkthrough commands
+- `docs/EVALUATION.md`: dataset format, metrics, and evaluation commands
+- `docs/LIMITATIONS.md`: medical, data, model, agent, and deployment boundaries
+- `docs/ARCHITECTURE.md`: system organization and interface boundaries
+- `docs/DECISIONS.md`: dated architecture decisions
+- `docs/ROADMAP.md`: completed milestones and optional future work
 
 ## Notes
 This is a portfolio and research-engineering project.

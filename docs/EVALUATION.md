@@ -81,6 +81,20 @@ larger than the demo dataset.
 The tracked example report at `data/evaluations/demo/demo_eval_report.json` shows the
 expected report shape without requiring a live run.
 
+## CI Smoke Test
+
+GitHub Actions runs a one-item baseline evaluation smoke test:
+
+```powershell
+python scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --limit 1
+```
+
+This is intentionally a smoke test, not a benchmark. It verifies that the
+tracked demo dataset, local corpus loading, retrieval workflow, evidence table,
+metric computation, and report formatting still work in a clean CI environment.
+When embedding credentials are not configured, the retrieval stack can fall back
+to lexical-only ranking; that fallback is acceptable for the CI smoke path.
+
 ## Metrics
 
 Retrieval metrics:

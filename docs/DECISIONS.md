@@ -115,3 +115,11 @@
 - Copy curated local corpus artifacts into the image so `/api/v1/health` and local-corpus query paths can run without external downloads.
 - Route embedding cache writes to `/tmp/bioevidence-cache` and run the service as a non-root user.
 - Keep Docker configuration environment-driven so `.env` can be supplied at runtime without baking secrets into the image.
+
+## 2026-07-02: CI quality gates and documentation closeout
+
+- Run GitHub Actions on push and pull request with Ruff linting, focused mypy type checking, the pytest suite, and a one-item baseline evaluation smoke test.
+- Keep the type-checking gate focused on stable schema, evaluation, and workflow modules rather than forcing whole-repository strict typing before the exploratory layers settle.
+- Use `--no-sqlite-cache --no-incremental` for mypy because the local Windows environment showed SQLite cache I/O errors; the focused check remains deterministic without cache.
+- Treat the evaluation smoke test as a workflow integrity check, not a benchmark or model-quality claim.
+- Keep documentation split by audience: README for the shortest path, `DEMO_SCRIPT.md` for walkthroughs, `EVALUATION.md` for metrics and datasets, and `LIMITATIONS.md` for medical and engineering boundaries.

@@ -15,6 +15,9 @@ The project should demonstrate:
 - citation-grounded answer generation
 - agentic orchestration over a multi-step workflow
 - evaluation-aware engineering
+- API service boundaries
+- Docker packaging for the backend service
+- CI-backed quality gates
 
 It is not intended to be a production medical product or a clinical decision system.
 
@@ -98,3 +101,16 @@ A successful initial scaffold should include:
 - a lightweight app entrypoint
 - placeholder tests
 - basic documentation
+
+## Current productization success criteria
+A successful portfolio-ready version should include:
+
+- a repeatable local demo corpus and evaluation dataset
+- baseline and agent workflows that expose retrieved papers, evidence rows,
+  citations, and trace metadata
+- a Streamlit review console for inspecting and exporting reports
+- a FastAPI service boundary over the same core workflows
+- Docker packaging for the FastAPI service
+- CI checks for linting, focused type checking, tests, and evaluation smoke
+- documentation for demo flow, evaluation, architecture decisions, and
+  limitations

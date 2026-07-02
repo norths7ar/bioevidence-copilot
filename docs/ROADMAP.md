@@ -1,6 +1,6 @@
-# ROADMAP
+﻿# ROADMAP
 
-## Milestone 0: Scaffold ✅
+## Milestone 0: Scaffold [done]
 - create repository layout
 - create importable package
 - add pyproject.toml
@@ -8,12 +8,12 @@
 - add basic app entrypoint
 - add docs
 
-## Milestone 1: PubMed ingestion ✅
+## Milestone 1: PubMed ingestion [done]
 - implement PubMed search client
 - normalize metadata into internal schema
 - save sample raw and processed artifacts
 
-## Milestone 2: RAG baseline ✅
+## Milestone 2: RAG baseline [done]
 - implement lexical retrieval
 - implement dense retrieval interface
 - implement hybrid merge
@@ -21,23 +21,23 @@
 - implement answer generation with citations
 - show results in app
 
-## Milestone 3: Structured evidence ✅
+## Milestone 3: Structured evidence [done]
 - implement evidence extraction
 - render evidence table in app
 - store real demo/evaluation artifacts
 
-## Milestone 4: Evaluation ✅
+## Milestone 4: Evaluation [done]
 - define small eval dataset format
 - add retrieval and answer checks
 - implement evaluation runner
 
-## Milestone 5: Agentic orchestration ✅
+## Milestone 5: Agentic orchestration [done]
 - add a custom LLM-backed planner and synthesis path
 - add multi-query branch execution over the existing retrieval stack
 - add deduplication, deterministic stopping, and baseline comparison
 - expose agent reports through CLI / JSON artifacts instead of a heavier UI
 
-## Milestone 6: Streamlit demo surface ✅
+## Milestone 6: Streamlit demo surface [done]
 - add a thin browser UI for baseline vs agent comparison
 - reuse the existing presentation helpers and workflow outputs
 - keep the browser view presentation-only and read-only
@@ -57,7 +57,7 @@ the project into a generic chatbot or framework-first demo.
 
 ## Track A: Product depth
 
-### Milestone 7: Reproducible demo and evaluation suite ✅
+### Milestone 7: Reproducible demo and evaluation suite [done]
 - define a fixed interview/demo query set
 - build or document a fixed local PubMed abstract corpus for repeatable demos
 - expand the evaluation dataset beyond the minimal example fixture
@@ -65,7 +65,7 @@ the project into a generic chatbot or framework-first demo.
 - compare baseline, hybrid retrieval, and agent workflow outputs
 - document expected demo commands and sample outputs
 
-### Milestone 8: Evidence quality and faithfulness ✅
+### Milestone 8: Evidence quality and faithfulness [done]
 - add citation faithfulness checks for generated answers
 - detect answers that cite unsupported or weakly supported claims
 - add an explicit insufficient-evidence outcome where appropriate
@@ -74,14 +74,14 @@ the project into a generic chatbot or framework-first demo.
 - surface conflicting or mixed evidence instead of forcing a single conclusion
 - keep these checks inspectable and testable with local fixtures
 
-### Milestone 9: Search strategy and agent traceability ✅
+### Milestone 9: Search strategy and agent traceability [done]
 - make query rewriting and branch planning easier to inspect
 - show original query, rewritten query, branch queries, and retrieval rationale
 - add branch-level retrieval diagnostics and stopping reasons
 - report whether the agent improved retrieval coverage over the baseline
 - keep agent stopping deterministic and tied to evidence sufficiency
 
-### Milestone 10: Demo console polish ✅
+### Milestone 10: Demo console polish [done]
 - improve the Streamlit demo as a lightweight review console
 - prioritize evidence table filtering, sorting, and readable trace views
 - add export paths for Markdown, JSON, or CSV reports
@@ -91,27 +91,32 @@ the project into a generic chatbot or framework-first demo.
 
 ## Track B: Engineering stack expansion
 
-### Milestone 11: FastAPI service layer ✅
+### Milestone 11: FastAPI service layer [done]
 - add a thin FastAPI API layer around the existing core package
 - keep retrieval, generation, extraction, evaluation, and agent logic in
   `src/bioevidence/`
 - define typed request and response schemas for baseline and agent queries
-- add health and metadata endpoints for local service checks
+- add a health endpoint for local service checks
 - return retrieved evidence, structured evidence rows, citations, final answer,
   and trace metadata in API responses
 - add API tests using FastAPI's test client
 
-Candidate endpoint shape:
+Current endpoint shape:
 
 ```text
 GET  /api/v1/health
-GET  /api/v1/corpora
 POST /api/v1/query/baseline
 POST /api/v1/query/agent
+```
+
+Deferred endpoint candidates:
+
+```text
+GET  /api/v1/corpora
 POST /api/v1/evaluations/run
 ```
 
-### Milestone 12: Docker packaging ✅
+### Milestone 12: Docker packaging [done]
 - add a Dockerfile for the FastAPI service
 - add a `.dockerignore`
 - document local Python startup and Docker startup separately
@@ -129,20 +134,20 @@ POST /api/v1/evaluations/run
 
 ## Supporting work
 
-### Quality gates
-- add or expand CI for tests
-- add linting and formatting checks
-- consider a focused type-checking pass for stable core modules
+### Quality gates [done]
+- add CI for tests
+- add linting checks
+- add focused type-checking for stable core modules
 - add an evaluation smoke test that can run quickly in CI
 
-### Documentation
+### Documentation [done]
 - keep `docs/DECISIONS.md` updated for meaningful architecture decisions
-- add `docs/EVALUATION.md` when evaluation reports become central
+- maintain `docs/EVALUATION.md` for evaluation datasets, metrics, and commands
 - add `docs/DEMO_SCRIPT.md` for interview or portfolio walkthroughs
 - add `docs/LIMITATIONS.md` to document medical, data, and model limitations
 - keep README focused on the shortest practical demo path first
 
-### Engineering hygiene ✅
+### Engineering hygiene [done]
 - split `agent/workflow.py` into `workflows/` package: `models.py`,
   `baseline.py`, `agent.py`, `retrieval_stack.py`
 - move `retrieval/rerank.py` into `retrieval/ranking.py` with a cleaner name
@@ -154,17 +159,16 @@ POST /api/v1/evaluations/run
 
 ## Priority guidance
 
-Short-term priority:
+Completed productization priorities:
 - Milestone 7: reproducible demo and evaluation suite
 - Milestone 8: evidence quality and faithfulness
-- Milestone 11: FastAPI service layer
-
-Medium-term priority:
 - Milestone 9: search strategy and agent traceability
+- Milestone 10: demo console polish
+- Milestone 11: FastAPI service layer
 - Milestone 12: Docker packaging
 - quality gates and documentation polish
 
 Lower priority unless needed later:
-- Streamlit-as-API-client conversion
 - Docker Compose for multiple services
+- Streamlit-as-API-client conversion
 - full-text ingestion, PDF parsing, browser automation, or database adoption
