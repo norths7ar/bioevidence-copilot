@@ -74,7 +74,7 @@ the project into a generic chatbot or framework-first demo.
 - surface conflicting or mixed evidence instead of forcing a single conclusion
 - keep these checks inspectable and testable with local fixtures
 
-### Milestone 9: Search strategy and agent traceability 鉁?
+### Milestone 9: Search strategy and agent traceability ✅
 - make query rewriting and branch planning easier to inspect
 - show original query, rewritten query, branch queries, and retrieval rationale
 - add branch-level retrieval diagnostics and stopping reasons
