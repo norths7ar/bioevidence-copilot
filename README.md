@@ -1,5 +1,7 @@
 # BioEvidence Copilot
 
+[![CI](https://github.com/norths7ar/bioevidence-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/norths7ar/bioevidence-copilot/actions/workflows/ci.yml)
+
 BioEvidence Copilot is a portfolio project for biomedical literature evidence retrieval, structured evidence, evaluation, and custom agentic orchestration.
 
 It is intentionally built in two stages:
