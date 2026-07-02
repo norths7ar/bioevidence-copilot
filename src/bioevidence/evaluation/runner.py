@@ -149,7 +149,7 @@ def format_report(report: EvaluationReport) -> str:
     return "\n".join(lines)
 
 
-def _evaluate_item(item: EvaluationItem, workflow_result: WorkflowResult) -> EvaluationItemResult:
+def _evaluate_item(item: EvaluationItem, workflow_result: WorkflowResult | AgentWorkflowResult) -> EvaluationItemResult:
     retrieved_candidates = workflow_result.retrieved_candidates[: item.top_k]
     predicted_pmids = tuple(candidate.document.pmid for candidate in retrieved_candidates)
     predicted_citations = tuple(workflow_result.answer.citations)
@@ -229,7 +229,11 @@ def _preload_documents(
 ) -> tuple[Document, ...] | None:
     if data_dir is None and settings is None:
         return None
-    corpus_dir = data_dir or settings.data_dir
+    if data_dir is None:
+        assert settings is not None
+        corpus_dir = settings.data_dir
+    else:
+        corpus_dir = data_dir
     documents = load_local_documents(corpus_dir, settings=settings)
     return tuple(documents) if documents else None
 

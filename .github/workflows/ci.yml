@@ -24,5 +24,11 @@ jobs:
       - name: Run lint
         run: python -m ruff check --no-cache .
 
+      - name: Run focused type check
+        run: python -m mypy src/bioevidence/schemas src/bioevidence/evaluation src/bioevidence/workflows --no-sqlite-cache --no-incremental
+
       - name: Run tests
         run: python -m pytest
+
+      - name: Run evaluation smoke test
+        run: python scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --limit 1

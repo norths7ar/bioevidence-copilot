@@ -138,11 +138,12 @@ def _states_insufficient_evidence(text: str) -> bool:
     return any(marker in normalized for marker in _INSUFFICIENT_MARKERS)
 
 
-def _unique(values: Iterable[str] | object) -> tuple[str, ...]:
+def _unique(values: Iterable[str]) -> tuple[str, ...]:
     seen: set[str] = set()
     unique_values: list[str] = []
-    iterable = () if isinstance(values, str) else values
-    for value in iterable:
+    if isinstance(values, str):
+        values = ()
+    for value in values:
         normalized = str(value).strip()
         if normalized and normalized not in seen:
             seen.add(normalized)
