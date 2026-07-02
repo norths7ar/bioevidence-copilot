@@ -111,7 +111,7 @@ POST /api/v1/query/agent
 POST /api/v1/evaluations/run
 ```
 
-### Milestone 12: Docker packaging
+### Milestone 12: Docker packaging ✅
 - add a Dockerfile for the FastAPI service
 - add a `.dockerignore`
 - document local Python startup and Docker startup separately

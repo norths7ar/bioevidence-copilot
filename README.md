@@ -155,6 +155,22 @@ Run the API locally:
 C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m uvicorn interfaces.api.main:app --reload
 ```
 
+Build and run the FastAPI service with Docker:
+
+```powershell
+docker build -t bioevidence-copilot-api .
+docker run --rm --name bioevidence-api -p 8000:8000 --env-file .env bioevidence-copilot-api
+```
+
+If you want to run the container without local secrets or model-provider
+configuration, omit `--env-file .env`. The health endpoint and local-corpus
+fallback paths still work without external LLM or embedding credentials:
+
+```powershell
+docker run --rm --name bioevidence-api -p 8000:8000 bioevidence-copilot-api
+Invoke-WebRequest -UseBasicParsing http://localhost:8000/api/v1/health
+```
+
 Initial endpoints:
 
 - `GET /api/v1/health`

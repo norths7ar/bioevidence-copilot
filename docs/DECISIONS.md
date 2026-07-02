@@ -107,3 +107,11 @@
 - Add evidence-table filtering, sorting, and wider dataframe views in the web interface while keeping the underlying evidence rows unchanged.
 - Add Markdown, JSON, and CSV exports from presentation payloads so demo results can be shared without rerunning the workflow.
 - Keep trace summaries and branch diagnostics table-shaped for reviewer inspection instead of relying on raw JSON as the primary view.
+
+## 2026-07-02: FastAPI Docker packaging
+
+- Package only the FastAPI service path in Docker; keep Streamlit and conda-based commands as local development and demo workflows.
+- Install the project with the `serve` extra so `uvicorn` is available inside the image while keeping business logic in `src/bioevidence/`.
+- Copy curated local corpus artifacts into the image so `/api/v1/health` and local-corpus query paths can run without external downloads.
+- Route embedding cache writes to `/tmp/bioevidence-cache` and run the service as a non-root user.
+- Keep Docker configuration environment-driven so `.env` can be supplied at runtime without baking secrets into the image.
