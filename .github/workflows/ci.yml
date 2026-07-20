@@ -19,13 +19,13 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: python -m pip install -e ".[dev,serve]"
+        run: python -m pip install -e ".[dev,serve,web]"
 
       - name: Run lint
         run: python -m ruff check --no-cache .
 
       - name: Run focused type check
-        run: python -m mypy src/bioevidence/schemas src/bioevidence/evaluation src/bioevidence/workflows --no-sqlite-cache --no-incremental
+        run: python -m mypy src/bioevidence/schemas src/bioevidence/evaluation src/bioevidence/workflows src/bioevidence/graph --no-sqlite-cache --no-incremental
 
       - name: Run tests
         run: python -m pytest

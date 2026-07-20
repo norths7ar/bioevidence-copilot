@@ -13,7 +13,7 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 
 RUN python -m pip install --upgrade pip \
-    && python -m pip install --no-cache-dir ".[serve]"
+    && python -m pip install --no-cache-dir ".[serve,graph]"
 
 COPY interfaces ./interfaces
 COPY data ./data

@@ -1,0 +1,41 @@
+name: bioevidence-copilot
+
+services:
+  neo4j:
+    image: neo4j:2026.06.0
+    environment:
+      NEO4J_AUTH: neo4j/${BIOEVIDENCE_GRAPH_PASSWORD:-bioevidence-local}
+      BIOEVIDENCE_GRAPH_PASSWORD: ${BIOEVIDENCE_GRAPH_PASSWORD:-bioevidence-local}
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - cypher-shell -u neo4j -p "$${BIOEVIDENCE_GRAPH_PASSWORD}" "RETURN 1" >/dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  api:
+    build:
+      context: .
+    environment:
+      BIOEVIDENCE_GRAPH_ENABLED: "true"
+      BIOEVIDENCE_GRAPH_URI: bolt://neo4j:7687
+      BIOEVIDENCE_GRAPH_USER: neo4j
+      BIOEVIDENCE_GRAPH_PASSWORD: ${BIOEVIDENCE_GRAPH_PASSWORD:-bioevidence-local}
+      BIOEVIDENCE_GRAPH_DATABASE: neo4j
+    ports:
+      - "8000:8000"
+    depends_on:
+      neo4j:
+        condition: service_healthy
+
+volumes:
+  neo4j-data:
+  neo4j-logs:
