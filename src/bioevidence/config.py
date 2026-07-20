@@ -24,6 +24,10 @@ def _env_float(name: str, default: str) -> float:
     return float(os.getenv(name, default))
 
 
+def _env_bool(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().casefold() in {"1", "true", "yes", "on"}
+
+
 @dataclass(frozen=True, slots=True)
 class Settings:
     data_dir: Path
@@ -44,6 +48,13 @@ class Settings:
     embedding_model: str
     embedding_dimensions: int | None
     embedding_batch_size: int
+    graph_enabled: bool = False
+    graph_database: str = "neo4j"
+    graph_max_expansion_queries: int = 3
+    graph_max_paths: int = 20
+    graph_password: str = ""
+    graph_uri: str = "bolt://127.0.0.1:7687"
+    graph_user: str = "neo4j"
 
 
 def load_settings() -> Settings:
@@ -67,4 +78,11 @@ def load_settings() -> Settings:
         embedding_model=os.getenv("BIOEVIDENCE_EMBEDDING_MODEL", ""),
         embedding_dimensions=_env_optional_int("BIOEVIDENCE_EMBEDDING_DIMENSIONS"),
         embedding_batch_size=_env_int("BIOEVIDENCE_EMBEDDING_BATCH_SIZE", "10"),
+        graph_enabled=_env_bool("BIOEVIDENCE_GRAPH_ENABLED"),
+        graph_database=os.getenv("BIOEVIDENCE_GRAPH_DATABASE", "neo4j"),
+        graph_max_expansion_queries=_env_int("BIOEVIDENCE_GRAPH_MAX_EXPANSION_QUERIES", "3"),
+        graph_max_paths=_env_int("BIOEVIDENCE_GRAPH_MAX_PATHS", "20"),
+        graph_password=os.getenv("BIOEVIDENCE_GRAPH_PASSWORD", ""),
+        graph_uri=os.getenv("BIOEVIDENCE_GRAPH_URI", "bolt://127.0.0.1:7687"),
+        graph_user=os.getenv("BIOEVIDENCE_GRAPH_USER", "neo4j"),
     )
