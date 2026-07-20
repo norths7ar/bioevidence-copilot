@@ -53,6 +53,32 @@ def test_health_endpoint():
     assert response.json()["status"] == "ok"
 
 
+def test_agent_stream_endpoint_emits_ndjson(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    import interfaces.api.main as api_main
+
+    monkeypatch.setattr(
+        api_main,
+        "stream_agent_workflow",
+        lambda query, data_dir=None: iter(
+            [
+                {"node": "retrieve_baseline"},
+                {"node": "discover_graph", "graph_discovery": {"status": "disabled"}},
+            ]
+        ),
+    )
+    client = TestClient(api_main.app)
+
+    response = client.post("/api/v1/query/agent/stream", json={"query": "asthma evidence"})
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/x-ndjson")
+    lines = response.text.strip().splitlines()
+    assert '"node": "retrieve_baseline"' in lines[0]
+    assert '"status": "disabled"' in lines[1]
+
+
 def test_baseline_endpoint_returns_workflow_shape(monkeypatch):
     from fastapi.testclient import TestClient
 

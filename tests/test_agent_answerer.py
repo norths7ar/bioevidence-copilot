@@ -1,4 +1,5 @@
 from pathlib import Path
+from dataclasses import replace
 
 import bioevidence.generation.agent_answerer as agent_answerer_module
 from bioevidence.agent.state import AgentState
@@ -103,4 +104,26 @@ def test_synthesize_agent_answer_falls_back_to_template(monkeypatch):
     answer = synthesize_agent_answer(state, "baseline answer", client=object())
 
     assert answer.answer_text.startswith("Top retrieved evidence for 'asthma corticosteroids'")
+    assert answer.citations == ("111",)
+
+
+def test_synthesize_agent_answer_falls_back_when_backend_is_unconfigured() -> None:
+    state = AgentState(
+        query=Query(text="asthma corticosteroids"),
+        evidence_records=[
+            EvidenceRecord(
+                pmid="111",
+                title="Title 111",
+                year=2024,
+                journal="Journal",
+                entities=("asthma",),
+                summary="Summary 111",
+                relevance_score=0.9,
+            )
+        ],
+    )
+    settings = replace(_settings(), agent_api_key="", agent_base_url="", agent_model="")
+
+    answer = synthesize_agent_answer(state, "baseline answer", settings=settings)
+
     assert answer.citations == ("111",)

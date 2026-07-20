@@ -2,11 +2,19 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+import json
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from bioevidence.workflows import AgentWorkflowResult, WorkflowResult, run_agent_workflow, run_rag_pipeline
+from bioevidence.workflows import (
+    AgentWorkflowResult,
+    WorkflowResult,
+    run_agent_workflow,
+    run_rag_pipeline,
+    stream_agent_workflow,
+)
 from bioevidence.extraction.table import evidence_table_rows
 from bioevidence.presentation import build_agent_trace_payload
 from bioevidence.schemas.query import Query
@@ -14,7 +22,7 @@ from bioevidence.schemas.query import Query
 
 app = FastAPI(
     title="BioEvidence Copilot API",
-    version="0.1.0",
+    version="0.2.0",
     description="Thin API layer over the local BioEvidence retrieval and agent workflows.",
 )
 
@@ -50,6 +58,19 @@ def query_agent(request: QueryRequest) -> dict[str, Any]:
     except Exception as exc:
         raise HTTPException(status_code=500, detail="agent workflow failed") from exc
     return _agent_response(result)
+
+
+@app.post("/api/v1/query/agent/stream")
+def query_agent_stream(request: QueryRequest) -> StreamingResponse:
+    def events():
+        for event in stream_agent_workflow(_to_query(request), data_dir=_data_dir(request)):
+            payload = dict(event)
+            result = payload.get("result")
+            if isinstance(result, AgentWorkflowResult):
+                payload["result"] = _agent_response(result)
+            yield json.dumps(payload, ensure_ascii=True) + "\n"
+
+    return StreamingResponse(events(), media_type="application/x-ndjson")
 
 
 def _to_query(request: QueryRequest) -> Query:
@@ -90,6 +111,7 @@ def _agent_response(result: AgentWorkflowResult) -> dict[str, Any]:
             },
             "comparison": result.comparison,
             "trace": build_agent_trace_payload(result),
+            "graph_discovery": result.graph_discovery.to_dict() if result.graph_discovery else None,
         }
     )
     return response

@@ -19,11 +19,11 @@ def synthesize_agent_answer(
     client=None,
 ) -> AnswerBundle:
     settings = settings or load_settings()
-    client = client or create_agent_client(settings)
     evidence_records = tuple(state.top_evidence_records())
-    if not settings.agent_model:
-        raise AgentLLMError("BIOEVIDENCE_AGENT_MODEL is required for agent synthesis")
     try:
+        client = client or create_agent_client(settings)
+        if not settings.agent_model:
+            raise AgentLLMError("BIOEVIDENCE_AGENT_MODEL is required for agent synthesis")
         payload = chat_json(
             client,
             model=settings.agent_model,

@@ -140,3 +140,14 @@ def test_run_agent_workflow_accumulates_branches_and_stops(monkeypatch):
     assert result.branch_results[0].diagnostics["new_pmids"] == ["333"]
     assert result.branch_results[0].diagnostics["overlap_pmids"] == ["222"]
     assert result.branch_results[0].diagnostics["stop_reason_after_branch"] == "sufficient_evidence"
+
+    events = list(agent_workflow.stream_agent_workflow(Query(text="asthma corticosteroids"), settings=_settings()))
+
+    assert [event["node"] for event in events] == [
+        "retrieve_baseline",
+        "discover_graph",
+        "plan",
+        "retrieve_branches",
+        "synthesize",
+    ]
+    assert isinstance(events[-1]["result"], agent_workflow.AgentWorkflowResult)

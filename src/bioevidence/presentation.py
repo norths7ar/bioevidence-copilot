@@ -84,6 +84,7 @@ def build_agent_trace_payload(result: AgentWorkflowResult) -> dict[str, object]:
         "rewritten_query": result.answer.rewritten_query or result.query.text,
         "planning_steps": [step.to_dict() for step in result.planning_steps],
         "branch_diagnostics": [branch.to_dict() for branch in result.branch_results],
+        "graph_discovery": result.graph_discovery.to_dict() if result.graph_discovery else None,
         "retrieval_coverage": result.comparison.get("retrieval_coverage", {}),
         "stop": {
             "reason": result.state.stop_reason,

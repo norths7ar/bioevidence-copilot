@@ -7,6 +7,7 @@ from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.evidence import EvidenceRecord
 from bioevidence.schemas.query import Query
+from bioevidence.graph.models import GraphDiscoveryResult
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +73,7 @@ class AgentWorkflowResult:
     state: AgentState
     comparison: dict[str, object]
     planning_steps: tuple[AgentPlanningStep, ...] = tuple()
+    graph_discovery: GraphDiscoveryResult | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -88,6 +90,7 @@ class AgentWorkflowResult:
                 "rewritten_query": self.answer.rewritten_query or self.query.text,
                 "planning_steps": [step.to_dict() for step in self.planning_steps],
                 "branch_diagnostics": [branch.to_dict() for branch in self.branch_results],
+                "graph_discovery": self.graph_discovery.to_dict() if self.graph_discovery else None,
                 "retrieval_coverage": self.comparison.get("retrieval_coverage", {}),
                 "stop": {
                     "reason": self.state.stop_reason,
