@@ -73,22 +73,22 @@ Editable install is the supported local workflow. CLI entrypoints live under
 To enable the dense retriever, configure the embedding backend via the generic
 `.env` fields:
 
-- `BIOEVIDENCE_EMBEDDING_API_KEY`
-- `BIOEVIDENCE_EMBEDDING_BASE_URL`
-- `BIOEVIDENCE_EMBEDDING_MODEL`
-- `BIOEVIDENCE_EMBEDDING_DIMENSIONS`
+- `EMBEDDING_API_KEY`
+- `EMBEDDING_BASE_URL`
+- `EMBEDDING_MODEL`
+- `EMBEDDING_DIMENSIONS`
 
 To enable the agent planner and final synthesis path, configure the generic
 agent variables and pick a provider in `.env`:
 
-- `BIOEVIDENCE_AGENT_API_KEY`
-- `BIOEVIDENCE_AGENT_BASE_URL`
-- `BIOEVIDENCE_AGENT_MODEL`
-- `BIOEVIDENCE_AGENT_MAX_ITERATIONS=3`
-- `BIOEVIDENCE_AGENT_MAX_OUTPUT_TOKENS=800`
-- `BIOEVIDENCE_AGENT_MIN_RELEVANCE_SCORE=0.6`
-- `BIOEVIDENCE_AGENT_MIN_UNIQUE_PMIDS=3`
-- `BIOEVIDENCE_AGENT_TEMPERATURE=0.2`
+- `AGENT_API_KEY`
+- `AGENT_BASE_URL`
+- `AGENT_MODEL`
+- `AGENT_MAX_ITERATIONS=3`
+- `AGENT_MAX_OUTPUT_TOKENS=8192`
+- `AGENT_MIN_RELEVANCE_SCORE=0.6`
+- `AGENT_MIN_UNIQUE_PMIDS=3`
+- `AGENT_TEMPERATURE=0.2`
 
 Example provider mappings are documented in `.env.example` for Qwen embedding,
 DeepSeek, Qwen Chat, and MiMo.
@@ -217,14 +217,16 @@ Run the graph-enabled local service composition:
 
 ```powershell
 docker compose up --build -d
-$env:BIOEVIDENCE_GRAPH_PASSWORD="bioevidence-local"
+$env:NEO4J_PASSWORD="bioevidence-local"
 C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/import_hetionet.py --hetionet-root E:/GitHub-Repos/hetionet-main
 ```
 
 Compose starts FastAPI on port `8000`, Neo4j Browser on `7474`, and Bolt on
 `7687`. The database initially contains no Hetionet data; import is an explicit
-one-time preparation step. Override `BIOEVIDENCE_GRAPH_PASSWORD` in `.env` or
+one-time preparation step. Override `NEO4J_PASSWORD` in `.env` or
 the shell instead of using the documented local default outside development.
+The API service reads provider credentials and runtime settings from `.env`,
+then uses container-specific data, cache, and Neo4j addresses internally.
 
 ## Project structure
 

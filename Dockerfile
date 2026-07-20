@@ -2,8 +2,8 @@ FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    BIOEVIDENCE_DATA_DIR=/app/data/corpora/demo \
-    BIOEVIDENCE_EMBEDDING_CACHE_DIR=/tmp/bioevidence-cache
+    DATA_DIR=/app/data/corpora/demo \
+    EMBEDDING_CACHE_DIR=/tmp/bioevidence-cache
 
 WORKDIR /app
 

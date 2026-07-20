@@ -259,6 +259,6 @@ def test_embed_texts_rejects_invalid_batch_size(tmp_path: Path):
     try:
         embed_texts(["a"], client=object(), settings=settings)
     except DenseRetrievalError as exc:
-        assert "BIOEVIDENCE_EMBEDDING_BATCH_SIZE" in str(exc)
+        assert "EMBEDDING_BATCH_SIZE" in str(exc)
     else:  # pragma: no cover
         raise AssertionError("Expected DenseRetrievalError")

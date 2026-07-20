@@ -15,9 +15,9 @@ class DenseRetrievalError(RuntimeError):
 def create_embedding_client(settings: Settings | None = None) -> OpenAI:
     settings = settings or load_settings()
     if not settings.embedding_api_key:
-        raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_API_KEY is required for dense retrieval")
+        raise DenseRetrievalError("EMBEDDING_API_KEY is required for dense retrieval")
     if not settings.embedding_base_url:
-        raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_BASE_URL is required for dense retrieval")
+        raise DenseRetrievalError("EMBEDDING_BASE_URL is required for dense retrieval")
     return OpenAI(api_key=settings.embedding_api_key, base_url=settings.embedding_base_url)
 
 
@@ -31,13 +31,13 @@ def embed_texts(
         return []
     settings = settings or load_settings()
     if not settings.embedding_model:
-        raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_MODEL is required for dense retrieval")
+        raise DenseRetrievalError("EMBEDDING_MODEL is required for dense retrieval")
     if settings.embedding_dimensions is None:
-        raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_DIMENSIONS is required for dense retrieval")
+        raise DenseRetrievalError("EMBEDDING_DIMENSIONS is required for dense retrieval")
     if settings.embedding_dimensions <= 0:
-        raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_DIMENSIONS must be a positive integer")
+        raise DenseRetrievalError("EMBEDDING_DIMENSIONS must be a positive integer")
     if settings.embedding_batch_size <= 0:
-        raise DenseRetrievalError("BIOEVIDENCE_EMBEDDING_BATCH_SIZE must be a positive integer")
+        raise DenseRetrievalError("EMBEDDING_BATCH_SIZE must be a positive integer")
     client = client or create_embedding_client(settings)
     embeddings: list[list[float]] = []
     for start_index in range(0, len(texts), settings.embedding_batch_size):

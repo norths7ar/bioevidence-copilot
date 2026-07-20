@@ -26,11 +26,11 @@ class AgentLLMError(RuntimeError):
 
 def create_agent_client(settings: Settings) -> OpenAI:
     if not settings.agent_api_key:
-        raise AgentLLMError("BIOEVIDENCE_AGENT_API_KEY is required for agent synthesis")
+        raise AgentLLMError("AGENT_API_KEY is required for agent synthesis")
     if not settings.agent_base_url:
-        raise AgentLLMError("BIOEVIDENCE_AGENT_BASE_URL is required for agent synthesis")
+        raise AgentLLMError("AGENT_BASE_URL is required for agent synthesis")
     if not settings.agent_model:
-        raise AgentLLMError("BIOEVIDENCE_AGENT_MODEL is required for agent synthesis")
+        raise AgentLLMError("AGENT_MODEL is required for agent synthesis")
     return OpenAI(api_key=settings.agent_api_key, base_url=settings.agent_base_url)
 
 

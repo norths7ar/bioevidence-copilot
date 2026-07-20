@@ -173,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
         raise ImportDataError("batch-size must be positive")
     settings = load_settings()
     if not settings.graph_password:
-        raise ImportDataError("BIOEVIDENCE_GRAPH_PASSWORD is required")
+        raise ImportDataError("NEO4J_PASSWORD is required")
     root = args.hetionet_root
     nodes_path = root / "hetnet" / "tsv" / "hetionet-v1.0-nodes.tsv"
     edges_path = root / "hetnet" / "tsv" / "hetionet-v1.0-edges.sif.gz"

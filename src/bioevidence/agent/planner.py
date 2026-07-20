@@ -54,7 +54,7 @@ def plan_next_steps_with_trace(
     try:
         client = client or create_agent_client(settings)
         if not settings.agent_model:
-            raise AgentLLMError("BIOEVIDENCE_AGENT_MODEL is required for agent planning")
+            raise AgentLLMError("AGENT_MODEL is required for agent planning")
         payload = chat_json(
             client,
             model=settings.agent_model,

@@ -38,7 +38,7 @@ class Neo4jGraphProvider:
         except ModuleNotFoundError as exc:
             raise GraphDiscoveryError("Install the graph extra to enable Neo4j discovery") from exc
         if not self._settings.graph_password:
-            raise GraphDiscoveryError("BIOEVIDENCE_GRAPH_PASSWORD is required when graph discovery is enabled")
+            raise GraphDiscoveryError("NEO4J_PASSWORD is required when graph discovery is enabled")
         driver = None
         try:
             driver = GraphDatabase.driver(

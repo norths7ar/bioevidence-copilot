@@ -27,7 +27,7 @@
 
 ## 2026-04-15: Dense embedding backend
 
-- Use an OpenAI-compatible embedding backend configured through generic `BIOEVIDENCE_EMBEDDING_*` fields in `.env`.
+- Use an OpenAI-compatible embedding backend configured through generic `EMBEDDING_*` fields in `.env`.
 - Keep the implementation provider-agnostic in code; the example configuration can point at Qwen `text-embedding-v4` or another OpenAI-compatible provider without code changes.
 - Cache corpus embeddings on disk keyed by corpus signature, model, and dimensions so repeated dense retrieval does not re-embed unchanged documents.
 - Fall back to lexical-only ranking when the dense backend is unavailable, rather than failing the whole retrieval flow.
@@ -47,7 +47,7 @@
 ## 2026-04-17: Custom agentic orchestration
 
 - Keep the agent controller custom and lightweight instead of adopting LangChain or LangGraph for the first agent milestone.
-- Use generic `BIOEVIDENCE_AGENT_*` environment variables for the agent backend so provider choice stays in `.env` rather than in code.
+- Use generic `AGENT_*` environment variables for the agent backend so provider choice stays in `.env` rather than in code.
 - Keep the agent backend OpenAI-compatible so DeepSeek, Qwen Chat, MiMo, and similar providers can be swapped without code changes.
 - Keep sufficiency deterministic: stop when the loop has accumulated enough unique PMIDs with a minimum relevance floor, otherwise continue until max iterations.
 - Surface the agent report in CLI / JSON form and let callers write real report artifacts for reviewability.
@@ -145,3 +145,20 @@
   hosted deployment, and a general-purpose application database.
 - Keep Streamlit in a `web` extra so the FastAPI container does not install the
   UI-only Pandas, PyArrow, and Streamlit dependency chain.
+
+## 2026-07-20: Canonical Neo4j runtime and environment contract
+
+- Use the Docker Compose Neo4j service and its named volumes as the canonical
+  local product runtime. Neo4j Desktop is not required to run the product.
+- Keep Hetionet ingestion explicit: Compose creates an empty database, and the
+  import script rebuilds it from the external Hetionet source files.
+- Use purpose-grouped environment variables (`AGENT_*`, `EMBEDDING_*`,
+  `NEO4J_*`, and `GRAPH_*`) instead of a repository-wide `BIOEVIDENCE_*`
+  prefix.
+- Reserve `NEO4J_*` for connection settings and `GRAPH_*` for discovery-layer
+  behavior so local scripts and containers share one unambiguous contract.
+- Default agent output capacity to 8192 tokens because reasoning models consume
+  the same completion budget for internal reasoning and structured response
+  text. Keep a bounded default rather than allowing unbounded model output.
+- Let the Compose API service read the local `.env` for provider credentials,
+  while overriding container-only paths and the Neo4j service-network address.
