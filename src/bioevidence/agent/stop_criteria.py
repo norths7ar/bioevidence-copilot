@@ -9,6 +9,9 @@ def should_stop(
     minimum_unique_pmids: int = 3,
     minimum_relevance_score: float = 0.6,
 ) -> bool:
+    if state.stop_reason is not None:
+        return True
+
     if state.iterations >= state.max_iterations:
         state.sufficient = False
         state.stop_reason = "max_iterations"

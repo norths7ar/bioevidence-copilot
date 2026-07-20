@@ -210,7 +210,8 @@ Initial endpoints:
 - `GET /api/v1/health`
 - `POST /api/v1/query/baseline`
 - `POST /api/v1/query/agent`
-- `POST /api/v1/query/agent/stream` (newline-delimited JSON node updates)
+- `POST /api/v1/query/agent/stream` (newline-delimited JSON node updates; startup failures use HTTP 400/500,
+  while failures after streaming starts produce a terminal `error` event)
 
 Run the graph-enabled local service composition:
 

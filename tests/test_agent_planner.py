@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import bioevidence.agent.planner as planner_module
+import pytest
 from bioevidence.agent.llm import AgentLLMError
 from bioevidence.agent.state import AgentState
 from bioevidence.config import Settings
@@ -112,3 +113,15 @@ def test_plan_next_steps_with_trace_marks_fallback(monkeypatch):
     assert result.accepted_queries == ("asthma corticosteroids review",)
     assert result.source == "fallback"
     assert "Fallback planning" in result.rationale
+
+
+def test_planner_does_not_hide_programming_errors(monkeypatch) -> None:
+    state = AgentState(query=Query(text="asthma corticosteroids"))
+    monkeypatch.setattr(
+        planner_module,
+        "chat_json",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("bug")),
+    )
+
+    with pytest.raises(RuntimeError, match="bug"):
+        planner_module.plan_next_steps(state, settings=_settings(), client=object())

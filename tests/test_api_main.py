@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from bioevidence.agent.state import AgentState
 from bioevidence.workflows import AgentWorkflowResult, WorkflowResult
 from bioevidence.schemas.answer import AnswerBundle
@@ -77,6 +79,49 @@ def test_agent_stream_endpoint_emits_ndjson(monkeypatch):
     lines = response.text.strip().splitlines()
     assert '"node": "retrieve_baseline"' in lines[0]
     assert '"status": "disabled"' in lines[1]
+
+
+def test_agent_stream_endpoint_returns_error_status_before_stream_starts(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    import interfaces.api.main as api_main
+
+    def failed_stream(query, data_dir=None):
+        del query, data_dir
+        raise FileNotFoundError("missing corpus")
+        yield
+
+    monkeypatch.setattr(api_main, "stream_agent_workflow", failed_stream)
+    client = TestClient(api_main.app)
+
+    response = client.post("/api/v1/query/agent/stream", json={"query": "asthma evidence"})
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "missing corpus"}
+
+
+def test_agent_stream_endpoint_emits_terminal_error_after_stream_starts(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    import interfaces.api.main as api_main
+
+    def failed_stream(query, data_dir=None):
+        del query, data_dir
+        yield {"node": "retrieve_baseline"}
+        raise RuntimeError("bug")
+
+    monkeypatch.setattr(api_main, "stream_agent_workflow", failed_stream)
+    client = TestClient(api_main.app)
+
+    response = client.post("/api/v1/query/agent/stream", json={"query": "asthma evidence"})
+
+    assert response.status_code == 200
+    lines = [json.loads(line) for line in response.text.strip().splitlines()]
+    assert lines[0] == {"node": "retrieve_baseline"}
+    assert lines[1] == {
+        "node": "error",
+        "error": {"status_code": 500, "detail": "agent workflow failed"},
+    }
 
 
 def test_baseline_endpoint_returns_workflow_shape(monkeypatch):

@@ -40,7 +40,7 @@ def synthesize_agent_answer(
             evidence_records=evidence_records,
             rewritten_query=rewritten_query,
         )
-    except (AgentLLMError, ValueError, TypeError, Exception):
+    except (AgentLLMError, ValueError, TypeError):
         return generate_answer(state.query, list(evidence_records))
 
 

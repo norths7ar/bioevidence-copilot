@@ -80,3 +80,17 @@ def test_should_stop_when_iterations_exhausted():
     assert should_stop(state)
     assert state.sufficient is False
     assert state.stop_reason == "max_iterations"
+
+
+def test_should_stop_preserves_an_existing_sufficient_decision() -> None:
+    state = AgentState(
+        query=Query(text="asthma"),
+        iterations=3,
+        max_iterations=3,
+        sufficient=True,
+        stop_reason="sufficient_evidence",
+    )
+
+    assert should_stop(state)
+    assert state.sufficient is True
+    assert state.stop_reason == "sufficient_evidence"

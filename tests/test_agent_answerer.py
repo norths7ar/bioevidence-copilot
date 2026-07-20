@@ -127,3 +127,17 @@ def test_synthesize_agent_answer_falls_back_when_backend_is_unconfigured() -> No
     answer = synthesize_agent_answer(state, "baseline answer", settings=settings)
 
     assert answer.citations == ("111",)
+
+
+def test_synthesize_agent_answer_does_not_hide_programming_errors(monkeypatch) -> None:
+    import pytest
+
+    state = AgentState(query=Query(text="asthma corticosteroids"))
+    monkeypatch.setattr(
+        agent_answerer_module,
+        "chat_json",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("bug")),
+    )
+
+    with pytest.raises(RuntimeError, match="bug"):
+        synthesize_agent_answer(state, "baseline answer", settings=_settings(), client=object())

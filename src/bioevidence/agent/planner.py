@@ -65,7 +65,7 @@ def plan_next_steps_with_trace(
         branch_queries = _normalize_branch_queries(payload.get("branch_queries"))
         rationale = _normalize_rationale(payload.get("rationale"))
         source = "model"
-    except (AgentLLMError, ValueError, TypeError, Exception):
+    except (AgentLLMError, ValueError, TypeError):
         branch_queries = _fallback_branch_queries(state, branch_count=branch_count)
         rationale = _fallback_rationale(state)
         source = "fallback"

@@ -3,9 +3,10 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
+from openai.types.chat import ChatCompletionMessageParam
 
 from bioevidence.config import Settings
 
@@ -41,12 +42,15 @@ def chat_text(
     max_tokens: int,
     temperature: float,
 ) -> str:
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        max_tokens=max_tokens,
-        temperature=temperature,
-    )
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=cast(list[ChatCompletionMessageParam], messages),
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+    except OpenAIError as exc:
+        raise AgentLLMError("Agent model request failed") from exc
     content = response.choices[0].message.content or ""
     return content.strip()
 

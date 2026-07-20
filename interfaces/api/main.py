@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
+import json
+import logging
 from pathlib import Path
 from typing import Any
-import json
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
@@ -18,6 +20,9 @@ from bioevidence.workflows import (
 from bioevidence.extraction.table import evidence_table_rows
 from bioevidence.presentation import build_agent_trace_payload
 from bioevidence.schemas.query import Query
+
+
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI(
@@ -62,13 +67,31 @@ def query_agent(request: QueryRequest) -> dict[str, Any]:
 
 @app.post("/api/v1/query/agent/stream")
 def query_agent_stream(request: QueryRequest) -> StreamingResponse:
-    def events():
-        for event in stream_agent_workflow(_to_query(request), data_dir=_data_dir(request)):
-            payload = dict(event)
-            result = payload.get("result")
-            if isinstance(result, AgentWorkflowResult):
-                payload["result"] = _agent_response(result)
-            yield json.dumps(payload, ensure_ascii=True) + "\n"
+    try:
+        event_iterator = iter(stream_agent_workflow(_to_query(request), data_dir=_data_dir(request)))
+        first_event = next(event_iterator)
+    except StopIteration:
+        return StreamingResponse(iter(()), media_type="application/x-ndjson")
+    except (FileNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Agent stream failed before the first event")
+        raise HTTPException(status_code=500, detail="agent workflow failed") from exc
+
+    def events() -> Iterator[str]:
+        try:
+            yield _serialize_stream_event(first_event)
+            for event in event_iterator:
+                yield _serialize_stream_event(event)
+        except (FileNotFoundError, ValueError) as exc:
+            yield _serialize_stream_error(400, str(exc))
+        except Exception:
+            logger.exception("Agent stream failed after streaming started")
+            yield _serialize_stream_error(500, "agent workflow failed")
+        finally:
+            close = getattr(event_iterator, "close", None)
+            if close is not None:
+                close()
 
     return StreamingResponse(events(), media_type="application/x-ndjson")
 
@@ -83,7 +106,22 @@ def _data_dir(request: QueryRequest) -> Path | None:
     return Path(request.data_dir)
 
 
-def _workflow_response(result: WorkflowResult) -> dict[str, Any]:
+def _serialize_stream_event(event: dict[str, object]) -> str:
+    payload = dict(event)
+    result = payload.get("result")
+    if isinstance(result, AgentWorkflowResult):
+        payload["result"] = _agent_response(result)
+    return json.dumps(payload, ensure_ascii=True) + "\n"
+
+
+def _serialize_stream_error(status_code: int, detail: str) -> str:
+    return json.dumps(
+        {"node": "error", "error": {"status_code": status_code, "detail": detail}},
+        ensure_ascii=True,
+    ) + "\n"
+
+
+def _workflow_response(result: WorkflowResult | AgentWorkflowResult) -> dict[str, Any]:
     return {
         "query": result.query.text,
         "rewritten_query": result.answer.rewritten_query or result.query.text,
