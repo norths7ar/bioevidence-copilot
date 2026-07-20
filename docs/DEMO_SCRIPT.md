@@ -8,7 +8,8 @@ demo corpus under `data/corpora/demo` is available.
 
 BioEvidence Copilot is a biomedical literature evidence assistant over PubMed
 metadata and abstracts. The project demonstrates an inspectable RAG baseline,
-structured evidence extraction, local evaluation, custom agentic orchestration,
+structured evidence extraction, local evaluation, LangGraph orchestration,
+a Hetionet discovery branch,
 a lightweight review console, a FastAPI service boundary, Docker packaging, and
 CI quality gates.
 
@@ -21,11 +22,12 @@ It is not a clinical decision system.
 2. Show the Streamlit review console.
 3. Run a query such as `What evidence exists for asthma corticosteroids?`.
 4. Compare the Baseline and Agent tabs.
-5. Point out the evidence table, citations, trace summary, branch diagnostics,
-   and report export buttons.
-6. Show the FastAPI health endpoint or baseline query endpoint.
-7. Mention Docker packaging as the deployable service shape for the API.
-8. Close with evaluation and limitations: local demo data, abstract-only
+5. Point out that graph-linked entities create follow-up literature queries,
+   while final citations still identify PubMed papers.
+6. Show the evidence table, trace summary, branch diagnostics, and exports.
+7. Show the FastAPI health endpoint or streaming agent endpoint.
+8. Mention Docker Compose as the local FastAPI plus Neo4j service shape.
+9. Close with evaluation and limitations: local demo data, abstract-only
    evidence, deterministic checks, and no medical-decision use.
 
 ## Local Demo Commands
@@ -33,7 +35,7 @@ It is not a clinical decision system.
 Install or refresh local development dependencies:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e ".[dev,serve]"
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e ".[dev,serve,graph,web]"
 ```
 
 Run the review console:
@@ -73,12 +75,21 @@ docker build -t bioevidence-copilot-api .
 docker run --rm --name bioevidence-api -p 8000:8000 bioevidence-copilot-api
 ```
 
+Run the graph-enabled service pair:
+
+```powershell
+docker compose up --build -d
+```
+
 ## What to Highlight
 
 - The baseline path is inspectable: retrieved papers, evidence rows, answer,
   and citations are all visible.
-- The agent path is controlled: branch planning, deduplication, deterministic
-  stopping, and coverage comparison are exposed as trace data.
+- The LangGraph path is controlled: graph discovery, branch planning,
+  deduplication, deterministic stopping, and coverage comparison are exposed as
+  trace data.
+- Graph-derived terms are evaluated by whether they recover additional relevant
+  PMIDs, not by graph-path count alone.
 - The evidence table is a review surface, not hidden prompt context.
 - The API is a thin boundary over core package workflows.
 - Docker packages the FastAPI service without replacing the local conda

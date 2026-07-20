@@ -36,10 +36,10 @@ User query
 -> answer generation
 -> final output
 
-The agent implementation should remain a custom controller over the existing
-retrieval and extraction layers. The baseline templated answer path remains
-available for comparison, while the agent uses an OpenAI-compatible LLM backend
-for planning and final synthesis. Agent workflow output includes a structured
+LangGraph controls routing between the existing retrieval, graph discovery,
+stopping, and extraction layers. The baseline templated answer path remains
+available for comparison, while the agent can use an OpenAI-compatible LLM
+backend for planning and final synthesis. Agent workflow output includes a structured
 trace payload with planning steps, branch-level retrieval diagnostics, coverage
 comparison against the baseline, and deterministic stopping metadata. The app
 surface stays lightweight; agent comparison is exposed through CLI / JSON report
@@ -118,3 +118,45 @@ CI should remain lightweight and deterministic:
 
 These checks are intended to catch regressions in the code and evidence workflow
 without requiring external model-provider credentials.
+
+## Graph-augmented discovery
+
+The knowledge graph is a discovery source, not a substitute for citable
+literature. Hetionet entity linking and path traversal can identify related
+diseases, compounds, genes, pathways, and biological processes. Those graph
+results are converted into follow-up literature queries and fed back through
+the existing PubMed retrieval and evidence pipeline.
+
+```text
+question
+-> baseline literature retrieval
+-> optional Hetionet entity linking and path discovery
+-> graph-derived query expansion
+-> follow-up literature retrieval
+-> deduplication and sufficiency check
+-> structured evidence extraction
+-> citation-grounded synthesis
+```
+
+Graph paths remain visible in the workflow trace, including linked entities,
+relationships, and generated branch queries. Final answer citations continue
+to identify PubMed records only.
+
+Neo4j is accessed behind an optional provider boundary. A disabled, empty, or
+unavailable graph must not break the baseline literature workflow. This keeps
+local fixtures and CI deterministic while allowing a composed API plus Neo4j
+runtime for graph-enabled demos.
+
+## Agent runtime
+
+LangGraph owns workflow routing, node execution, and streaming updates. Domain
+behavior remains in project modules:
+
+- the planner proposes follow-up searches
+- the graph provider returns discovery context and query expansions
+- the retrieval stack returns ranked PubMed candidates
+- deterministic rules decide evidence sufficiency
+- the answerer synthesizes only from accumulated evidence
+
+This split uses a maintained orchestration runtime without hiding biomedical
+retrieval decisions inside framework-specific agents or generic tool loops.

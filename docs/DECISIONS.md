@@ -123,3 +123,25 @@
 - Use `--no-sqlite-cache --no-incremental` for mypy because the local Windows environment showed SQLite cache I/O errors; the focused check remains deterministic without cache.
 - Treat the evaluation smoke test as a workflow integrity check, not a benchmark or model-quality claim.
 - Keep documentation split by audience: README for the shortest path, `DEMO_SCRIPT.md` for walkthroughs, `EVALUATION.md` for metrics and datasets, and `LIMITATIONS.md` for medical and engineering boundaries.
+
+## 2026-07-20: v0.1 release boundary and GraphRAG integration
+
+- Freeze the completed literature evidence assistant at the `v0.1.0` tag
+  before introducing knowledge-graph and orchestration-runtime changes.
+- Integrate useful Hetionet capabilities into this repository rather than
+  preserving a second product-shaped API, Docker image, CI workflow, and
+  evaluation shell from `biomedical-graphrag`.
+- Treat Hetionet as a discovery and query-expansion source. Graph paths can
+  explain why a literature search was broadened, but only retrieved papers can
+  support final answer citations.
+- Access Neo4j behind an optional provider boundary so baseline workflows,
+  local fixtures, and CI do not require a graph database.
+- Use LangGraph for routing and streaming while retaining project-owned
+  planner, retrieval, evidence, stopping, and synthesis functions as domain
+  nodes.
+- Evaluate graph augmentation against relevant PMIDs and report deltas over the
+  literature baseline. Do not reuse graph-generated pseudo ground truth.
+- Add Docker Compose only for local FastAPI plus Neo4j composition. Defer React,
+  hosted deployment, and a general-purpose application database.
+- Keep Streamlit in a `web` extra so the FastAPI container does not install the
+  UI-only Pandas, PyArrow, and Streamlit dependency chain.

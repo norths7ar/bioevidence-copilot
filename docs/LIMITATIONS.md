@@ -40,20 +40,33 @@ substitute for professional medical judgment.
 
 ## Agent Limitations
 
-- The agent is a custom controller over existing retrieval and extraction
-  modules. It is intentionally not a general-purpose autonomous research agent.
+- LangGraph provides workflow routing and streaming, but planning, stopping,
+  and biomedical retrieval behavior remain project-specific and require
+  evaluation. It is not a general-purpose autonomous research agent.
 - Branch planning can broaden coverage, but it can also retrieve redundant or
   weakly relevant papers.
 - Stopping is deterministic and tied to evidence count and relevance thresholds;
   it is a pragmatic demo control, not a clinical sufficiency standard.
+
+## Knowledge Graph Limitations
+
+- Hetionet is a bounded, historical biomedical graph. Missing or newer entities
+  and relationships cannot be discovered through this branch.
+- Entity linking is name-based and does not yet provide ontology synonyms,
+  abbreviation disambiguation, or context-aware biomedical NER.
+- A graph edge or path is treated as a discovery hint, not as citable evidence.
+  Final answer support still depends on retrieved PubMed records.
+- Graph query expansion can introduce broad or irrelevant terms. Its value must
+  be judged by PMID recall deltas, not by the number of returned graph paths.
 
 ## Engineering Limitations
 
 - The FastAPI service is a local portfolio service boundary. It does not include
   authentication, authorization, rate limiting, persistence, background job
   orchestration, or production observability.
-- Docker packages the API service for reproducible local startup and portfolio
-  demonstration. It is not a cloud deployment configuration.
+- Docker packages the API, and Compose adds a local Neo4j service. Neither is a
+  cloud deployment configuration, and Hetionet import remains a separate data
+  preparation step.
 - Streamlit remains a lightweight read-only review console and is not currently
   implemented as a separate API client.
 

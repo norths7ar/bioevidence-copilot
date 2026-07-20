@@ -2,33 +2,36 @@
 
 [![CI](https://github.com/norths7ar/bioevidence-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/norths7ar/bioevidence-copilot/actions/workflows/ci.yml)
 
-BioEvidence Copilot is a portfolio project for biomedical literature evidence retrieval, structured evidence, evaluation, and custom agentic orchestration.
+BioEvidence Copilot is a portfolio project for biomedical literature evidence retrieval, structured evidence, evaluation, LangGraph orchestration, and optional Hetionet discovery.
 
 It is intentionally built in two stages:
 
 - Stage 1: citation-grounded RAG over PubMed abstracts
-- Stage 2: custom agentic orchestration over the same retrieval pipeline
+- Stage 2: LangGraph orchestration over the same retrieval pipeline
+- Stage 3: Hetionet knowledge-graph discovery that expands literature searches
 
 ## Goals
 - build an inspectable RAG baseline
 - extract structured evidence
 - generate citation-grounded answers
 - evolve toward agentic workflows without losing modularity
-- keep the agent layer custom rather than framework-first
+- use a maintained orchestration runtime while keeping domain logic explicit
 - keep the project evaluation-friendly
 
 ## Core demo flow
 1. user enters a biomedical question
 2. system retrieves PubMed evidence
 3. system shows a structured evidence table
-4. system returns a final answer with citations
+4. optional graph paths propose related biomedical search terms
+5. system returns a final answer with PubMed citations
 
 ## Repository status
-The project now includes the Stage 1 RAG baseline, Stage 2 custom agentic
+The project now includes the Stage 1 RAG baseline, Stage 2 LangGraph agentic
 orchestration, reproducible demo/evaluation artifacts, evidence faithfulness
 checks, agent traceability, a polished Streamlit review console, a FastAPI
-service boundary, Docker packaging for the API, and GitHub Actions quality
-gates.
+service boundary, optional Hetionet/Neo4j query expansion, local Docker Compose,
+and GitHub Actions quality gates. The literature-only baseline is preserved at
+the `v0.1.0` release tag.
 
 ## Implemented modules
 - ingestion
@@ -36,6 +39,7 @@ gates.
 - generation
 - extraction
 - agent
+- graph discovery
 - evaluation
 - API
 - web review console
@@ -52,7 +56,7 @@ Suggested local setup:
 Example commands:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e ".[dev,serve]"
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e ".[dev,serve,graph,web]"
 C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_baseline.py
 C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m streamlit run interfaces/web/streamlit_app.py
 C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
@@ -97,16 +101,19 @@ The demo app now shows:
 - baseline and agent comparisons in browser tabs via Streamlit
 - evidence filtering, sorting, readable trace tables, and JSON / Markdown / CSV exports
 
-The agent CLI adds:
+The LangGraph agent adds:
 - multi-step branch planning
 - branch-level retrieval traces
 - baseline vs agent comparison metadata
 - JSON output that can be written to disk with `--output`
+- optional Hetionet entity/path discovery before follow-up literature searches
+- streaming node updates through the FastAPI NDJSON endpoint
 
 Implementation note:
 - the baseline RAG answer path is evidence stitching / templated synthesis over structured evidence
 - the agent path is the LLM-backed synthesis path
 - `ranking.py` is a deterministic final ordering step, not a learned cross-encoder reranker
+- graph paths guide discovery but never replace PMID-backed evidence
 - the FastAPI service is a thin backend boundary over the same workflow functions;
   Streamlit remains a lightweight local presentation surface and does not need
   to call the API for the current local demo
@@ -125,6 +132,7 @@ The evaluation harness is file-based and local:
 - add `--limit N` for BioASQ smoke runs before attempting the full dataset
 - optionally add `--output path/to/report.json` to write the full report artifact
 - run the agent workflow directly with `C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_agent.py --query "asthma corticosteroids" --data-dir data/corpora/demo --output data/evaluations/demo/agent-report.json`
+- with Neo4j configured, compare baseline and graph-expanded PMID retrieval with `C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_graph_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --limit 5`
 
 Each JSONL dataset row uses:
 
@@ -160,7 +168,7 @@ Run the same checks locally:
 
 ```powershell
 C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m ruff check --no-cache .
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m mypy src/bioevidence/schemas src/bioevidence/evaluation src/bioevidence/workflows --no-sqlite-cache --no-incremental
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m mypy src/bioevidence/schemas src/bioevidence/evaluation src/bioevidence/workflows src/bioevidence/graph --no-sqlite-cache --no-incremental
 C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pytest
 C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --limit 1
 ```
@@ -172,7 +180,7 @@ of `src/bioevidence/`.
 Install the service runtime extra when needed:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e ".[dev,serve]"
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e ".[dev,serve,graph,web]"
 ```
 
 Run the API locally:
@@ -202,12 +210,26 @@ Initial endpoints:
 - `GET /api/v1/health`
 - `POST /api/v1/query/baseline`
 - `POST /api/v1/query/agent`
+- `POST /api/v1/query/agent/stream` (newline-delimited JSON node updates)
+
+Run the graph-enabled local service composition:
+
+```powershell
+docker compose up --build -d
+$env:BIOEVIDENCE_GRAPH_PASSWORD="bioevidence-local"
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/import_hetionet.py --hetionet-root E:/GitHub-Repos/hetionet-main
+```
+
+Compose starts FastAPI on port `8000`, Neo4j Browser on `7474`, and Bolt on
+`7687`. The database initially contains no Hetionet data; import is an explicit
+one-time preparation step. Override `BIOEVIDENCE_GRAPH_PASSWORD` in `.env` or
+the shell instead of using the documented local default outside development.
 
 ## Project structure
 
 ```text
 interfaces/         external API and Streamlit UI entrypoints
-src/bioevidence/    importable package with retrieval, extraction, generation, agent, and workflow layers
+src/bioevidence/    importable package with literature, graph, evidence, agent, and workflow layers
 docs/               project brief, architecture, roadmap, decisions, evaluation, demo, and limitation notes
 scripts/            local CLI helpers for baseline, agent, ingestion, conversion, and evaluation
 tests/              unit and integration tests

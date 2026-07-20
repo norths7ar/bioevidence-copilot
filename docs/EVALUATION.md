@@ -124,3 +124,26 @@ Quality checks:
   evidence records
 - `evidence_metadata`: deterministic study-type and effect-direction hints
   derived from evidence title and summary text
+
+## Graph Augmentation Evaluation
+
+Graph augmentation is evaluated against the same independently supplied gold
+PMIDs as the literature baseline. For each question the evaluator:
+
+1. records the baseline PMID ranking
+2. asks Hetionet for linked entities and related terms
+3. runs literature retrieval for each graph-derived query
+4. combines rankings with reciprocal rank fusion rather than hand-tuned weights
+5. compares top-k recall, hit rate, MRR, and newly recovered relevant PMIDs
+
+Run a graph-enabled comparison after Neo4j has been populated:
+
+```powershell
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_graph_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --limit 5 --output tmp/graph-gain-report.json
+```
+
+The result is an ablation report, not a claim that graph augmentation always
+helps. Queries with no linked Hetionet entity retain the baseline ranking and
+are reported with their graph status. The old GraphRAG prototype's
+path-template-generated targets are intentionally not used here because they
+would make the KG evaluate against its own output.

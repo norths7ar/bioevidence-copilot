@@ -169,6 +169,38 @@ Completed productization priorities:
 - quality gates and documentation polish
 
 Lower priority unless needed later:
-- Docker Compose for multiple services
+- Docker Compose for API plus Streamlit presentation
 - Streamlit-as-API-client conversion
 - full-text ingestion, PDF parsing, browser automation, or database adoption
+
+## v0.2: Graph-augmented evidence discovery
+
+The v0.1.0 release freezes the literature-only product baseline. The next
+version integrates the useful domain capabilities from `biomedical-graphrag`
+without treating knowledge-graph paths as citable literature evidence.
+
+### Milestone 14: Hetionet discovery layer [done]
+- migrate typed Hetionet nodes, entity linking, and deterministic path retrieval
+- expose Neo4j through an optional graph provider boundary
+- use graph paths to propose biomedical terms and follow-up literature queries
+- keep PubMed papers and PMIDs as the evidence source for final answers
+- keep baseline workflows operational when Neo4j is disabled or unavailable
+
+### Milestone 15: LangGraph orchestration runtime [done]
+- replace the handwritten agent loop with an explicit state graph
+- keep retrieval, graph discovery, sufficiency checks, extraction, and synthesis
+  as independently testable domain functions
+- expose workflow updates as a streaming API surface
+- preserve deterministic stopping and the existing inspectable trace contract
+
+### Milestone 16: Graph augmentation evaluation [done]
+- compare baseline literature retrieval with graph-expanded retrieval
+- report recall@k, MRR, new relevant PMIDs, and per-query deltas
+- keep graph evaluation ground truth independent of graph traversal output
+- do not reuse Hetionet path-template pseudo ground truth as biomedical evidence
+
+### Milestone 17: Local service composition [done]
+- add Docker Compose for FastAPI plus Neo4j
+- keep Hetionet import as an explicit, repeatable data-preparation step
+- keep React, hosted deployment, and general application persistence out of
+  scope until the retrieval and evaluation work is validated
