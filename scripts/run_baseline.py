@@ -13,6 +13,10 @@ from bioevidence.presentation import build_demo_payload, render_demo_output
 from bioevidence.ingestion.pubmed_client import PubMedRequestError
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.query import Query
+from bioevidence.utils.logging_config import configure_logging
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -40,16 +44,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s %(message)s",
-    )
-    query = Query(text=args.query)
     settings = load_settings()
+    configure_logging(settings.log_level)
+    query = Query(text=args.query)
     try:
         result = run_rag_pipeline(query, data_dir=args.data_dir, settings=settings)
     except (PubMedRequestError, URLError, OSError) as exc:
-        logging.getLogger(__name__).warning("Offline demo mode: %s", exc)
+        LOGGER.warning("baseline_offline_fallback reason=%s", type(exc).__name__)
         answer = AnswerBundle(
             answer_text="PubMed fetch is unavailable in the current environment. The scaffold is ready, but live ingestion is disabled.",
             citations=(),

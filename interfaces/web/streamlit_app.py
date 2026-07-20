@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Callable
 from urllib.error import URLError
@@ -10,6 +11,7 @@ from bioevidence.config import load_settings
 from bioevidence.ingestion.pubmed_client import PubMedRequestError
 from bioevidence.presentation import build_agent_comparison_payload, build_evidence_csv, build_markdown_report
 from bioevidence.schemas.query import Query
+from bioevidence.utils.logging_config import configure_logging
 
 try:  # pragma: no cover - optional runtime dependency
     import streamlit as st
@@ -19,6 +21,7 @@ except ModuleNotFoundError:  # pragma: no cover - import smoke test path
 
 DEFAULT_QUERY = "What evidence exists for asthma corticosteroids?"
 DEFAULT_DATA_DIR = "data/corpora/demo"
+LOGGER = logging.getLogger(__name__)
 
 
 def _cache_data(*decorator_args, **decorator_kwargs) -> Callable[[Callable[..., object]], Callable[..., object]]:
@@ -38,6 +41,7 @@ def load_demo_payload(query_text: str, data_dir: str | None = None) -> dict[str,
     try:
         result = run_agent_workflow(query, data_dir=data_path, settings=settings)
     except (PubMedRequestError, URLError, OSError) as exc:
+        LOGGER.warning("streamlit_agent_unavailable reason=%s", type(exc).__name__)
         return {
             "query": query.text,
             "baseline": None,
@@ -361,6 +365,10 @@ def _render_exports(payload: dict[str, object]) -> None:
 
 def main() -> None:
     _require_streamlit()
+    configure_logging(
+        load_settings().log_level,
+        log_file=Path("artifacts/logs/streamlit.log"),
+    )
     st.set_page_config(
         page_title="BioEvidence Copilot",
         page_icon="🧬",

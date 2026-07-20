@@ -74,6 +74,8 @@ class AgentWorkflowResult:
     comparison: dict[str, object]
     planning_steps: tuple[AgentPlanningStep, ...] = tuple()
     graph_discovery: GraphDiscoveryResult | None = None
+    run_id: str | None = None
+    trace_events: tuple[dict[str, object], ...] = tuple()
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -86,6 +88,8 @@ class AgentWorkflowResult:
             },
             "branches": [branch.to_dict() for branch in self.branch_results],
             "trace": {
+                "run_id": self.run_id,
+                "events": [dict(event) for event in self.trace_events],
                 "original_query": self.query.text,
                 "rewritten_query": self.answer.rewritten_query or self.query.text,
                 "planning_steps": [step.to_dict() for step in self.planning_steps],

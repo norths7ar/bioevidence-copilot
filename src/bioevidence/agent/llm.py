@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from dataclasses import dataclass
 from typing import Any, cast
@@ -12,6 +13,7 @@ from bioevidence.config import Settings
 
 
 JSON_FENCE_PATTERN = re.compile(r"```json\s*(.*?)\s*```", re.DOTALL | re.IGNORECASE)
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,6 +54,14 @@ def chat_text(
     except OpenAIError as exc:
         raise AgentLLMError("Agent model request failed") from exc
     content = response.choices[0].message.content or ""
+    usage = response.usage
+    LOGGER.debug(
+        "agent_model_completed model=%s finish_reason=%s content_chars=%d completion_tokens=%s",
+        model,
+        response.choices[0].finish_reason,
+        len(content),
+        usage.completion_tokens if usage is not None else None,
+    )
     return content.strip()
 
 
@@ -74,6 +84,8 @@ def chat_json(
 
 
 def _parse_json_content(content: str) -> dict[str, Any]:
+    if not content.strip():
+        raise AgentLLMError("Agent model returned empty content")
     candidates = [content]
     match = JSON_FENCE_PATTERN.search(content)
     if match:

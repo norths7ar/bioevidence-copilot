@@ -93,6 +93,12 @@ agent variables and pick a provider in `.env`:
 Example provider mappings are documented in `.env.example` for Qwen embedding,
 DeepSeek, Qwen Chat, and MiMo.
 
+Set `LOG_LEVEL` to `DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL` to control
+application logs. Logs go to the process stream by default, including under
+Docker. Agent run bundles retain `run.log`, Streamlit uses a rotating local log,
+and Docker rotates API logs. Provider credentials, prompts, abstracts, and full
+PMID lists are not logged.
+
 The demo app now shows:
 - the query and rewritten query
 - the top retrieved papers with scores and ranks
@@ -105,9 +111,10 @@ The LangGraph agent adds:
 - multi-step branch planning
 - branch-level retrieval traces
 - baseline vs agent comparison metadata
-- JSON output that can be written to disk with `--output`
+- compact JSON reports that can be written with `--output`
+- per-run log, report, and JSONL trace bundles under `--artifacts-dir`
 - optional Hetionet entity/path discovery before follow-up literature searches
-- streaming node updates through the FastAPI NDJSON endpoint
+- streaming execution events through the FastAPI NDJSON endpoint
 
 Implementation note:
 - the baseline RAG answer path is evidence stitching / templated synthesis over structured evidence
@@ -130,9 +137,16 @@ The evaluation harness is file-based and local:
 - add `--data-dir data/corpora/demo` to evaluate against the seeded demo corpus
 - add `--mode agent` to evaluate the agent workflow instead of the baseline
 - add `--limit N` for BioASQ smoke runs before attempting the full dataset
-- optionally add `--output path/to/report.json` to write the full report artifact
-- run the agent workflow directly with `C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_agent.py --query "asthma corticosteroids" --data-dir data/corpora/demo --output data/evaluations/demo/agent-report.json`
+- optionally add `--output path/to/report.json` to write a compact report artifact
+- run the agent workflow with `C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_agent.py --query "asthma corticosteroids" --data-dir data/corpora/demo --artifacts-dir artifacts/runs`
 - with Neo4j configured, compare baseline and graph-expanded PMID retrieval with `C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_graph_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --limit 5`
+
+Agent CLI output is intentionally split by responsibility. The console prints a
+short run summary. With `--artifacts-dir`, each run creates a timestamped,
+Git-ignored directory containing `run.log`, `report.json`, and `trace.jsonl`.
+Add `--debug` to include `debug.json`, which preserves the full internal payload
+only when it is needed for troubleshooting. Evidence rows appear once in the
+compact report; baseline and agent sections reference them by PMID.
 
 Each JSONL dataset row uses:
 
@@ -210,7 +224,7 @@ Initial endpoints:
 - `GET /api/v1/health`
 - `POST /api/v1/query/baseline`
 - `POST /api/v1/query/agent`
-- `POST /api/v1/query/agent/stream` (newline-delimited JSON node updates; startup failures use HTTP 400/500,
+- `POST /api/v1/query/agent/stream` (newline-delimited execution events; startup failures use HTTP 400/500,
   while failures after streaming starts produce a terminal `error` event)
 
 Run the graph-enabled local service composition:

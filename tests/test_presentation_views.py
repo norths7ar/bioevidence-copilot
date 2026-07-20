@@ -1,6 +1,12 @@
 from bioevidence.agent.state import AgentState
 from bioevidence.workflows import AgentPlanningStep, AgentWorkflowResult, WorkflowResult
-from bioevidence.presentation import build_agent_comparison_payload, build_evidence_csv, build_markdown_report, build_result_view
+from bioevidence.presentation import (
+    build_agent_comparison_payload,
+    build_agent_report_payload,
+    build_evidence_csv,
+    build_markdown_report,
+    build_result_view,
+)
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.evidence import EvidenceRecord
@@ -104,6 +110,17 @@ def test_build_agent_comparison_payload_includes_baseline_and_agent():
     assert payload["trace"]["original_query"] == "asthma corticosteroids"
     assert payload["trace"]["planning_steps"][0]["source"] == "skipped"
     assert payload["trace"]["retrieval_coverage"]["overlap_pmids"] == ["111"]
+
+
+def test_build_agent_report_payload_stores_evidence_once() -> None:
+    payload = build_agent_report_payload(_agent_result())
+
+    assert payload["schema_version"] == 1
+    assert payload["baseline"]["evidence_pmids"] == ["111"]
+    assert payload["agent"]["evidence_pmids"] == ["111"]
+    assert len(payload["evidence"]) == 1
+    assert payload["evidence"][0]["cited_by"] == ["baseline", "agent"]
+    assert payload["comparison"]["new_evidence_pmids"] == []
 
 
 def test_build_markdown_report_includes_answers_and_trace():

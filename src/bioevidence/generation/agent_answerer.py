@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
+import logging
 
 from bioevidence.agent.llm import AgentLLMError, chat_json, create_agent_client
 from bioevidence.agent.prompts import build_synthesis_messages
@@ -11,6 +13,16 @@ from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.evidence import EvidenceRecord
 
 
+LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class AgentSynthesisResult:
+    answer: AnswerBundle
+    source: str
+    fallback_reason: str | None = None
+
+
 def synthesize_agent_answer(
     state: AgentState,
     baseline_answer: str,
@@ -18,6 +30,21 @@ def synthesize_agent_answer(
     settings: Settings | None = None,
     client=None,
 ) -> AnswerBundle:
+    return synthesize_agent_answer_with_trace(
+        state,
+        baseline_answer,
+        settings=settings,
+        client=client,
+    ).answer
+
+
+def synthesize_agent_answer_with_trace(
+    state: AgentState,
+    baseline_answer: str,
+    *,
+    settings: Settings | None = None,
+    client=None,
+) -> AgentSynthesisResult:
     settings = settings or load_settings()
     evidence_records = tuple(state.top_evidence_records())
     try:
@@ -34,14 +61,22 @@ def synthesize_agent_answer(
         answer_text = _require_non_empty_str(payload.get("answer_text"), fallback=baseline_answer)
         citations = _normalize_citations(payload.get("citations"), evidence_records)
         rewritten_query = _normalize_rewritten_query(payload.get("rewritten_query"), state)
-        return AnswerBundle(
-            answer_text=answer_text,
-            citations=citations,
-            evidence_records=evidence_records,
-            rewritten_query=rewritten_query,
+        return AgentSynthesisResult(
+            answer=AnswerBundle(
+                answer_text=answer_text,
+                citations=citations,
+                evidence_records=evidence_records,
+                rewritten_query=rewritten_query,
+            ),
+            source="model",
         )
-    except (AgentLLMError, ValueError, TypeError):
-        return generate_answer(state.query, list(evidence_records))
+    except (AgentLLMError, ValueError, TypeError) as exc:
+        LOGGER.warning("synthesis_fallback reason=%s detail=%s", type(exc).__name__, exc)
+        return AgentSynthesisResult(
+            answer=generate_answer(state.query, list(evidence_records)),
+            source="template_fallback",
+            fallback_reason=str(exc),
+        )
 
 
 def _require_non_empty_str(value: object, fallback: str) -> str:

@@ -162,3 +162,26 @@
   text. Keep a bounded default rather than allowing unbounded model output.
 - Let the Compose API service read the local `.env` for provider credentials,
   while overriding container-only paths and the Neo4j service-network address.
+
+## 2026-07-20: Application logging boundary
+
+- Keep logging helpers local to `bioevidence.utils` instead of restoring the
+  separately installed `myutils` dependency.
+- Configure the root logger once at each application entrypoint and use
+  module-level `logging.getLogger(__name__)` instances throughout the package.
+- Write logs to the process stream by default so Docker and local runners use
+  the same behavior; do not create implicit per-script log directories.
+- Keep third-party HTTP and Neo4j INFO traffic quiet and log application
+  lifecycle counts, fallback reasons, and failures without prompts, abstracts,
+  credentials, or complete PMID collections.
+- Retain CLI logs beside their report and trace in a timestamped run directory;
+  keep Streamlit logs in one rotating file and use Docker log rotation for the
+  long-running API service.
+- Separate user-facing reports from execution traces. Store evidence once in
+  the compact report, write ordered execution events as JSONL, and generate the
+  full internal payload only when `--debug` is explicitly requested.
+- Reuse the same event schema for saved traces and the FastAPI NDJSON stream so
+  the service does not maintain a second tracing contract.
+- This supersedes the Milestone 9 decision to keep trace, report, and complete
+  internal state in one JSON payload; the Streamlit review payload remains an
+  in-memory presentation model rather than the persisted report format.

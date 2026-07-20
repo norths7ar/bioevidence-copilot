@@ -119,7 +119,7 @@ def test_agent_stream_endpoint_emits_terminal_error_after_stream_starts(monkeypa
     lines = [json.loads(line) for line in response.text.strip().splitlines()]
     assert lines[0] == {"node": "retrieve_baseline"}
     assert lines[1] == {
-        "node": "error",
+        "event": "error",
         "error": {"status_code": 500, "detail": "agent workflow failed"},
     }
 
@@ -143,7 +143,7 @@ def test_baseline_endpoint_returns_workflow_shape(monkeypatch):
     assert payload["evidence_table"][0]["pmid"] == "111"
 
 
-def test_agent_endpoint_returns_trace_shape(monkeypatch):
+def test_agent_endpoint_returns_compact_report(monkeypatch):
     from fastapi.testclient import TestClient
 
     import interfaces.api.main as api_main
@@ -168,12 +168,13 @@ def test_agent_endpoint_returns_trace_shape(monkeypatch):
 
     payload = response.json()
     assert response.status_code == 200
-    assert payload["source"] == "agent:local_corpus"
+    assert payload["schema_version"] == 1
+    assert payload["agent"]["source"] == "agent:local_corpus"
     assert payload["baseline"]["source"] == "local_corpus"
-    assert payload["state"]["stop_reason"] == "sufficient_evidence"
+    assert payload["stop"]["reason"] == "sufficient_evidence"
     assert payload["comparison"]["branch_count"] == 0
-    assert payload["trace"]["original_query"] == "asthma corticosteroids"
-    assert payload["trace"]["stop"]["reason"] == "sufficient_evidence"
+    assert payload["query"]["original"] == "asthma corticosteroids"
+    assert payload["evidence"][0]["pmid"] == "111"
 
 
 def test_baseline_endpoint_rejects_empty_query():

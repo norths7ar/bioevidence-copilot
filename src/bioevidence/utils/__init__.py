@@ -10,10 +10,12 @@ from bioevidence.utils.io import (
     save_text,
     set_output_dir,
 )
+from bioevidence.utils.logging_config import configure_logging
 from bioevidence.utils.text import normalize_whitespace, slugify_text
 
 __all__ = [
     "add_to_jsonl",
+    "configure_logging",
     "iter_jsonl",
     "load_json",
     "load_jsonl",

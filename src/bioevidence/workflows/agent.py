@@ -13,12 +13,13 @@ from bioevidence.agent.state import AgentState
 from bioevidence.agent.stop_criteria import should_stop
 from bioevidence.agent.tools import merge_candidates, merge_evidence_records
 from bioevidence.config import Settings, load_settings
-from bioevidence.generation.agent_answerer import synthesize_agent_answer
+from bioevidence.generation.agent_answerer import synthesize_agent_answer_with_trace
 from bioevidence.graph.models import GraphDiscoveryResult
 from bioevidence.graph.provider import GraphDiscoveryError, GraphDiscoveryProvider, create_graph_provider
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document
 from bioevidence.schemas.query import Query
+from bioevidence.trace import TraceRecorder
 from bioevidence.workflows.baseline import run_rag_pipeline
 from bioevidence.workflows.models import AgentBranchResult, AgentPlanningStep, AgentWorkflowResult, WorkflowResult
 from bioevidence.workflows.retrieval_stack import run_retrieval_stack
@@ -35,7 +36,7 @@ class AgentGraphState(TypedDict, total=False):
     state: AgentState
 
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def run_agent_workflow(
@@ -45,14 +46,42 @@ def run_agent_workflow(
     documents: tuple[Document, ...] | list[Document] | None = None,
     settings: Settings | None = None,
     graph_provider: GraphDiscoveryProvider | None = None,
+    trace_recorder: TraceRecorder | None = None,
 ) -> AgentWorkflowResult:
     settings = settings or load_settings()
+    recorder = trace_recorder or TraceRecorder()
+    _record_run_started(recorder, query, settings)
     provider = graph_provider or create_graph_provider(settings)
     owns_provider = graph_provider is None
+    LOGGER.info(
+        "agent_started top_k=%d graph_enabled=%s max_iterations=%d",
+        query.top_k,
+        settings.graph_enabled,
+        settings.agent_max_iterations,
+    )
     try:
-        graph = _build_agent_graph(query, data_dir=data_dir, settings=settings, graph_provider=provider)
+        graph = _build_agent_graph(
+            query,
+            data_dir=data_dir,
+            settings=settings,
+            graph_provider=provider,
+            trace_recorder=recorder,
+        )
         output = graph.invoke(_initial_graph_state(query, documents))
-        return output["result"]
+        result = output["result"]
+        LOGGER.info(
+            "agent_completed iterations=%d branches=%d evidence=%d citations=%d stop_reason=%s",
+            result.state.iterations,
+            len(result.branch_results),
+            len(result.evidence_records),
+            len(result.answer.citations),
+            result.state.stop_reason,
+        )
+        return result
+    except Exception as exc:
+        recorder.emit("run_failed", error_type=type(exc).__name__)
+        LOGGER.exception("agent_failed")
+        raise
     finally:
         if owns_provider:
             provider.close()
@@ -65,15 +94,40 @@ def stream_agent_workflow(
     documents: tuple[Document, ...] | list[Document] | None = None,
     settings: Settings | None = None,
     graph_provider: GraphDiscoveryProvider | None = None,
+    trace_recorder: TraceRecorder | None = None,
 ) -> Iterator[dict[str, object]]:
     settings = settings or load_settings()
+    recorder = trace_recorder or TraceRecorder()
+    _record_run_started(recorder, query, settings)
     provider = graph_provider or create_graph_provider(settings)
     owns_provider = graph_provider is None
-    graph = _build_agent_graph(query, data_dir=data_dir, settings=settings, graph_provider=provider)
+    graph = _build_agent_graph(
+        query,
+        data_dir=data_dir,
+        settings=settings,
+        graph_provider=provider,
+        trace_recorder=recorder,
+    )
+    emitted_event_count = 0
     try:
+        for event in recorder.events():
+            yield event
+            emitted_event_count += 1
         for update in graph.stream(_initial_graph_state(query, documents), stream_mode="updates"):
+            for event in recorder.events()[emitted_event_count:]:
+                yield event
+                emitted_event_count += 1
             node_name, node_update = next(iter(update.items()))
-            yield _stream_event(node_name, node_update)
+            if node_name == "synthesize" and "result" in node_update:
+                yield {
+                    "event": "result",
+                    "run_id": recorder.run_id,
+                    "result": node_update["result"],
+                }
+    except Exception as exc:
+        failure_event = recorder.emit("run_failed", error_type=type(exc).__name__)
+        yield failure_event
+        raise
     finally:
         if owns_provider:
             provider.close()
@@ -98,14 +152,17 @@ def _build_agent_graph(
     data_dir: Path | None,
     settings: Settings,
     graph_provider: GraphDiscoveryProvider,
+    trace_recorder: TraceRecorder,
 ):
     try:
         agent_client = create_agent_client(settings)
-    except AgentLLMError:
+    except AgentLLMError as exc:
+        LOGGER.warning("agent_backend_unavailable reason=%s", exc)
         agent_client = None
 
     def baseline_node(graph_state: AgentGraphState) -> AgentGraphState:
         runtime = graph_state
+        started_at = trace_recorder.start_timer()
         baseline = run_rag_pipeline(
             query,
             data_dir=data_dir,
@@ -116,14 +173,23 @@ def _build_agent_graph(
         state.record_branch_query(query.text)
         state.merge_candidates(baseline.retrieved_candidates)
         state.merge_evidence_records(baseline.evidence_records)
+        trace_recorder.emit(
+            "baseline_completed",
+            duration_ms=trace_recorder.elapsed_ms(started_at),
+            source=baseline.source,
+            candidates=len(baseline.retrieved_candidates),
+            evidence=len(baseline.evidence_records),
+            citations=len(baseline.answer.citations),
+        )
         return {"baseline": baseline, "state": state}
 
     def discover_graph_node(graph_state: AgentGraphState) -> AgentGraphState:
         runtime = graph_state
+        started_at = trace_recorder.start_timer()
         try:
             discovery = graph_provider.discover(query.text)
         except GraphDiscoveryError as exc:
-            logger.warning("Graph discovery unavailable: %s", exc)
+            LOGGER.warning("graph_discovery_fallback reason=%s", type(exc).__name__)
             discovery = GraphDiscoveryResult(
                 query=query.text,
                 status="unavailable",
@@ -146,6 +212,21 @@ def _build_agent_graph(
                     source="knowledge_graph",
                 )
             )
+        LOGGER.info(
+            "graph_discovery_completed status=%s linked_entities=%d paths=%d expansion_queries=%d",
+            discovery.status,
+            len(discovery.linked_entities),
+            len(discovery.paths),
+            len(discovery.expanded_queries),
+        )
+        trace_recorder.emit(
+            "graph_discovery_completed",
+            duration_ms=trace_recorder.elapsed_ms(started_at),
+            status=discovery.status,
+            linked_entities=len(discovery.linked_entities),
+            paths=len(discovery.paths),
+            expansion_queries=list(accepted_queries),
+        )
         return {
             "graph_discovery": discovery,
             "planned_queries": list(accepted_queries),
@@ -155,6 +236,7 @@ def _build_agent_graph(
     def plan_node(graph_state: AgentGraphState) -> AgentGraphState:
         runtime = graph_state
         state = runtime["state"]
+        started_at = trace_recorder.start_timer()
         planning_result = plan_next_steps_with_trace(state, settings=settings, client=agent_client)
         planning_steps = list(runtime.get("planning_steps", []))
         planning_steps.append(
@@ -169,6 +251,22 @@ def _build_agent_graph(
         )
         if not planning_result.accepted_queries and state.stop_reason is None:
             state.stop_reason = "planner_exhausted"
+        LOGGER.info(
+            "planner_completed iteration=%d source=%s proposed=%d accepted=%d",
+            state.iterations,
+            planning_result.source,
+            len(planning_result.proposed_queries),
+            len(planning_result.accepted_queries),
+        )
+        trace_recorder.emit(
+            "planner_completed",
+            duration_ms=trace_recorder.elapsed_ms(started_at),
+            iteration=state.iterations,
+            source=planning_result.source,
+            proposed=len(planning_result.proposed_queries),
+            accepted_queries=list(planning_result.accepted_queries),
+            fallback_reason=planning_result.fallback_reason,
+        )
         return {
             "planned_queries": list(planning_result.accepted_queries),
             "planning_steps": planning_steps,
@@ -186,6 +284,7 @@ def _build_agent_graph(
             if not state.record_branch_query(branch_query):
                 continue
             branch_added = True
+            started_at = trace_recorder.start_timer()
             branch_query_obj = Query(text=branch_query, rewritten_text=branch_query, top_k=query.top_k)
             pmids_before_branch = set(state.seen_pmids)
             returned_documents, ranked_candidates, evidence_records, source = run_retrieval_stack(
@@ -214,6 +313,27 @@ def _build_agent_graph(
             )
             merge_candidates(state, branch_result.retrieved_candidates)
             merge_evidence_records(state, branch_result.evidence_records)
+            new_pmids = sorted(
+                {candidate.document.pmid for candidate in ranked_candidates} - pmids_before_branch
+            )
+            LOGGER.info(
+                "branch_retrieval_completed iteration=%d source=%s candidates=%d evidence=%d new_pmids=%d",
+                state.iterations,
+                source,
+                len(ranked_candidates),
+                len(evidence_records),
+                len(new_pmids),
+            )
+            trace_recorder.emit(
+                "branch_retrieval_completed",
+                duration_ms=trace_recorder.elapsed_ms(started_at),
+                iteration=state.iterations,
+                query=branch_query,
+                source=source,
+                candidates=len(ranked_candidates),
+                evidence=len(evidence_records),
+                new_pmids=new_pmids,
+            )
             if should_stop(
                 state,
                 minimum_unique_pmids=settings.agent_min_unique_pmids,
@@ -239,7 +359,37 @@ def _build_agent_graph(
             state.stop_reason = "max_iterations" if state.iterations >= state.max_iterations else "planner_exhausted"
         baseline = runtime["baseline"]
         branch_results = runtime.get("branch_results", [])
-        answer = synthesize_agent_answer(state, baseline.answer.answer_text, settings=settings, client=agent_client)
+        started_at = trace_recorder.start_timer()
+        synthesis = synthesize_agent_answer_with_trace(
+            state,
+            baseline.answer.answer_text,
+            settings=settings,
+            client=agent_client,
+        )
+        answer = synthesis.answer
+        trace_recorder.emit(
+            "synthesis_completed",
+            duration_ms=trace_recorder.elapsed_ms(started_at),
+            source=synthesis.source,
+            evidence=len(state.top_evidence_records()),
+            citations=len(answer.citations),
+            fallback_reason=synthesis.fallback_reason,
+        )
+        trace_recorder.emit(
+            "run_completed",
+            iterations=state.iterations,
+            branches=len(branch_results),
+            evidence=len(state.top_evidence_records()),
+            citations=len(answer.citations),
+            stop_reason=state.stop_reason,
+        )
+        LOGGER.info(
+            "synthesis_completed source=%s evidence=%d citations=%d stop_reason=%s",
+            synthesis.source,
+            len(state.top_evidence_records()),
+            len(answer.citations),
+            state.stop_reason,
+        )
         result = AgentWorkflowResult(
             query=query,
             baseline=baseline,
@@ -259,6 +409,8 @@ def _build_agent_graph(
             ),
             planning_steps=tuple(runtime.get("planning_steps", [])),
             graph_discovery=runtime.get("graph_discovery"),
+            run_id=trace_recorder.run_id,
+            trace_events=trace_recorder.events(),
         )
         return {"result": result, "state": state}
 
@@ -300,16 +452,17 @@ def _stop(state: AgentState, settings: Settings) -> bool:
     )
 
 
-def _stream_event(node_name: str, update: AgentGraphState) -> dict[str, object]:
-    event: dict[str, object] = {"node": node_name}
-    if node_name == "discover_graph" and "graph_discovery" in update:
-        event["graph_discovery"] = update["graph_discovery"].to_dict()
-    elif node_name in {"plan", "retrieve_branches"}:
-        event["planned_queries"] = list(update.get("planned_queries", []))
-        event["branch_count"] = len(update.get("branch_results", []))
-    elif node_name == "synthesize" and "result" in update:
-        event["result"] = update["result"]
-    return event
+def _record_run_started(recorder: TraceRecorder, query: Query, settings: Settings) -> None:
+    if recorder.events():
+        return
+    recorder.emit(
+        "run_started",
+        query=query.text,
+        top_k=query.top_k,
+        graph_enabled=settings.graph_enabled,
+        agent_model=settings.agent_model or None,
+        max_iterations=settings.agent_max_iterations,
+    )
 
 
 def _merge_documents(document_groups: list[tuple[Document, ...]]) -> list[Document]:

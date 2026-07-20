@@ -6,6 +6,7 @@ import bioevidence.agent.planner as planner_module
 import pytest
 from bioevidence.agent.state import AgentState
 from bioevidence.config import Settings
+from bioevidence.generation.agent_answerer import AgentSynthesisResult
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.evidence import EvidenceRecord
@@ -92,11 +93,14 @@ def test_run_agent_workflow_accumulates_branches_and_stops(monkeypatch):
 
     def fake_synthesize(state: AgentState, baseline_answer: str, *, settings=None, client=None):
         del state, baseline_answer, settings, client
-        return AnswerBundle(
-            answer_text="Agent synthesis",
-            citations=("111", "333"),
-            evidence_records=tuple(),
-            rewritten_query="asthma biomarkers",
+        return AgentSynthesisResult(
+            answer=AnswerBundle(
+                answer_text="Agent synthesis",
+                citations=("111", "333"),
+                evidence_records=tuple(),
+                rewritten_query="asthma biomarkers",
+            ),
+            source="model",
         )
 
     def fake_run_rag_pipeline(query: Query, *, data_dir=None, documents=None, settings=None):
@@ -123,7 +127,7 @@ def test_run_agent_workflow_accumulates_branches_and_stops(monkeypatch):
     monkeypatch.setattr(agent_workflow, "run_rag_pipeline", fake_run_rag_pipeline)
     monkeypatch.setattr(agent_workflow, "run_retrieval_stack", fake_retrieval_stack)
     monkeypatch.setattr(agent_workflow, "plan_next_steps_with_trace", fake_plan_next_steps_with_trace)
-    monkeypatch.setattr(agent_workflow, "synthesize_agent_answer", fake_synthesize)
+    monkeypatch.setattr(agent_workflow, "synthesize_agent_answer_with_trace", fake_synthesize)
     monkeypatch.setattr(agent_workflow, "create_agent_client", lambda settings: object())
 
     result = agent_workflow.run_agent_workflow(Query(text="asthma corticosteroids"), settings=_settings())
@@ -146,14 +150,18 @@ def test_run_agent_workflow_accumulates_branches_and_stops(monkeypatch):
 
     events = list(agent_workflow.stream_agent_workflow(Query(text="asthma corticosteroids"), settings=_settings()))
 
-    assert [event["node"] for event in events] == [
-        "retrieve_baseline",
-        "discover_graph",
-        "plan",
-        "retrieve_branches",
-        "synthesize",
+    assert [event["event"] for event in events] == [
+        "run_started",
+        "baseline_completed",
+        "graph_discovery_completed",
+        "planner_completed",
+        "branch_retrieval_completed",
+        "synthesis_completed",
+        "run_completed",
+        "result",
     ]
     assert isinstance(events[-1]["result"], agent_workflow.AgentWorkflowResult)
+    assert events[0]["run_id"] == events[-1]["run_id"]
 
 
 def test_graph_discovery_only_degrades_declared_operational_errors(monkeypatch) -> None:

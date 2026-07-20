@@ -18,11 +18,14 @@ from bioevidence.workflows import (
     stream_agent_workflow,
 )
 from bioevidence.extraction.table import evidence_table_rows
-from bioevidence.presentation import build_agent_trace_payload
+from bioevidence.presentation import build_agent_report_payload
 from bioevidence.schemas.query import Query
+from bioevidence.config import load_settings
+from bioevidence.utils.logging_config import configure_logging
 
 
-logger = logging.getLogger(__name__)
+configure_logging(load_settings().log_level)
+LOGGER = logging.getLogger(__name__)
 
 
 app = FastAPI(
@@ -50,6 +53,7 @@ def query_baseline(request: QueryRequest) -> dict[str, Any]:
     except (FileNotFoundError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
+        LOGGER.exception("baseline_api_failed")
         raise HTTPException(status_code=500, detail="baseline workflow failed") from exc
     return _workflow_response(result)
 
@@ -61,6 +65,7 @@ def query_agent(request: QueryRequest) -> dict[str, Any]:
     except (FileNotFoundError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
+        LOGGER.exception("agent_api_failed")
         raise HTTPException(status_code=500, detail="agent workflow failed") from exc
     return _agent_response(result)
 
@@ -75,7 +80,7 @@ def query_agent_stream(request: QueryRequest) -> StreamingResponse:
     except (FileNotFoundError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
-        logger.exception("Agent stream failed before the first event")
+        LOGGER.exception("agent_stream_failed_before_first_event")
         raise HTTPException(status_code=500, detail="agent workflow failed") from exc
 
     def events() -> Iterator[str]:
@@ -86,7 +91,7 @@ def query_agent_stream(request: QueryRequest) -> StreamingResponse:
         except (FileNotFoundError, ValueError) as exc:
             yield _serialize_stream_error(400, str(exc))
         except Exception:
-            logger.exception("Agent stream failed after streaming started")
+            LOGGER.exception("agent_stream_failed_after_start")
             yield _serialize_stream_error(500, "agent workflow failed")
         finally:
             close = getattr(event_iterator, "close", None)
@@ -116,7 +121,7 @@ def _serialize_stream_event(event: dict[str, object]) -> str:
 
 def _serialize_stream_error(status_code: int, detail: str) -> str:
     return json.dumps(
-        {"node": "error", "error": {"status_code": status_code, "detail": detail}},
+        {"event": "error", "error": {"status_code": status_code, "detail": detail}},
         ensure_ascii=True,
     ) + "\n"
 
@@ -134,25 +139,7 @@ def _workflow_response(result: WorkflowResult | AgentWorkflowResult) -> dict[str
 
 
 def _agent_response(result: AgentWorkflowResult) -> dict[str, Any]:
-    response = _workflow_response(result)
-    response.update(
-        {
-            "baseline": _workflow_response(result.baseline),
-            "branches": [branch.to_dict() for branch in result.branch_results],
-            "state": {
-                "iterations": result.state.iterations,
-                "max_iterations": result.state.max_iterations,
-                "branch_queries": list(result.state.branch_queries),
-                "unique_pmids": sorted(result.state.seen_pmids),
-                "sufficient": result.state.sufficient,
-                "stop_reason": result.state.stop_reason,
-            },
-            "comparison": result.comparison,
-            "trace": build_agent_trace_payload(result),
-            "graph_discovery": result.graph_discovery.to_dict() if result.graph_discovery else None,
-        }
-    )
-    return response
+    return build_agent_report_payload(result)
 
 
 def _retrieved_papers(result: WorkflowResult | AgentWorkflowResult) -> list[dict[str, Any]]:

@@ -56,11 +56,15 @@ Check the API:
 Invoke-WebRequest -UseBasicParsing http://localhost:8000/api/v1/health
 ```
 
-Run the agent workflow as JSON:
+Run the agent workflow with retained run artifacts:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_agent.py --query "asthma corticosteroids" --data-dir data/corpora/demo --output tmp/agent-report.json
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_agent.py --query "asthma corticosteroids" --data-dir data/corpora/demo --artifacts-dir artifacts/runs
 ```
+
+The command prints a short summary and creates one timestamped directory with
+`run.log`, `report.json`, and `trace.jsonl`. Add `--debug` only when the complete
+internal workflow payload is needed.
 
 Run the evaluation smoke path:
 

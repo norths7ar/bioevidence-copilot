@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections.abc import Sequence
+from dataclasses import dataclass
+import logging
 
 from bioevidence.agent.llm import AgentLLMError, create_agent_client, chat_json
 from bioevidence.agent.prompts import build_planning_messages
@@ -10,12 +11,16 @@ from bioevidence.config import Settings, load_settings
 from bioevidence.schemas.evidence import EvidenceRecord
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 @dataclass(frozen=True, slots=True)
 class PlanningResult:
     proposed_queries: tuple[str, ...]
     accepted_queries: tuple[str, ...]
     rationale: str
     source: str
+    fallback_reason: str | None = None
 
 
 def plan_next_steps(
@@ -65,10 +70,13 @@ def plan_next_steps_with_trace(
         branch_queries = _normalize_branch_queries(payload.get("branch_queries"))
         rationale = _normalize_rationale(payload.get("rationale"))
         source = "model"
-    except (AgentLLMError, ValueError, TypeError):
+        fallback_reason = None
+    except (AgentLLMError, ValueError, TypeError) as exc:
+        LOGGER.warning("planner_fallback reason=%s detail=%s", type(exc).__name__, exc)
         branch_queries = _fallback_branch_queries(state, branch_count=branch_count)
         rationale = _fallback_rationale(state)
         source = "fallback"
+        fallback_reason = str(exc)
 
     accepted_queries = _deduplicate_queries(branch_queries, state.branch_queries)[:branch_count]
     return PlanningResult(
@@ -76,6 +84,7 @@ def plan_next_steps_with_trace(
         accepted_queries=tuple(accepted_queries),
         rationale=rationale,
         source=source,
+        fallback_reason=fallback_reason,
     )
 
 

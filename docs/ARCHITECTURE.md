@@ -39,12 +39,12 @@ User query
 LangGraph controls routing between the existing retrieval, graph discovery,
 stopping, and extraction layers. The baseline templated answer path remains
 available for comparison, while the agent can use an OpenAI-compatible LLM
-backend for planning and final synthesis. Agent workflow output includes a structured
-trace payload with planning steps, branch-level retrieval diagnostics, coverage
-comparison against the baseline, and deterministic stopping metadata. The app
-surface stays lightweight; agent comparison is exposed through CLI / JSON report
-artifacts and a read-only Streamlit review console rather than a heavier
-interactive UI.
+backend for planning and final synthesis. Each run produces ordered execution
+events with a shared run ID. The CLI can retain those events as JSONL beside a
+compact report and run log, while the FastAPI streaming endpoint emits the same
+event schema. The complete internal workflow payload is debug-only. The app
+surface stays lightweight; agent comparison is exposed through CLI artifacts
+and a read-only Streamlit review console rather than a heavier interactive UI.
 
 ## Data model expectations
 At minimum define schemas for:
@@ -149,7 +149,8 @@ runtime for graph-enabled demos.
 
 ## Agent runtime
 
-LangGraph owns workflow routing, node execution, and streaming updates. Domain
+LangGraph owns workflow routing, node execution, and streaming updates. Saved
+JSONL traces and streamed API events use the same ordered event contract. Domain
 behavior remains in project modules:
 
 - the planner proposes follow-up searches

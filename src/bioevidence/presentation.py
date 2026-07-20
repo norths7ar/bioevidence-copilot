@@ -78,6 +78,104 @@ def build_agent_comparison_payload(result: AgentWorkflowResult) -> dict[str, obj
     }
 
 
+def build_agent_report_payload(result: AgentWorkflowResult) -> dict[str, object]:
+    baseline_evidence_pmids = [record.pmid for record in result.baseline.evidence_records]
+    agent_evidence_pmids = [record.pmid for record in result.evidence_records]
+    baseline_evidence_set = set(baseline_evidence_pmids)
+    agent_evidence_set = set(agent_evidence_pmids)
+    baseline_citations = set(result.baseline.answer.citations)
+    agent_citations = set(result.answer.citations)
+
+    evidence_by_pmid = {record.pmid: record for record in result.baseline.evidence_records}
+    evidence_by_pmid.update({record.pmid: record for record in result.evidence_records})
+    evidence = []
+    for pmid, record in evidence_by_pmid.items():
+        evidence.append(
+            {
+                "pmid": pmid,
+                "title": record.title,
+                "year": record.year,
+                "journal": record.journal,
+                "entities": list(record.entities),
+                "summary": record.summary,
+                "relevance_score": round(record.relevance_score, 4),
+                "in_baseline": pmid in baseline_evidence_set,
+                "in_agent": pmid in agent_evidence_set,
+                "cited_by": [
+                    name
+                    for name, citations in (("baseline", baseline_citations), ("agent", agent_citations))
+                    if pmid in citations
+                ],
+            }
+        )
+
+    graph = result.graph_discovery
+    graph_summary = None
+    if graph is not None:
+        graph_summary = {
+            "status": graph.status,
+            "linked_entities": [
+                {
+                    "id": entity.id,
+                    "name": entity.name,
+                    "label": entity.label,
+                    "score": entity.score,
+                    "match_type": entity.match_type,
+                }
+                for entity in graph.linked_entities
+            ],
+            "path_count": len(graph.paths),
+            "expanded_queries": list(graph.expanded_queries),
+        }
+
+    return {
+        "schema_version": 1,
+        "run": {"run_id": result.run_id, "status": "completed"},
+        "query": {
+            "original": result.query.text,
+            "rewritten": result.answer.rewritten_query or result.query.text,
+        },
+        "baseline": {
+            "source": result.baseline.source,
+            "answer": result.baseline.answer.answer_text,
+            "citations": list(result.baseline.answer.citations),
+            "evidence_pmids": baseline_evidence_pmids,
+        },
+        "agent": {
+            "source": result.source,
+            "answer": result.answer.answer_text,
+            "citations": list(result.answer.citations),
+            "evidence_pmids": agent_evidence_pmids,
+        },
+        "comparison": {
+            "branch_count": len(result.branch_results),
+            "iterations": result.state.iterations,
+            "baseline_evidence_count": len(baseline_evidence_set),
+            "agent_evidence_count": len(agent_evidence_set),
+            "new_evidence_pmids": sorted(agent_evidence_set - baseline_evidence_set),
+            "citation_overlap": sorted(baseline_citations & agent_citations),
+            "agent_backend_ready": result.comparison.get("agent_backend_ready", False),
+        },
+        "planning": [
+            {
+                "iteration": step.iteration,
+                "source": step.source,
+                "accepted_queries": list(step.accepted_queries),
+                "rationale": step.rationale,
+            }
+            for step in result.planning_steps
+        ],
+        "graph": graph_summary,
+        "stop": {
+            "reason": result.state.stop_reason,
+            "sufficient": result.state.sufficient,
+            "iterations": result.state.iterations,
+            "max_iterations": result.state.max_iterations,
+        },
+        "evidence": evidence,
+    }
+
+
 def build_agent_trace_payload(result: AgentWorkflowResult) -> dict[str, object]:
     return {
         "original_query": result.query.text,
@@ -93,6 +191,34 @@ def build_agent_trace_payload(result: AgentWorkflowResult) -> dict[str, object]:
             "max_iterations": result.state.max_iterations,
         },
     }
+
+
+def render_agent_run_summary(result: AgentWorkflowResult) -> str:
+    graph = result.graph_discovery
+    graph_text = "unavailable"
+    if graph is not None:
+        graph_text = (
+            f"{graph.status}, {len(graph.linked_entities)} entities, "
+            f"{len(graph.paths)} paths, {len(graph.expanded_queries)} expansions"
+        )
+    planner_sources = " -> ".join(step.source for step in result.planning_steps) or "none"
+    baseline_pmids = {record.pmid for record in result.baseline.evidence_records}
+    agent_pmids = {record.pmid for record in result.evidence_records}
+    synthesis_event = next(
+        (event for event in reversed(result.trace_events) if event.get("event") == "synthesis_completed"),
+        {},
+    )
+    return "\n".join(
+        [
+            f"Run ID: {result.run_id or 'unavailable'}",
+            f"Graph: {graph_text}",
+            f"Planner: {planner_sources}",
+            f"Evidence: baseline {len(baseline_pmids)} -> agent {len(agent_pmids)}",
+            f"New evidence: {len(agent_pmids - baseline_pmids)}",
+            f"Synthesis: {synthesis_event.get('source', 'unknown')}",
+            f"Stop: {result.state.stop_reason} after {result.state.iterations} iterations",
+        ]
+    )
 
 
 def build_markdown_report(payload: dict[str, object]) -> str:
