@@ -12,6 +12,7 @@ from typing import Any, TextIO
 from neo4j import GraphDatabase
 
 from bioevidence.config import load_settings
+from bioevidence.graph.cypher import quote_identifier
 
 
 DEFAULT_BATCH_SIZE = 5_000
@@ -27,10 +28,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--hetionet-root", type=Path, required=True)
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
     return parser
-
-
-def quote_identifier(value: str) -> str:
-    return f"`{value.replace('`', '``')}`"
 
 
 def ensure_real_data_file(path: Path) -> None:

@@ -1,3 +1,4 @@
+import bioevidence.graph.entity_linking as entity_linking
 from bioevidence.graph.entity_linking import EntityLinker, normalize_text
 from bioevidence.graph.models import KGNode
 
@@ -15,6 +16,29 @@ def _linker() -> EntityLinker:
 
 def test_normalize_text_keeps_biomedical_tokens() -> None:
     assert normalize_text("BRCA1 / Alzheimer's disease") == "brca1 alzheimer disease"
+
+
+def test_entity_linker_normalizes_nodes_once_and_query_once(monkeypatch) -> None:
+    calls = 0
+    original = entity_linking.normalize_text
+
+    def counting_normalize(value: str) -> str:
+        nonlocal calls
+        calls += 1
+        return original(value)
+
+    monkeypatch.setattr(entity_linking, "normalize_text", counting_normalize)
+    linker = EntityLinker(
+        [
+            KGNode(id="Gene::1", name="APOE", label="Gene"),
+            KGNode(id="Gene::2", name="TREM2", label="Gene"),
+        ]
+    )
+
+    linker.link("APOE evidence")
+    linker.link("TREM2 evidence")
+
+    assert calls == 4
 
 
 def test_entity_linker_prefers_phrase_match() -> None:

@@ -14,6 +14,10 @@ class GraphDiscoveryProvider(Protocol):
     def close(self) -> None: ...
 
 
+class GraphDiscoveryError(RuntimeError):
+    pass
+
+
 class DisabledGraphProvider:
     def discover(self, query: str) -> GraphDiscoveryResult:
         return GraphDiscoveryResult(query=query, status="disabled")
@@ -30,15 +34,22 @@ class Neo4jGraphProvider:
     def driver(self) -> Any:
         try:
             from neo4j import GraphDatabase
+            from neo4j.exceptions import DriverError, Neo4jError
         except ModuleNotFoundError as exc:
-            raise RuntimeError("Install the graph extra to enable Neo4j discovery") from exc
+            raise GraphDiscoveryError("Install the graph extra to enable Neo4j discovery") from exc
         if not self._settings.graph_password:
-            raise RuntimeError("BIOEVIDENCE_GRAPH_PASSWORD is required when graph discovery is enabled")
-        driver = GraphDatabase.driver(
-            self._settings.graph_uri,
-            auth=(self._settings.graph_user, self._settings.graph_password),
-        )
-        driver.verify_connectivity()
+            raise GraphDiscoveryError("BIOEVIDENCE_GRAPH_PASSWORD is required when graph discovery is enabled")
+        driver = None
+        try:
+            driver = GraphDatabase.driver(
+                self._settings.graph_uri,
+                auth=(self._settings.graph_user, self._settings.graph_password),
+            )
+            driver.verify_connectivity()
+        except (DriverError, Neo4jError, OSError) as exc:
+            if driver is not None:
+                driver.close()
+            raise GraphDiscoveryError("Neo4j connection failed") from exc
         return driver
 
     @cached_property
@@ -47,6 +58,14 @@ class Neo4jGraphProvider:
             return EntityLinker(load_nodes_from_neo4j(session))
 
     def discover(self, query: str) -> GraphDiscoveryResult:
+        try:
+            return self._discover(query)
+        except GraphDiscoveryError:
+            raise
+        except _neo4j_error_types() as exc:
+            raise GraphDiscoveryError("Neo4j discovery query failed") from exc
+
+    def _discover(self, query: str) -> GraphDiscoveryResult:
         linked_entities = tuple(self.entity_linker.link(query, top_k=3))
         if not linked_entities:
             return GraphDiscoveryResult(
@@ -116,13 +135,22 @@ def build_expansion_queries(
         if not path.nodes:
             continue
         terminal = path.nodes[-1].name.strip()
-        if not terminal or normalize_text(terminal) in normalized_query:
+        normalized_terminal = normalize_text(terminal)
+        if not normalized_terminal or f" {normalized_terminal} " in f" {normalized_query} ":
             continue
         if terminal.casefold() not in {term.casefold() for term in terms}:
             terms.append(terminal)
         if len(terms) >= max_queries:
             break
     return tuple(f"{query} {term}" for term in terms)
+
+
+def _neo4j_error_types() -> tuple[type[Exception], ...]:
+    try:
+        from neo4j.exceptions import DriverError, Neo4jError
+    except ModuleNotFoundError:
+        return ()
+    return (DriverError, Neo4jError, OSError)
 
 
 def _one_hop_record(record: Any) -> KGPathRecord:

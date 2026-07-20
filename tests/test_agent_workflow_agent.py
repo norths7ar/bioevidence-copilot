@@ -1,13 +1,16 @@
 from pathlib import Path
+from dataclasses import replace
 
 import bioevidence.workflows.agent as agent_workflow
 import bioevidence.agent.planner as planner_module
+import pytest
 from bioevidence.agent.state import AgentState
 from bioevidence.config import Settings
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.evidence import EvidenceRecord
 from bioevidence.schemas.query import Query
+from bioevidence.graph.provider import GraphDiscoveryError
 
 
 def _settings() -> Settings:
@@ -151,3 +154,57 @@ def test_run_agent_workflow_accumulates_branches_and_stops(monkeypatch):
         "synthesize",
     ]
     assert isinstance(events[-1]["result"], agent_workflow.AgentWorkflowResult)
+
+
+def test_graph_discovery_only_degrades_declared_operational_errors(monkeypatch) -> None:
+    query = Query(text="asthma")
+    baseline = agent_workflow.WorkflowResult(
+        query=query,
+        documents=tuple(),
+        retrieved_candidates=tuple(),
+        evidence_records=tuple(),
+        answer=AnswerBundle(answer_text="No evidence", rewritten_query=query.text),
+        source="local_corpus",
+    )
+
+    class UnavailableProvider:
+        def discover(self, query_text: str):
+            raise GraphDiscoveryError("Neo4j unavailable")
+
+        def close(self) -> None:
+            return None
+
+    monkeypatch.setattr(agent_workflow, "run_rag_pipeline", lambda *args, **kwargs: baseline)
+    result = agent_workflow.run_agent_workflow(
+        query,
+        settings=replace(_settings(), agent_max_iterations=0),
+        graph_provider=UnavailableProvider(),
+    )
+
+    assert result.graph_discovery is not None
+    assert result.graph_discovery.status == "unavailable"
+    assert result.graph_discovery.diagnostics["error_type"] == "GraphDiscoveryError"
+
+
+def test_graph_discovery_does_not_hide_programming_errors(monkeypatch) -> None:
+    query = Query(text="asthma")
+    baseline = agent_workflow.WorkflowResult(
+        query=query,
+        documents=tuple(),
+        retrieved_candidates=tuple(),
+        evidence_records=tuple(),
+        answer=AnswerBundle(answer_text="No evidence", rewritten_query=query.text),
+        source="local_corpus",
+    )
+
+    class BrokenProvider:
+        def discover(self, query_text: str):
+            raise KeyError("bug")
+
+        def close(self) -> None:
+            return None
+
+    monkeypatch.setattr(agent_workflow, "run_rag_pipeline", lambda *args, **kwargs: baseline)
+
+    with pytest.raises(KeyError, match="bug"):
+        agent_workflow.run_agent_workflow(query, settings=_settings(), graph_provider=BrokenProvider())

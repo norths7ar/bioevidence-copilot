@@ -6,6 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from bioevidence.graph.cypher import quote_identifier
 from bioevidence.graph.entity_linking import EntityLinker
 from bioevidence.graph.models import (
     EntityLinkCandidate,
@@ -64,10 +65,6 @@ class PathTemplate:
     @property
     def hop_count(self) -> int:
         return len(self.steps)
-
-
-def quote_identifier(value: str) -> str:
-    return f"`{value.replace('`', '``')}`"
 
 
 def parse_path_templates(path_text: str) -> list[PathTemplate]:
@@ -143,9 +140,13 @@ class KGPathRetriever:
                 top_k_anchors=top_k_anchors,
                 limit=limit_per_template,
             )
-            records = tuple(
-                path_record_from_neo4j(record, template.raw)
-                for record in self._session.run(cypher, parameters)
+            records = (
+                tuple(
+                    path_record_from_neo4j(record, template.raw)
+                    for record in self._session.run(cypher, parameters)
+                )
+                if any(anchors.values())
+                else ()
             )
             results.append(
                 KGTraversalResult(

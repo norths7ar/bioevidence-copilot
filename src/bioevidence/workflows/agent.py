@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+import logging
 from pathlib import Path
 from typing import Any, TypedDict, cast
 
@@ -14,7 +15,7 @@ from bioevidence.agent.tools import merge_candidates, merge_evidence_records
 from bioevidence.config import Settings, load_settings
 from bioevidence.generation.agent_answerer import synthesize_agent_answer
 from bioevidence.graph.models import GraphDiscoveryResult
-from bioevidence.graph.provider import GraphDiscoveryProvider, create_graph_provider
+from bioevidence.graph.provider import GraphDiscoveryError, GraphDiscoveryProvider, create_graph_provider
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document
 from bioevidence.schemas.query import Query
@@ -32,6 +33,9 @@ class AgentGraphState(TypedDict, total=False):
     planned_queries: list[str]
     result: AgentWorkflowResult
     state: AgentState
+
+
+logger = logging.getLogger(__name__)
 
 
 def run_agent_workflow(
@@ -118,7 +122,8 @@ def _build_agent_graph(
         runtime = graph_state
         try:
             discovery = graph_provider.discover(query.text)
-        except Exception as exc:
+        except GraphDiscoveryError as exc:
+            logger.warning("Graph discovery unavailable: %s", exc)
             discovery = GraphDiscoveryResult(
                 query=query.text,
                 status="unavailable",
