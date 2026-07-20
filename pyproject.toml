@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bioevidence-copilot"
-version = "0.1.0"
+version = "0.2.0"
 description = "Biomedical literature evidence retrieval and synthesis scaffold."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,15 +12,17 @@ license = { text = "MIT" }
 authors = [{ name = "Jianan Wang" }]
 dependencies = [
   "fastapi",
+  "langgraph>=1,<2",
   "numpy>=1.26",
   "openai>=1.0",
   "python-dotenv>=1.0",
-  "streamlit>=1.30",
 ]
 
 [project.optional-dependencies]
 dev = ["mypy>=1.10,<2", "pytest>=8.0", "ruff>=0.6"]
 serve = ["uvicorn"]
+graph = ["neo4j>=5.18,<7"]
+web = ["streamlit>=1.30"]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
