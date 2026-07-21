@@ -229,11 +229,15 @@ metrics runner are implemented. A pinned local Qwen3-4B 4-bit run now records
 the prompted baseline against all 20 versioned pilot labels, including raw
 failure output, latency, and peak VRAM.
 
-### Milestone 20: Training dataset
-- expand reviewed annotations only after the pilot contract stabilizes
+### Milestone 20: Training dataset [in progress]
+- expand versioned annotations after the pilot contract stabilizes
 - split by PMID to prevent document leakage across train, dev, and test sets
 - preserve source, license, transformation, and annotation provenance
 - record label source and review status, and reserve a held-out split for final evaluation
+
+The first dataset builder now exports the pilot to Qwen chat-format JSONL with
+deterministic PMID-level train/dev/test assignments and a provenance-bearing
+manifest. Expanding the query-document annotations is the remaining core work.
 
 ### Milestone 21: Fine-tuning and offline evaluation
 - keep training code under `training/evidence_extraction/` in this repository

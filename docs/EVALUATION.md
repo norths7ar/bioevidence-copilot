@@ -38,7 +38,8 @@ substrings of the referenced abstract.
 
 The initial 20 rows intentionally mix direct, indirect, and unrelated pairs.
 They remain a small schema-development pilot, with source and review provenance
-stored on each row. See `docs/EVIDENCE_ANNOTATION_GUIDE.md` for field definitions
+stored in `pilot_dataset_metadata.json` and per-row stability status in the
+annotation JSONL. See `docs/EVIDENCE_ANNOTATION_GUIDE.md` for field definitions
 and review rules.
 
 Validate the tracked annotations against the current corpus:

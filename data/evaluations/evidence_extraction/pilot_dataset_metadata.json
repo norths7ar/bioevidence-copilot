@@ -1,0 +1,14 @@
+{
+  "dataset_id": "bioevidence-extraction-pilot-v1",
+  "target_schema": "https://bioevidence.local/schemas/model-evidence-extraction-v1.json",
+  "source_corpus": "data/corpora/demo/processed/demo.documents.jsonl",
+  "source_documents": "PubMed titles and abstracts",
+  "label_source": "model-assisted annotation",
+  "review_process": "A second model reviewed all 20 rows; three recommended corrections were incorporated.",
+  "accepted_uses": [
+    "schema development",
+    "pipeline smoke testing",
+    "pilot supervised fine-tuning"
+  ],
+  "license_note": "Derived labels are stored separately from the source PubMed metadata and abstracts."
+}

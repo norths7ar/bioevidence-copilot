@@ -20,11 +20,14 @@ The canonical runtime contract is `ModelEvidenceExtraction` in
 4. Fill only query-relevant population, intervention or exposure, comparator,
    and outcomes that are supported by the abstract.
 5. Copy every `evidence_span` verbatim from the abstract.
-6. Validate the complete row, then have a second person review it before
-   changing `annotation_status` from `draft` to `reviewed`.
+6. Validate the complete row and record the review path before changing
+   `annotation_status` from `draft` to `reviewed`.
 
-Draft annotations are schema-development material. Only reviewed annotations
-may be used as gold dev or test labels or support reported model-quality claims.
+`annotation_status` describes label stability, not whether the reviewer was a
+person or a model. Draft labels may be used for schema development and pilot
+training; `reviewed` marks labels frozen for a named evaluation version. Record
+label source, review method, source corpus, and accepted uses in the dataset
+metadata rather than inferring authority from the status name.
 
 Generate a local Markdown review packet with full abstracts and checklists:
 
@@ -148,9 +151,10 @@ corresponding tracked abstract.
 - Split train, dev, and test data by PMID, not by individual annotation row.
 - Keep query variants for the same PMID in one split.
 - Track source corpus version and annotation status.
-- Use reviewed labels only for final metrics.
+- Freeze the label version and review provenance used for final metrics.
 - Resolve disagreements through the written rules and record schema changes in
   `docs/DECISIONS.md`.
 
 The tracked pilot intentionally contains direct, indirect, and negative pairs.
-It is a draft for schema pressure-testing, not a biomedical-quality benchmark.
+It supports schema pressure-testing, pipeline validation, and a pilot SFT run;
+its dataset metadata records how the labels were produced and reviewed.

@@ -55,6 +55,28 @@ Reports are written under ignored `artifacts/` directories. The full runner
 preserves every prediction and raw model response so parse, schema, grounding,
 and field-level failures remain inspectable.
 
+## Build the SFT dataset
+
+Convert the validated annotations into Qwen chat-format JSONL:
+
+```powershell
+python training/evidence_extraction/scripts/build_sft_dataset.py
+```
+
+The builder writes `train.jsonl`, `dev.jsonl`, `test.jsonl`, and
+`manifest.json` under `artifacts/training/evidence_extraction/pilot_sft/`.
+It also refreshes the tracked aggregate `pilot_split_manifest.json` beside the
+source annotations.
+Assignments are deterministic for a fixed seed, and every query variant for the
+same PMID stays in one split. Each row contains the exact runtime system/user
+prompt, a compact JSON assistant target, and inspectable annotation metadata.
+
+The 20-row pilot is enough to validate the complete data and training pipeline,
+but dataset expansion remains the main Milestone 20 task before a meaningful
+quality comparison. Because the pilot has only three `direct` labels, its
+PMID-safe split leaves one direct example in each split; that is an honest smoke
+test constraint, not a training recipe for the final experiment.
+
 ## Recorded baseline
 
 The first local run used deterministic decoding, a 4,096-token context, and a

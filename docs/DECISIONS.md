@@ -233,3 +233,14 @@
 - Treat over-extraction as the first optimization target: the prompted model
   improves status, design, and semantic fields but predicts four times as many
   outcomes as the pilot labels on average.
+
+## 2026-07-21: SFT dataset format and split ownership
+
+- Export supervised examples as three-message chat records using the exact
+  runtime extraction prompt and a compact JSON assistant target.
+- Assign splits by PMID with a deterministic seed so query variants for one
+  document cannot cross train, dev, and test boundaries.
+- Keep generated training JSONL under ignored `artifacts/`; track the builder,
+  source annotations, dataset-level provenance, and aggregate split manifest.
+- Treat annotation status as label stability rather than reviewer identity.
+  Record model-assisted, manual, or imported label provenance explicitly.
