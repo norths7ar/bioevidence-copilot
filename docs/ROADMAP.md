@@ -211,18 +211,22 @@ The next version deepens the biomedical evidence layer. Fine-tuning is an
 implementation technique within the existing product, not a separate chatbot
 or model-training demo.
 
-### Milestone 18: Extraction contract and annotation pilot [in progress]
+### Milestone 18: Extraction contract and annotation pilot [completed]
 - define a versioned, query-focused JSON Schema for model-generated evidence
 - keep document metadata and retrieval scores outside the model target
 - add annotation rules, exact abstract-span validation, and review status
 - pressure-test the contract on tracked direct, indirect, and negative pairs
 
-### Milestone 19: Comparable extraction baselines
+### Milestone 19: Comparable extraction baselines [in progress]
 - evaluate the deterministic extractor and a prompted base model against the
-  same reviewed labels
+  same versioned pilot labels
 - report JSON parse rate, schema validity, field metrics, outcome direction,
   evidence-span support, latency, and cost
 - distinguish workflow-integrity checks from model-quality benchmarks
+
+The shared backend contract, prompt-only adapter, rule adapter, and offline
+metrics runner are implemented. Milestone 19 remains in progress until a
+prompted model run is recorded against the versioned pilot labels.
 
 ### Milestone 20: Training dataset
 - expand reviewed annotations only after the pilot contract stabilizes

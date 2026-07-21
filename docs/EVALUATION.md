@@ -53,6 +53,32 @@ Render a local review packet:
 C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/render_extraction_review.py
 ```
 
+## Evidence extraction baselines
+
+The extraction evaluator uses the same query-document annotations for every
+backend and writes predictions, failure categories, per-item metrics, latency,
+and aggregate metrics to JSON. Run the inspectable rule baseline with:
+
+```powershell
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_extraction_eval.py --backend rules
+```
+
+For the prompt-only baseline, configure `EXTRACTION_API_KEY`,
+`EXTRACTION_BASE_URL`, and `EXTRACTION_MODEL`, then run:
+
+```powershell
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_extraction_eval.py --backend prompted
+```
+
+The prompt-only backend sends the query, title, abstract, and versioned output
+schema to an OpenAI-compatible chat endpoint. It then applies Pydantic schema
+validation and exact abstract-span grounding. The initial report covers JSON
+parse rate, schema validity, evidence status, study design, semantic-field token
+F1, outcome matching and direction, span overlap/support, and latency. Provider
+cost is not inferred when the compatible endpoint does not expose a stable
+price contract; model name and experiment configuration should be recorded
+alongside published benchmark results.
+
 ## Building Real Local Data
 
 Seed a small PubMed corpus with real E-utilities abstracts:

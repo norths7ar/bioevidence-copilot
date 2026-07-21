@@ -201,7 +201,19 @@
   evaluated beyond JSON parse success.
 - Preserve the current deterministic extractor as a baseline and compare it
   with a prompted base model before making fine-tuning quality claims.
-- Treat the first tracked annotations as schema-development drafts. Only
-  human-reviewed labels may become benchmark gold data.
+- Treat the first tracked annotations as schema-development drafts and retain
+  annotation/review provenance when promoting any labels into a benchmark.
 - Keep the v0.3 sequence evaluation-first: stabilize the contract and pilot,
   establish baselines, expand reviewed data, train, then add optional inference.
+
+## 2026-07-21: Shared extraction baseline interface
+
+- Put rule-based and prompt-only semantic extraction behind the same typed
+  `ExtractionBackend` contract and validate both against
+  `ModelEvidenceExtraction`.
+- Keep extraction model credentials and model selection under `EXTRACTION_*`
+  rather than coupling experiments to the agent planner/synthesizer settings.
+- Record parse, schema, grounding, field-quality, and latency results per item;
+  preserve raw failed model output for diagnosis.
+- Treat provider cost as experiment metadata rather than guessing it from token
+  counts when an OpenAI-compatible endpoint has no stable price contract.
