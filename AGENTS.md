@@ -15,6 +15,7 @@ Do not redesign the project into an unrelated chatbot, general assistant, or toy
 - When adding a new module, also add minimal tests or stubs.
 - Keep code readable and boring over clever.
 - Avoid over-engineering, speculative abstractions, and unnecessary framework complexity.
+- Respond to the user's actual claims and decisions; do not preemptively warn against, rebut, or repeatedly emphasize mistakes the user has not made or positions they have not taken.
 
 ## Engineering principles
 - Python 3.12
