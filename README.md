@@ -31,7 +31,9 @@ orchestration, reproducible demo/evaluation artifacts, evidence faithfulness
 checks, agent traceability, a polished Streamlit review console, a FastAPI
 service boundary, optional Hetionet/Neo4j query expansion, local Docker Compose,
 and GitHub Actions quality gates. The literature-only baseline is preserved at
-the `v0.1.0` release tag.
+the `v0.1.0` release tag. The v0.3 workstream adds a versioned semantic evidence
+schema, PMID-safe fine-tuning data, a local QLoRA experiment, and an optional
+fine-tuned extraction backend.
 
 ## Implemented modules
 - ingestion
@@ -92,6 +94,12 @@ agent variables and pick a provider in `.env`:
 
 Example provider mappings are documented in `.env.example` for Qwen embedding,
 DeepSeek, Qwen Chat, and MiMo.
+
+Semantic extraction defaults to the compatibility-preserving `legacy` mode.
+Set `EXTRACTION_BACKEND` to `rules`, `prompted`, or `local` to attach validated
+query-focused fields to evidence rows. Local QLoRA inference also requires
+`EXTRACTION_ADAPTER_PATH` and the separate `bioevidence-training` environment;
+the normal API installation remains GPU-toolchain-free.
 
 Set `LOG_LEVEL` to `DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL` to control
 application logs. Logs go to the process stream by default, including under

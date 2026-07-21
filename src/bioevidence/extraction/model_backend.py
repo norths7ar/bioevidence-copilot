@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from time import perf_counter
-from typing import Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from openai import OpenAI, OpenAIError
 from openai.types.chat import ChatCompletionMessageParam
@@ -15,8 +17,12 @@ from bioevidence.schemas.document import Document
 from bioevidence.schemas.model_evidence import ModelEvidenceExtraction, unsupported_evidence_spans
 from bioevidence.schemas.model_evidence import EvidenceStatus, OutcomeDirection, OutcomeEvidence, StudyDesign
 
+if TYPE_CHECKING:
+    from bioevidence.config import Settings
+
 
 _JSON_FENCE_PATTERN = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL | re.IGNORECASE)
+LOGGER = logging.getLogger(__name__)
 
 
 class ExtractionBackend(Protocol):
@@ -42,7 +48,7 @@ class ExtractionAttempt:
 
     @property
     def json_parsed(self) -> bool:
-        return self.error_kind not in {"request", "empty", "json"}
+        return self.error_kind not in {"unavailable", "request", "empty", "json"}
 
     @property
     def schema_valid(self) -> bool:
@@ -95,22 +101,7 @@ class PromptedExtractionBackend:
     def extract(self, query: str, document: Document) -> ModelEvidenceExtraction:
         messages = build_extraction_messages(query, document)
         raw_output = self._complete(messages)
-        payload = _parse_json_object(raw_output)
-        try:
-            extraction = ModelEvidenceExtraction.model_validate(payload)
-        except ValidationError as exc:
-            raise ExtractionBackendError(
-                "Model output failed the extraction schema",
-                kind="schema",
-                raw_output=raw_output,
-            ) from exc
-        if unsupported_evidence_spans(extraction, document.abstract):
-            raise ExtractionBackendError(
-                "Model output contains evidence spans not copied from the abstract",
-                kind="grounding",
-                raw_output=raw_output,
-            )
-        return extraction
+        return _validate_model_output(raw_output, document)
 
     def _complete(self, messages: list[dict[str, str]]) -> str:
         if self._completion is not None:
@@ -126,6 +117,100 @@ class PromptedExtractionBackend:
         except OpenAIError as exc:
             raise ExtractionBackendError("Extraction model request failed", kind="request") from exc
         return (response.choices[0].message.content or "").strip()
+
+
+class LocalAdapterExtractionBackend:
+    """Lazy local inference adapter without adding training packages to product dependencies."""
+
+    name = "local_adapter"
+
+    def __init__(
+        self,
+        *,
+        adapter_path: Path,
+        max_seq_length: int = 4096,
+        max_output_tokens: int = 1024,
+        completion: Callable[[list[dict[str, str]]], str] | None = None,
+    ) -> None:
+        if max_seq_length <= 0 or max_output_tokens <= 0:
+            raise ValueError("sequence and output token limits must be positive")
+        self.adapter_path = adapter_path
+        self.max_seq_length = max_seq_length
+        self.max_output_tokens = max_output_tokens
+        self._completion = completion
+        self._runtime: tuple[Any, Any, Any] | None = None
+
+    def extract(self, query: str, document: Document) -> ModelEvidenceExtraction:
+        raw_output = self._complete(build_extraction_messages(query, document))
+        return _validate_model_output(raw_output, document)
+
+    def _complete(self, messages: list[dict[str, str]]) -> str:
+        if self._completion is not None:
+            return self._completion(messages).strip()
+        model, tokenizer, torch = self._load_runtime()
+        rendered_prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        inputs = tokenizer(rendered_prompt, return_tensors="pt").to("cuda")
+        try:
+            with torch.inference_mode():
+                output_ids = model.generate(
+                    **inputs,
+                    max_new_tokens=self.max_output_tokens,
+                    do_sample=False,
+                    use_cache=True,
+                )
+        except Exception as exc:
+            raise ExtractionBackendError("Local adapter inference failed", kind="request") from exc
+        generated_ids = output_ids[0, inputs["input_ids"].shape[1] :]
+        return tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
+
+    def _load_runtime(self) -> tuple[Any, Any, Any]:
+        if self._runtime is not None:
+            return self._runtime
+        if not self.adapter_path.is_dir():
+            raise ExtractionBackendError(
+                f"Local adapter directory does not exist: {self.adapter_path}",
+                kind="unavailable",
+            )
+        try:
+            import torch
+            from unsloth import FastLanguageModel
+        except ImportError as exc:
+            raise ExtractionBackendError(
+                "Local adapter inference requires the separate training environment",
+                kind="unavailable",
+            ) from exc
+        try:
+            model, tokenizer = FastLanguageModel.from_pretrained(
+                model_name=str(self.adapter_path),
+                max_seq_length=self.max_seq_length,
+                load_in_4bit=True,
+                full_finetuning=False,
+            )
+            FastLanguageModel.for_inference(model)
+        except Exception as exc:
+            raise ExtractionBackendError("Local adapter could not be loaded", kind="unavailable") from exc
+        self._runtime = (model, tokenizer, torch)
+        return self._runtime
+
+
+class FallbackExtractionBackend:
+    """Use a deterministic backend when an optional model backend is unavailable."""
+
+    def __init__(self, primary: ExtractionBackend, fallback: ExtractionBackend) -> None:
+        self.primary = primary
+        self.fallback = fallback
+        self.name = f"{primary.name}+{fallback.name}_fallback"
+        self._primary_unavailable = False
+
+    def extract(self, query: str, document: Document) -> ModelEvidenceExtraction:
+        if self._primary_unavailable:
+            return self.fallback.extract(query, document)
+        try:
+            return self.primary.extract(query, document)
+        except ExtractionBackendError as exc:
+            LOGGER.warning("extraction_backend_fallback backend=%s reason=%s", self.primary.name, exc.kind)
+            self._primary_unavailable = exc.kind == "unavailable"
+            return self.fallback.extract(query, document)
 
 
 class RuleBasedExtractionBackend:
@@ -180,6 +265,39 @@ class RuleBasedExtractionBackend:
         )
 
 
+def create_product_extraction_backend(settings: Settings) -> ExtractionBackend | None:
+    """Build the optional semantic extractor used by product workflows."""
+
+    backend_name = settings.extraction_backend.strip().casefold()
+    if backend_name in {"", "legacy"}:
+        return None
+    fallback = RuleBasedExtractionBackend()
+    if backend_name == "rules":
+        return fallback
+    if backend_name == "prompted":
+        if not (settings.extraction_api_key and settings.extraction_base_url and settings.extraction_model):
+            LOGGER.warning("extraction_backend_fallback backend=prompted reason=unconfigured")
+            return fallback
+        primary: ExtractionBackend = PromptedExtractionBackend(
+            api_key=settings.extraction_api_key,
+            base_url=settings.extraction_base_url,
+            model=settings.extraction_model,
+            max_output_tokens=settings.extraction_max_output_tokens,
+        )
+        return FallbackExtractionBackend(primary, fallback)
+    if backend_name == "local":
+        if settings.extraction_adapter_path is None:
+            LOGGER.warning("extraction_backend_fallback backend=local_adapter reason=unconfigured")
+            return fallback
+        primary = LocalAdapterExtractionBackend(
+            adapter_path=settings.extraction_adapter_path,
+            max_seq_length=settings.extraction_max_seq_length,
+            max_output_tokens=settings.extraction_max_output_tokens,
+        )
+        return FallbackExtractionBackend(primary, fallback)
+    raise ValueError(f"Unsupported extraction backend: {settings.extraction_backend}")
+
+
 def build_extraction_messages(query: str, document: Document) -> list[dict[str, str]]:
     schema = json.dumps(ModelEvidenceExtraction.model_json_schema(), ensure_ascii=False, separators=(",", ":"))
     system_prompt = (
@@ -213,6 +331,25 @@ def _parse_json_object(content: str) -> dict[str, Any]:
         if isinstance(payload, dict):
             return payload
     raise ExtractionBackendError("Model did not return a JSON object", kind="json", raw_output=content)
+
+
+def _validate_model_output(raw_output: str, document: Document) -> ModelEvidenceExtraction:
+    payload = _parse_json_object(raw_output)
+    try:
+        extraction = ModelEvidenceExtraction.model_validate(payload)
+    except ValidationError as exc:
+        raise ExtractionBackendError(
+            "Model output failed the extraction schema",
+            kind="schema",
+            raw_output=raw_output,
+        ) from exc
+    if unsupported_evidence_spans(extraction, document.abstract):
+        raise ExtractionBackendError(
+            "Model output contains evidence spans not copied from the abstract",
+            kind="grounding",
+            raw_output=raw_output,
+        )
+    return extraction
 
 
 _TOKEN_PATTERN = re.compile(r"[A-Za-z0-9]+")

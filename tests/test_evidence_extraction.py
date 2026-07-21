@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from bioevidence.extraction.evidence_extractor import extract_evidence
+from bioevidence.extraction.model_backend import RuleBasedExtractionBackend
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.query import Query
 
@@ -51,3 +52,11 @@ def test_extract_evidence_from_candidates_uses_rank_and_score():
     assert records[1].relevance_score > records[0].relevance_score
     assert records[1].entities == ("asthma", "corticosteroids")
 
+
+def test_extract_evidence_can_attach_validated_model_fields():
+    query = Query(text="asthma corticosteroids")
+
+    records = extract_evidence(query, _build_documents()[:1], backend=RuleBasedExtractionBackend())
+
+    assert records[0].model_extraction is not None
+    assert records[0].model_extraction.evidence_status.value in {"direct", "indirect"}

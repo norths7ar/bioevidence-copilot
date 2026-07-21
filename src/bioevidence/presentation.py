@@ -90,15 +90,9 @@ def build_agent_report_payload(result: AgentWorkflowResult) -> dict[str, object]
     evidence_by_pmid.update({record.pmid: record for record in result.evidence_records})
     evidence = []
     for pmid, record in evidence_by_pmid.items():
-        evidence.append(
+        row = evidence_table_rows([record])[0]
+        row.update(
             {
-                "pmid": pmid,
-                "title": record.title,
-                "year": record.year,
-                "journal": record.journal,
-                "entities": list(record.entities),
-                "summary": record.summary,
-                "relevance_score": round(record.relevance_score, 4),
                 "in_baseline": pmid in baseline_evidence_set,
                 "in_agent": pmid in agent_evidence_set,
                 "cited_by": [
@@ -108,6 +102,7 @@ def build_agent_report_payload(result: AgentWorkflowResult) -> dict[str, object]
                 ],
             }
         )
+        evidence.append(row)
 
     graph = result.graph_discovery
     graph_summary = None

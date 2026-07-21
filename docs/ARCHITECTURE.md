@@ -46,6 +46,13 @@ event schema. The complete internal workflow payload is debug-only. The app
 surface stays lightweight; agent comparison is exposed through CLI artifacts
 and a read-only Streamlit review console rather than a heavier interactive UI.
 
+The evidence layer can optionally attach a query-focused
+`ModelEvidenceExtraction` object to each existing `EvidenceRecord`. Product
+workflows create one extraction backend at the workflow boundary and reuse it
+across baseline and agent retrieval branches. The default legacy path stays
+dependency-free; local QLoRA inference imports its Unsloth runtime lazily and
+falls back to the deterministic schema backend when unavailable.
+
 ## Data model expectations
 At minimum define schemas for:
 - Query

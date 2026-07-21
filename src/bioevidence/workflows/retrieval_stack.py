@@ -4,6 +4,7 @@ from pathlib import Path
 
 from bioevidence.config import Settings, load_settings
 from bioevidence.extraction.evidence_extractor import extract_evidence
+from bioevidence.extraction.model_backend import ExtractionBackend
 from bioevidence.ingestion.pubmed_client import search_pubmed
 from bioevidence.retrieval.corpus import load_local_documents
 from bioevidence.retrieval.hybrid import hybrid_retrieve
@@ -19,6 +20,7 @@ def run_retrieval_stack(
     data_dir: Path | None = None,
     documents: tuple[Document, ...] | list[Document] | None = None,
     settings: Settings | None = None,
+    extraction_backend: ExtractionBackend | None = None,
 ) -> tuple[list[Document], list[RetrievedCandidate], list[EvidenceRecord], str]:
     settings = settings or load_settings()
     documents = list(documents) if documents is not None else load_local_documents(data_dir or settings.data_dir, settings=settings)
@@ -29,5 +31,5 @@ def run_retrieval_stack(
 
     candidates = hybrid_retrieve(query, documents=documents, data_dir=data_dir, settings=settings)
     ranked_candidates = finalize_ranking(candidates)
-    evidence_records = extract_evidence(query, ranked_candidates[: query.top_k])
+    evidence_records = extract_evidence(query, ranked_candidates[: query.top_k], backend=extraction_backend)
     return list(documents), list(ranked_candidates), list(evidence_records), source

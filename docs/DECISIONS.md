@@ -282,3 +282,20 @@
 - Compare corrected adapters against rules and the prompted base model on the
   same PMID-held-out split. Treat the seven-row draft test result as evidence
   that the training path works, not as a general biomedical-quality benchmark.
+
+## 2026-07-21: Optional semantic extraction in product workflows
+
+- Attach validated semantic extraction as an optional nested capability on the
+  existing evidence record instead of replacing deterministic document metadata
+  or retrieval relevance.
+- Keep the existing summary and citation path unchanged in this first product
+  integration; expose model fields for inspection until a larger benchmark
+  supports using status predictions to filter or rewrite cited evidence.
+- Construct one backend at the workflow boundary and reuse it for baseline and
+  agent branches so local weights are not reloaded for each document or query.
+- Keep `legacy` as the compatibility default. Expose `rules`, `prompted`, and
+  `local` as explicit modes through `EXTRACTION_BACKEND`.
+- Import the local Unsloth runtime lazily from the separate training environment;
+  do not add GPU training dependencies to the API package or Docker image.
+- Fall back to the deterministic structured extractor when an optional model is
+  unconfigured, unavailable, invalid, or produces unsupported evidence spans.

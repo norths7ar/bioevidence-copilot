@@ -11,6 +11,11 @@ def _env_path(name: str, default: str) -> Path:
     return Path(os.getenv(name, default))
 
 
+def _env_optional_path(name: str) -> Path | None:
+    raw_value = os.getenv(name, "").strip()
+    return Path(raw_value) if raw_value else None
+
+
 def _env_int(name: str, default: str) -> int:
     return int(os.getenv(name, default))
 
@@ -48,6 +53,13 @@ class Settings:
     embedding_model: str
     embedding_dimensions: int | None
     embedding_batch_size: int
+    extraction_adapter_path: Path | None = None
+    extraction_api_key: str = ""
+    extraction_backend: str = "legacy"
+    extraction_base_url: str = ""
+    extraction_max_output_tokens: int = 1024
+    extraction_max_seq_length: int = 4096
+    extraction_model: str = ""
     graph_enabled: bool = False
     graph_database: str = "neo4j"
     graph_max_expansion_queries: int = 3
@@ -78,6 +90,13 @@ def load_settings() -> Settings:
         embedding_model=os.getenv("EMBEDDING_MODEL", ""),
         embedding_dimensions=_env_optional_int("EMBEDDING_DIMENSIONS"),
         embedding_batch_size=_env_int("EMBEDDING_BATCH_SIZE", "10"),
+        extraction_adapter_path=_env_optional_path("EXTRACTION_ADAPTER_PATH"),
+        extraction_api_key=os.getenv("EXTRACTION_API_KEY", ""),
+        extraction_backend=os.getenv("EXTRACTION_BACKEND", "legacy"),
+        extraction_base_url=os.getenv("EXTRACTION_BASE_URL", ""),
+        extraction_max_output_tokens=_env_int("EXTRACTION_MAX_OUTPUT_TOKENS", "1024"),
+        extraction_max_seq_length=_env_int("EXTRACTION_MAX_SEQ_LENGTH", "4096"),
+        extraction_model=os.getenv("EXTRACTION_MODEL", ""),
         graph_enabled=_env_bool("GRAPH_ENABLED"),
         graph_database=os.getenv("NEO4J_DATABASE", "neo4j"),
         graph_max_expansion_queries=_env_int("GRAPH_MAX_EXPANSION_QUERIES", "3"),

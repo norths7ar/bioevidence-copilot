@@ -229,17 +229,15 @@ metrics runner are implemented. A pinned local Qwen3-4B 4-bit run now records
 the prompted baseline against all 20 versioned pilot labels, including raw
 failure output, latency, and peak VRAM.
 
-### Milestone 20: Training dataset [in progress]
+### Milestone 20: Training dataset [completed]
 - expand versioned annotations after the pilot contract stabilizes
 - split by PMID to prevent document leakage across train, dev, and test sets
 - preserve source, license, transformation, and annotation provenance
 - record label source and review status, and reserve a held-out split for final evaluation
 
-The first dataset builder now exports the pilot to Qwen chat-format JSONL with
-deterministic PMID-level train/dev/test assignments and a provenance-bearing
-manifest. A 40-pair expansion queue now adds query-balanced high-relevance,
-broad-coverage, and cross-topic hard-negative candidates with model-assisted
-drafting seams. Producing and reviewing those labels is the remaining core work.
+The dataset builder combines the 20-row pilot with 40 model-assisted draft
+annotations, exports Qwen chat-format JSONL, and produces deterministic
+PMID-level train/dev/test assignments with a provenance-bearing manifest.
 
 ### Milestone 21: Fine-tuning and offline evaluation [in progress]
 - keep training code under `training/evidence_extraction/` in this repository
@@ -247,13 +245,19 @@ drafting seams. Producing and reviewing those labels is the remaining core work.
 - compare the fine-tuned model against both established baselines
 - publish weights externally with a model card rather than committing them to Git
 
-A five-step QLoRA smoke run now verifies response-only masking, BF16 training,
-dev evaluation, adapter saving, and adapter reload on the target RTX 5070. A
-formal training and baseline comparison waits on the expanded Milestone 20 data.
+A corrected 36-step QLoRA run now verifies JSON-first response masking, BF16
+training, dev evaluation, adapter saving, and adapter reload on the target RTX
+5070. The held-out comparison against rules and the prompted base model is
+tracked; external adapter publication and its model card remain.
 
-### Milestone 22: Optional product inference backend
+### Milestone 22: Optional product inference backend [completed]
 - add deterministic, prompted, and fine-tuned extraction backends behind one
   validated output contract
 - preserve deterministic fallback behavior when model inference is unavailable
 - surface grounded structured fields without making the core API image depend
   on the training toolchain
+
+The product workflow now supports legacy, deterministic rules, OpenAI-compatible
+prompted, and lazy local-adapter modes. One backend instance is reused across a
+run, validated model fields appear in evidence rows, and optional model failures
+fall back to rules. The default API dependency set remains unchanged.

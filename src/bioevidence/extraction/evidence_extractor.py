@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from collections.abc import Sequence
 
+from bioevidence.extraction.model_backend import ExtractionBackend
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.evidence import EvidenceRecord
 from bioevidence.schemas.query import Query
@@ -62,6 +63,8 @@ _STOPWORDS = {
 def extract_evidence(
     query: Query,
     items: Sequence[Document | RetrievedCandidate],
+    *,
+    backend: ExtractionBackend | None = None,
 ) -> list[EvidenceRecord]:
     query_terms = _query_terms(query.rewritten_text or query.text)
     records: list[EvidenceRecord] = []
@@ -74,6 +77,7 @@ def extract_evidence(
             document = item
             rank = index
             score = 0.0
+        model_extraction = backend.extract(query.rewritten_text or query.text, document) if backend else None
 
         records.append(
             EvidenceRecord(
@@ -84,6 +88,7 @@ def extract_evidence(
                 entities=_extract_entities(query_terms, document),
                 summary=_summarize_document(document),
                 relevance_score=_relevance_score(score, rank),
+                model_extraction=model_extraction,
             )
         )
     return records

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from bioevidence.extraction.model_backend import RuleBasedExtractionBackend
 from bioevidence.workflows import run_rag_pipeline, run_workflow
 from bioevidence.schemas.document import Document
 from bioevidence.schemas.query import Query
@@ -101,7 +102,12 @@ def test_run_rag_pipeline_accepts_preloaded_documents(monkeypatch):
     monkeypatch.setattr("bioevidence.retrieval.dense.embed_documents", fake_embed_documents)
     monkeypatch.setattr("bioevidence.retrieval.dense.embed_texts", fake_embed_texts)
 
-    result = run_rag_pipeline(Query(text="asthma corticosteroids"), documents=[document])
+    result = run_rag_pipeline(
+        Query(text="asthma corticosteroids"),
+        documents=[document],
+        extraction_backend=RuleBasedExtractionBackend(),
+    )
 
     assert result.source == "local_corpus"
     assert result.retrieved_candidates[0].document.pmid == "12345678"
+    assert result.evidence_records[0].model_extraction is not None

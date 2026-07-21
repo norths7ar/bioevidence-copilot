@@ -87,6 +87,25 @@ cost is not inferred when the compatible endpoint does not expose a stable
 price contract; model name and experiment configuration should be recorded
 alongside published benchmark results.
 
+The shared product-side local adapter can be evaluated from the separate
+training environment without importing Unsloth into the normal API image:
+
+```powershell
+conda activate bioevidence-training
+python scripts/run_extraction_eval.py `
+  --backend local `
+  --adapter-path artifacts/training/evidence_extraction/qwen3_4b_qlora_v2/adapter `
+  --dataset artifacts/training/evidence_extraction/training_v1_sft/test.annotations.jsonl `
+  --output artifacts/evaluations/extraction_local_adapter.json
+```
+
+For an opt-in product run, set `EXTRACTION_BACKEND=local` and
+`EXTRACTION_ADAPTER_PATH` to the adapter directory. `rules` and `prompted` use
+the same validated contract; `legacy` preserves the original evidence rows.
+Optional model failures fall back to the deterministic structured extractor.
+Successful structured predictions are exposed alongside the existing evidence
+row fields and do not require the API container to install the training stack.
+
 The first local prompted run uses the pinned 4-bit
 `unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit` snapshot. Reproduce it from
 the separate training environment with:

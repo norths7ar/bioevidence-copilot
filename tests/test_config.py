@@ -13,6 +13,8 @@ def test_load_settings_uses_grouped_environment_names(monkeypatch) -> None:
         "EMBEDDING_CACHE_DIR": "custom/cache",
         "EMBEDDING_MODEL": "embedding-model",
         "AGENT_MODEL": "agent-model",
+        "EXTRACTION_BACKEND": "local",
+        "EXTRACTION_ADAPTER_PATH": "artifacts/adapter",
         "GRAPH_ENABLED": "true",
         "NEO4J_URI": "bolt://neo4j:7687",
         "NEO4J_USER": "graph-user",
@@ -31,6 +33,8 @@ def test_load_settings_uses_grouped_environment_names(monkeypatch) -> None:
     assert settings.embedding_cache_dir == Path("custom/cache")
     assert settings.embedding_model == "embedding-model"
     assert settings.agent_model == "agent-model"
+    assert settings.extraction_backend == "local"
+    assert settings.extraction_adapter_path == Path("artifacts/adapter")
     assert settings.graph_enabled is True
     assert settings.graph_uri == "bolt://neo4j:7687"
     assert settings.graph_user == "graph-user"

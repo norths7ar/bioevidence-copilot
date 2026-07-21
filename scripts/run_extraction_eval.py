@@ -13,7 +13,12 @@ from bioevidence.evaluation.extraction_runner import (
     run_extraction_evaluation,
     write_extraction_report,
 )
-from bioevidence.extraction.model_backend import ExtractionBackend, PromptedExtractionBackend, RuleBasedExtractionBackend
+from bioevidence.extraction.model_backend import (
+    ExtractionBackend,
+    LocalAdapterExtractionBackend,
+    PromptedExtractionBackend,
+    RuleBasedExtractionBackend,
+)
 from bioevidence.retrieval.corpus import load_local_documents
 
 
@@ -25,13 +30,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     backend: ExtractionBackend
     if args.backend == "rules":
         backend = RuleBasedExtractionBackend()
-    else:
+    elif args.backend == "prompted":
         backend = PromptedExtractionBackend(
             api_key=args.api_key or os.getenv("EXTRACTION_API_KEY", ""),
             base_url=args.base_url or os.getenv("EXTRACTION_BASE_URL", ""),
             model=args.model or os.getenv("EXTRACTION_MODEL", ""),
             max_output_tokens=args.max_output_tokens,
             temperature=args.temperature,
+        )
+    else:
+        adapter_path = args.adapter_path or _optional_path(os.getenv("EXTRACTION_ADAPTER_PATH", ""))
+        if adapter_path is None:
+            raise ValueError("--adapter-path or EXTRACTION_ADAPTER_PATH is required for the local backend")
+        backend = LocalAdapterExtractionBackend(
+            adapter_path=adapter_path,
+            max_seq_length=args.max_seq_length,
+            max_output_tokens=args.max_output_tokens,
         )
     report = run_extraction_evaluation(annotations, backend, limit=args.limit)
     write_extraction_report(report, args.output)
@@ -42,7 +56,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Evaluate an evidence extraction backend.")
-    parser.add_argument("--backend", choices=("rules", "prompted"), default="rules")
+    parser.add_argument("--backend", choices=("rules", "prompted", "local"), default="rules")
     parser.add_argument(
         "--dataset",
         type=Path,
@@ -53,10 +67,16 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument("--api-key", default="")
     parser.add_argument("--base-url", default="")
     parser.add_argument("--model", default="")
+    parser.add_argument("--adapter-path", type=Path)
+    parser.add_argument("--max-seq-length", type=int, default=4096)
     parser.add_argument("--max-output-tokens", type=int, default=2048)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--limit", type=int)
     return parser.parse_args(argv)
+
+
+def _optional_path(value: str) -> Path | None:
+    return Path(value) if value.strip() else None
 
 
 if __name__ == "__main__":

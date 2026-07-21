@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from bioevidence.agent.state import AgentState
+from bioevidence.extraction.table import evidence_table_rows
 from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.evidence import EvidenceRecord
@@ -122,18 +123,7 @@ class AgentWorkflowResult:
                 }
                 for candidate in self.retrieved_candidates
             ],
-            "evidence_table": [
-                {
-                    "pmid": record.pmid,
-                    "title": record.title,
-                    "year": record.year,
-                    "journal": record.journal,
-                    "entities": list(record.entities),
-                    "summary": record.summary,
-                    "relevance_score": round(record.relevance_score, 4),
-                }
-                for record in self.evidence_records
-            ],
+            "evidence_table": evidence_table_rows(self.evidence_records),
             "answer": self.answer.answer_text,
             "citations": list(self.answer.citations),
             "comparison": self.comparison,

@@ -18,8 +18,9 @@ TABLE_COLUMNS = (
 
 
 def evidence_table_rows(records: Sequence[EvidenceRecord]) -> list[dict[str, object]]:
-    return [
-        {
+    rows: list[dict[str, object]] = []
+    for record in records:
+        row: dict[str, object] = {
             "pmid": record.pmid,
             "title": record.title,
             "year": record.year,
@@ -28,8 +29,21 @@ def evidence_table_rows(records: Sequence[EvidenceRecord]) -> list[dict[str, obj
             "summary": record.summary,
             "relevance_score": round(record.relevance_score, 4),
         }
-        for record in records
-    ]
+        if record.model_extraction is not None:
+            extraction = record.model_extraction
+            row.update(
+                {
+                    "evidence_status": extraction.evidence_status.value,
+                    "study_design": extraction.study_design.value,
+                    "population_or_system": extraction.population_or_system,
+                    "intervention_or_exposure": extraction.intervention_or_exposure,
+                    "comparator": extraction.comparator,
+                    "outcomes": [outcome.model_dump(mode="json") for outcome in extraction.outcomes],
+                    "evidence_summary": extraction.evidence_summary,
+                }
+            )
+        rows.append(row)
+    return rows
 
 
 def render_evidence_table(records: Sequence[EvidenceRecord]) -> str:

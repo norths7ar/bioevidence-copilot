@@ -13,6 +13,7 @@ from bioevidence.agent.state import AgentState
 from bioevidence.agent.stop_criteria import should_stop
 from bioevidence.agent.tools import merge_candidates, merge_evidence_records
 from bioevidence.config import Settings, load_settings
+from bioevidence.extraction.model_backend import ExtractionBackend, create_product_extraction_backend
 from bioevidence.generation.agent_answerer import synthesize_agent_answer_with_trace
 from bioevidence.graph.models import GraphDiscoveryResult
 from bioevidence.graph.provider import GraphDiscoveryError, GraphDiscoveryProvider, create_graph_provider
@@ -47,8 +48,10 @@ def run_agent_workflow(
     settings: Settings | None = None,
     graph_provider: GraphDiscoveryProvider | None = None,
     trace_recorder: TraceRecorder | None = None,
+    extraction_backend: ExtractionBackend | None = None,
 ) -> AgentWorkflowResult:
     settings = settings or load_settings()
+    extraction_backend = extraction_backend or create_product_extraction_backend(settings)
     recorder = trace_recorder or TraceRecorder()
     _record_run_started(recorder, query, settings)
     provider = graph_provider or create_graph_provider(settings)
@@ -66,6 +69,7 @@ def run_agent_workflow(
             settings=settings,
             graph_provider=provider,
             trace_recorder=recorder,
+            extraction_backend=extraction_backend,
         )
         output = graph.invoke(_initial_graph_state(query, documents))
         result = output["result"]
@@ -95,8 +99,10 @@ def stream_agent_workflow(
     settings: Settings | None = None,
     graph_provider: GraphDiscoveryProvider | None = None,
     trace_recorder: TraceRecorder | None = None,
+    extraction_backend: ExtractionBackend | None = None,
 ) -> Iterator[dict[str, object]]:
     settings = settings or load_settings()
+    extraction_backend = extraction_backend or create_product_extraction_backend(settings)
     recorder = trace_recorder or TraceRecorder()
     _record_run_started(recorder, query, settings)
     provider = graph_provider or create_graph_provider(settings)
@@ -107,6 +113,7 @@ def stream_agent_workflow(
         settings=settings,
         graph_provider=provider,
         trace_recorder=recorder,
+        extraction_backend=extraction_backend,
     )
     emitted_event_count = 0
     try:
@@ -153,6 +160,7 @@ def _build_agent_graph(
     settings: Settings,
     graph_provider: GraphDiscoveryProvider,
     trace_recorder: TraceRecorder,
+    extraction_backend: ExtractionBackend | None,
 ):
     try:
         agent_client = create_agent_client(settings)
@@ -163,12 +171,14 @@ def _build_agent_graph(
     def baseline_node(graph_state: AgentGraphState) -> AgentGraphState:
         runtime = graph_state
         started_at = trace_recorder.start_timer()
-        baseline = run_rag_pipeline(
-            query,
-            data_dir=data_dir,
-            documents=runtime.get("documents"),
-            settings=settings,
-        )
+        baseline_kwargs: dict[str, Any] = {
+            "data_dir": data_dir,
+            "documents": runtime.get("documents"),
+            "settings": settings,
+        }
+        if extraction_backend is not None:
+            baseline_kwargs["extraction_backend"] = extraction_backend
+        baseline = run_rag_pipeline(query, **baseline_kwargs)
         state = AgentState(query=query, max_iterations=settings.agent_max_iterations)
         state.record_branch_query(query.text)
         state.merge_candidates(baseline.retrieved_candidates)
@@ -287,11 +297,16 @@ def _build_agent_graph(
             started_at = trace_recorder.start_timer()
             branch_query_obj = Query(text=branch_query, rewritten_text=branch_query, top_k=query.top_k)
             pmids_before_branch = set(state.seen_pmids)
+            retrieval_kwargs: dict[str, Any] = {
+                "data_dir": data_dir,
+                "documents": runtime_documents,
+                "settings": settings,
+            }
+            if extraction_backend is not None:
+                retrieval_kwargs["extraction_backend"] = extraction_backend
             returned_documents, ranked_candidates, evidence_records, source = run_retrieval_stack(
                 branch_query_obj,
-                data_dir=data_dir,
-                documents=runtime_documents,
-                settings=settings,
+                **retrieval_kwargs,
             )
             runtime_documents = returned_documents
             branch_result = AgentBranchResult(

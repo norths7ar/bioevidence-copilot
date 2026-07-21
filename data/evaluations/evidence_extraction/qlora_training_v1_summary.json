@@ -85,5 +85,14 @@
     "cause": "The complete-conversation chat template inserted assistant-side thinking scaffolding into the supervised response target.",
     "resolution": "Render the system/user generation prompt first, then append the raw JSON assistant target and EOS token."
   },
+  "product_inference_smoke": {
+    "entrypoint": "scripts/run_extraction_eval.py --backend local",
+    "items": 1,
+    "json_parse_rate": 1.0,
+    "schema_validity_rate": 1.0,
+    "evidence_span_support_rate": 1.0,
+    "workflow_evidence_fields_exposed": true,
+    "first_item_latency_includes_model_load": true
+  },
   "interpretation": "The corrected adapter achieved strict JSON, schema validity, and grounded spans on all seven held-out draft examples. It improved semantic and outcome metrics over the prompted base, but evidence-status accuracy was lower. The test set is too small and draft-labeled for a broad extraction-quality claim."
 }
