@@ -9,5 +9,5 @@ def test_validate_extraction_annotations_cli(monkeypatch, capsys) -> None:
 
     output = capsys.readouterr().out
     assert "Validated annotations: 20" in output
-    assert "Evidence status: direct=5, indirect=9, none=6" in output
+    assert "Evidence status: direct=3, indirect=10, none=7" in output
     assert "Annotation status: draft=20" in output

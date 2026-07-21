@@ -18,9 +18,9 @@ def test_tracked_extraction_pilot_is_valid_and_remains_draft() -> None:
 
     assert len(annotations) == 20
     assert {annotation.annotation_status for annotation in annotations} == {AnnotationStatus.DRAFT}
-    assert sum(annotation.extraction.evidence_status == "direct" for annotation in annotations) == 5
-    assert sum(annotation.extraction.evidence_status == "indirect" for annotation in annotations) == 9
-    assert sum(annotation.extraction.evidence_status == "none" for annotation in annotations) == 6
+    assert sum(annotation.extraction.evidence_status == "direct" for annotation in annotations) == 3
+    assert sum(annotation.extraction.evidence_status == "indirect" for annotation in annotations) == 10
+    assert sum(annotation.extraction.evidence_status == "none" for annotation in annotations) == 7
 
 
 def test_extraction_dataset_rejects_non_verbatim_evidence_span(tmp_path: Path) -> None:

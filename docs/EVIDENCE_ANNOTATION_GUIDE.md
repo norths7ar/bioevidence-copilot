@@ -26,6 +26,15 @@ The canonical runtime contract is `ModelEvidenceExtraction` in
 Draft annotations are schema-development material. Only reviewed annotations
 may be used as gold dev or test labels or support reported model-quality claims.
 
+Generate a local Markdown review packet with full abstracts and checklists:
+
+```powershell
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/render_extraction_review.py
+```
+
+The report is written under `artifacts/annotation_reviews/`, which is ignored by
+Git. Record accepted changes in the source JSONL rather than editing the report.
+
 ## Evidence status
 
 | Value | Use when |
@@ -67,6 +76,12 @@ Apply these precedence rules:
 - A randomized crossover study is `randomized_controlled_trial`.
 - Do not infer randomization, prospective design, or a comparator that the
   abstract does not report.
+
+For an evidence or effect query, a study protocol with no completed results is
+`none`, while its document-level design remains `study_protocol`. A result is
+`direct` only when it addresses the core query relationship, including the
+relevant intervention or exposure and outcome; matching only part of a compact
+retrieval query is `indirect`.
 
 ## Extracted fields
 

@@ -47,6 +47,12 @@ Validate the tracked annotations against the current corpus:
 C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/validate_extraction_annotations.py
 ```
 
+Render a local review packet:
+
+```powershell
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/render_extraction_review.py
+```
+
 ## Building Real Local Data
 
 Seed a small PubMed corpus with real E-utilities abstracts:
