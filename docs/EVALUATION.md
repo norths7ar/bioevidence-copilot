@@ -23,6 +23,30 @@ The file contains stable demo questions for interview walkthroughs. Large raw
 downloads and caches under `data/` remain ignored, but curated eval and corpus
 artifacts are intentionally trackable.
 
+## Evidence Extraction Pilot
+
+The v0.3 schema-development pilot lives at:
+
+```text
+data/evaluations/evidence_extraction/pilot_annotations.jsonl
+```
+
+Each row references one PMID in the tracked demo corpus and contains a query,
+review status, and `ModelEvidenceExtraction` target. The loader validates the
+closed schema and rejects outcome evidence spans that are not verbatim
+substrings of the referenced abstract.
+
+The initial 20 rows intentionally mix direct, indirect, and unrelated pairs.
+They remain `draft`; they pressure-test the annotation contract but are not yet
+gold labels and must not support model-quality claims until human review. See
+`docs/EVIDENCE_ANNOTATION_GUIDE.md` for field definitions and review rules.
+
+Validate the tracked annotations against the current corpus:
+
+```powershell
+C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/validate_extraction_annotations.py
+```
+
 ## Building Real Local Data
 
 Seed a small PubMed corpus with real E-utilities abstracts:

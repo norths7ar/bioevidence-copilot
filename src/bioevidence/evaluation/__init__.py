@@ -1,4 +1,9 @@
 from bioevidence.evaluation.dataset import EvaluationItem, load_dataset
+from bioevidence.evaluation.extraction_dataset import (
+    AnnotationStatus,
+    ExtractionAnnotation,
+    load_extraction_annotations,
+)
 from bioevidence.evaluation.metrics import (
     compute_answer_metrics,
     compute_citation_metrics,
@@ -15,10 +20,12 @@ from bioevidence.evaluation.graph_gain import (
 from bioevidence.evaluation.runner import EvaluationItemResult, EvaluationReport, format_report, run_evaluation, write_report
 
 __all__ = [
+    "AnnotationStatus",
     "EvaluationItem",
     "EvaluationItemResult",
     "EvaluationReport",
     "EvidenceMetadata",
+    "ExtractionAnnotation",
     "GraphGainItemResult",
     "GraphGainReport",
     "QualityCheckResult",
@@ -30,6 +37,7 @@ __all__ = [
     "compare_retrieval_gain",
     "format_report",
     "load_dataset",
+    "load_extraction_annotations",
     "run_evaluation",
     "run_graph_gain_evaluation",
     "write_report",

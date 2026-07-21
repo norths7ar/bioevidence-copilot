@@ -204,3 +204,41 @@ without treating knowledge-graph paths as citable literature evidence.
 - keep Hetionet import as an explicit, repeatable data-preparation step
 - keep React, hosted deployment, and general application persistence out of
   scope until the retrieval and evaluation work is validated
+
+## v0.3: Fine-tuned evidence extraction
+
+The next version deepens the biomedical evidence layer. Fine-tuning is an
+implementation technique within the existing product, not a separate chatbot
+or model-training demo.
+
+### Milestone 18: Extraction contract and annotation pilot [in progress]
+- define a versioned, query-focused JSON Schema for model-generated evidence
+- keep document metadata and retrieval scores outside the model target
+- add annotation rules, exact abstract-span validation, and review status
+- pressure-test the contract on tracked direct, indirect, and negative pairs
+
+### Milestone 19: Comparable extraction baselines
+- evaluate the deterministic extractor and a prompted base model against the
+  same reviewed labels
+- report JSON parse rate, schema validity, field metrics, outcome direction,
+  evidence-span support, latency, and cost
+- distinguish workflow-integrity checks from model-quality benchmarks
+
+### Milestone 20: Training dataset
+- expand reviewed annotations only after the pilot contract stabilizes
+- split by PMID to prevent document leakage across train, dev, and test sets
+- preserve source, license, transformation, and annotation provenance
+- do not treat unreviewed synthetic labels as benchmark ground truth
+
+### Milestone 21: Fine-tuning and offline evaluation
+- keep training code under `training/evidence_extraction/` in this repository
+- use a separate environment and optional dependencies for the training stack
+- compare the fine-tuned model against both established baselines
+- publish weights externally with a model card rather than committing them to Git
+
+### Milestone 22: Optional product inference backend
+- add deterministic, prompted, and fine-tuned extraction backends behind one
+  validated output contract
+- preserve deterministic fallback behavior when model inference is unavailable
+- surface grounded structured fields without making the core API image depend
+  on the training toolchain

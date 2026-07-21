@@ -185,3 +185,23 @@
 - This supersedes the Milestone 9 decision to keep trace, report, and complete
   internal state in one JSON payload; the Streamlit review payload remains an
   in-memory presentation model rather than the persisted report format.
+
+## 2026-07-21: Fine-tuned evidence extraction boundary
+
+- Keep fine-tuning inside the BioEvidence Copilot repository because the model
+  is one evidence-pipeline capability, not an independently released product.
+- Keep future training and offline evaluation under `training/`, runtime model
+  adapters under `src/bioevidence/extraction/`, and model weights in an external
+  registry or ignored local artifact directory.
+- Define a separate `ModelEvidenceExtraction` contract for semantic predictions;
+  do not ask the model to regenerate PMID, title, year, journal, or retrieval
+  relevance scores that the workflow already owns deterministically.
+- Require query-focused evidence status, explicit nulls, closed enums, and
+  verbatim abstract evidence spans so structured output can be validated and
+  evaluated beyond JSON parse success.
+- Preserve the current deterministic extractor as a baseline and compare it
+  with a prompted base model before making fine-tuning quality claims.
+- Treat the first tracked annotations as schema-development drafts. Only
+  human-reviewed labels may become benchmark gold data.
+- Keep the v0.3 sequence evaluation-first: stabilize the contract and pilot,
+  establish baselines, expand reviewed data, train, then add optional inference.

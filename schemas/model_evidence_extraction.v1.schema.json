@@ -1,0 +1,162 @@
+{
+  "$defs": {
+    "EvidenceStatus": {
+      "enum": [
+        "direct",
+        "indirect",
+        "none",
+        "unclear"
+      ],
+      "title": "EvidenceStatus",
+      "type": "string"
+    },
+    "OutcomeDirection": {
+      "enum": [
+        "increased",
+        "decreased",
+        "no_clear_difference",
+        "mixed",
+        "association_only",
+        "not_reported"
+      ],
+      "title": "OutcomeDirection",
+      "type": "string"
+    },
+    "OutcomeEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/$defs/OutcomeDirection"
+        },
+        "result_text": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Result Text"
+        },
+        "evidence_span": {
+          "minLength": 1,
+          "title": "Evidence Span",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "direction",
+        "result_text",
+        "evidence_span"
+      ],
+      "title": "OutcomeEvidence",
+      "type": "object"
+    },
+    "StudyDesign": {
+      "enum": [
+        "randomized_controlled_trial",
+        "non_randomized_interventional",
+        "cohort",
+        "case_control",
+        "cross_sectional",
+        "case_report_or_series",
+        "systematic_review_or_meta_analysis",
+        "narrative_review",
+        "study_protocol",
+        "preclinical_in_vivo",
+        "in_vitro",
+        "other",
+        "not_reported"
+      ],
+      "title": "StudyDesign",
+      "type": "string"
+    }
+  },
+  "$id": "https://bioevidence.local/schemas/model-evidence-extraction-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Query-focused fields predicted from one PubMed title and abstract.",
+  "properties": {
+    "evidence_status": {
+      "$ref": "#/$defs/EvidenceStatus"
+    },
+    "study_design": {
+      "$ref": "#/$defs/StudyDesign"
+    },
+    "population_or_system": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Population Or System"
+    },
+    "intervention_or_exposure": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Intervention Or Exposure"
+    },
+    "comparator": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Comparator"
+    },
+    "outcomes": {
+      "items": {
+        "$ref": "#/$defs/OutcomeEvidence"
+      },
+      "maxItems": 8,
+      "title": "Outcomes",
+      "type": "array"
+    },
+    "evidence_summary": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Evidence Summary"
+    }
+  },
+  "required": [
+    "evidence_status",
+    "study_design",
+    "population_or_system",
+    "intervention_or_exposure",
+    "comparator",
+    "outcomes",
+    "evidence_summary"
+  ],
+  "title": "ModelEvidenceExtraction",
+  "type": "object"
+}
