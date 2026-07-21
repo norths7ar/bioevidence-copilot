@@ -207,7 +207,7 @@ without treating knowledge-graph paths as citable literature evidence.
 
 ## v0.3: Fine-tuned evidence extraction
 
-The next version deepens the biomedical evidence layer. Fine-tuning is an
+This release deepens the biomedical evidence layer. Fine-tuning is an
 implementation technique within the existing product, not a separate chatbot
 or model-training demo.
 
@@ -248,7 +248,7 @@ PMID-level train/dev/test assignments with a provenance-bearing manifest.
 A corrected 36-step QLoRA run now verifies JSON-first response masking, BF16
 training, dev evaluation, adapter saving, and adapter reload on the target RTX
 5070. The held-out comparison against rules and the prompted base model is
-tracked; external adapter publication remains.
+tracked.
 
 The model card, dataset card, and a non-destructive release builder are tracked.
 The builder removes the machine-local base-model path from the PEFT configuration

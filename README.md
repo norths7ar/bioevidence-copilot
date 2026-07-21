@@ -31,9 +31,9 @@ orchestration, reproducible demo/evaluation artifacts, evidence faithfulness
 checks, agent traceability, a polished Streamlit review console, a FastAPI
 service boundary, optional Hetionet/Neo4j query expansion, local Docker Compose,
 and GitHub Actions quality gates. The literature-only baseline is preserved at
-the `v0.1.0` release tag. The v0.3 workstream adds a versioned semantic evidence
-schema, PMID-safe fine-tuning data, a local QLoRA experiment, and an optional
-fine-tuned extraction backend.
+the `v0.1.0` release tag. The `v0.3.0` release adds a versioned semantic evidence
+schema, PMID-safe fine-tuning data, a published local QLoRA adapter, and an
+optional fine-tuned extraction backend.
 
 The first extraction adapter is published on Hugging Face as
 [`n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1`](https://huggingface.co/n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1).
