@@ -113,6 +113,10 @@ def write_sft_dataset(
             for annotation in split_annotations
         ]
         _write_jsonl(output_dir / f"{split_name}.jsonl", records)
+        _write_jsonl(
+            output_dir / f"{split_name}.annotations.jsonl",
+            [_annotation_record(annotation) for annotation in split_annotations],
+        )
         split_summaries[split_name] = _summarize_split(split_annotations)
 
     manifest = {
@@ -163,3 +167,13 @@ def _write_jsonl(path: Path, records: Sequence[Mapping[str, Any]]) -> None:
 def _write_text(path: Path, content: str) -> None:
     with path.open("w", encoding="utf-8", newline="\n") as handle:
         handle.write(content)
+
+
+def _annotation_record(annotation: ExtractionAnnotation) -> dict[str, Any]:
+    return {
+        "id": annotation.id,
+        "query": annotation.query,
+        "pmid": annotation.document.pmid,
+        "annotation_status": annotation.annotation_status.value,
+        "extraction": annotation.extraction.model_dump(mode="json"),
+    }

@@ -1,0 +1,24 @@
+{
+  "dataset_id": "bioevidence-extraction-training-v1",
+  "target_schema": "https://bioevidence.local/schemas/model-evidence-extraction-v1.json",
+  "annotation_sources": [
+    "data/evaluations/evidence_extraction/pilot_annotations.jsonl",
+    "data/evaluations/evidence_extraction/expansion_annotations.v1.jsonl"
+  ],
+  "source_corpus": "data/corpora/demo/processed/demo.documents.jsonl",
+  "source_documents": "PubMed titles and abstracts",
+  "label_source": "model-assisted annotation",
+  "review_process": "Pilot labels received a second-model review; expansion labels were produced in Claude Desktop with schema and grounding validation.",
+  "rows": 60,
+  "evidence_status": {
+    "direct": 8,
+    "indirect": 29,
+    "none": 23
+  },
+  "known_coverage_limit": "Direct labels occur only for diabetes, statins, and sodium queries; asthma and melanoma have no direct labels in v1.",
+  "accepted_uses": [
+    "pipeline validation",
+    "structured-output fine-tuning experiment",
+    "held-out comparison with explicit dataset-version reporting"
+  ]
+}

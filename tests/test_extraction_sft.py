@@ -57,6 +57,7 @@ def test_write_sft_dataset_emits_manifest_without_pmid_leakage(tmp_path: Path) -
     assert sum(manifest["splits"][name]["rows"] for name in ("train", "dev", "test")) == 4
     assert manifest["source_metadata"]["label_source"] == "model-assisted annotation"
     assert all((tmp_path / f"{name}.jsonl").exists() for name in ("train", "dev", "test"))
+    assert all((tmp_path / f"{name}.annotations.jsonl").exists() for name in ("train", "dev", "test"))
     assert json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8")) == manifest
 
 

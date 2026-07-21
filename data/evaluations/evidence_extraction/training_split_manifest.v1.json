@@ -1,0 +1,200 @@
+{
+  "format": "qwen_chat_messages_v1",
+  "source_dataset": "data/evaluations/evidence_extraction/pilot_annotations.jsonl + data/evaluations/evidence_extraction/expansion_annotations.v1.jsonl",
+  "target_schema": "https://bioevidence.local/schemas/model-evidence-extraction-v1.json",
+  "seed": 42,
+  "ratios": {
+    "train": 0.8,
+    "dev": 0.1,
+    "test": 0.1
+  },
+  "rows": 60,
+  "unique_pmids": 53,
+  "splits": {
+    "train": {
+      "rows": 46,
+      "unique_pmids": 43,
+      "pmids": [
+        "40403434",
+        "40552187",
+        "40611785",
+        "40895849",
+        "40931546",
+        "41161590",
+        "41239448",
+        "41260459",
+        "41263457",
+        "41275512",
+        "41345453",
+        "41442024",
+        "41523285",
+        "41553395",
+        "41578335",
+        "41587637",
+        "41616871",
+        "41623136",
+        "41707916",
+        "41747920",
+        "41772161",
+        "41795462",
+        "41837861",
+        "41887159",
+        "41887268",
+        "41906877",
+        "41952094",
+        "42047827",
+        "42068528",
+        "42077353",
+        "42084728",
+        "42095998",
+        "42125304",
+        "42131458",
+        "42168180",
+        "42173441",
+        "42179835",
+        "42181194",
+        "42183244",
+        "42184419",
+        "42189350",
+        "42195213",
+        "42203264"
+      ],
+      "annotation_ids": [
+        "asthma-42125304",
+        "asthma-42173441",
+        "asthma-42189350",
+        "diabetes-42077353",
+        "diabetes-42184419",
+        "expansion-asthma-corticosteroids-exacerbations-41442024",
+        "expansion-asthma-corticosteroids-exacerbations-41587637",
+        "expansion-asthma-corticosteroids-exacerbations-41616871",
+        "expansion-asthma-corticosteroids-exacerbations-41707916",
+        "expansion-asthma-corticosteroids-exacerbations-41772161",
+        "expansion-asthma-corticosteroids-exacerbations-41837861",
+        "expansion-asthma-corticosteroids-exacerbations-42183244",
+        "expansion-dietary-sodium-hypertension-40611785",
+        "expansion-dietary-sodium-hypertension-40931546",
+        "expansion-dietary-sodium-hypertension-41161590",
+        "expansion-dietary-sodium-hypertension-41345453",
+        "expansion-dietary-sodium-hypertension-41747920",
+        "expansion-melanoma-immunotherapy-survival-40552187",
+        "expansion-melanoma-immunotherapy-survival-41795462",
+        "expansion-melanoma-immunotherapy-survival-42047827",
+        "expansion-melanoma-immunotherapy-survival-42131458",
+        "expansion-melanoma-immunotherapy-survival-42168180",
+        "expansion-melanoma-immunotherapy-survival-42179835",
+        "expansion-melanoma-immunotherapy-survival-42181194",
+        "expansion-statins-cardiovascular-risk-40403434",
+        "expansion-statins-cardiovascular-risk-40611785",
+        "expansion-statins-cardiovascular-risk-41275512",
+        "expansion-statins-cardiovascular-risk-41553395",
+        "expansion-statins-cardiovascular-risk-41578335",
+        "expansion-statins-cardiovascular-risk-41887159",
+        "expansion-type-2-diabetes-40895849",
+        "expansion-type-2-diabetes-41239448",
+        "expansion-type-2-diabetes-41260459",
+        "expansion-type-2-diabetes-41263457",
+        "expansion-type-2-diabetes-41523285",
+        "expansion-type-2-diabetes-41623136",
+        "expansion-type-2-diabetes-42095998",
+        "melanoma-42195213",
+        "melanoma-42203264",
+        "negative-diabetes-statins-42068528",
+        "negative-sodium-asthma-42125304",
+        "sodium-41906877",
+        "sodium-42084728",
+        "statins-41887268",
+        "statins-41952094",
+        "statins-42068528"
+      ],
+      "annotation_status": {
+        "draft": 46
+      },
+      "evidence_status": {
+        "direct": 4,
+        "indirect": 25,
+        "none": 17
+      }
+    },
+    "dev": {
+      "rows": 7,
+      "unique_pmids": 5,
+      "pmids": [
+        "41082048",
+        "41206973",
+        "41499691",
+        "41859618",
+        "42200697"
+      ],
+      "annotation_ids": [
+        "expansion-asthma-corticosteroids-exacerbations-42200697",
+        "expansion-dietary-sodium-hypertension-41206973",
+        "expansion-dietary-sodium-hypertension-41499691",
+        "expansion-statins-cardiovascular-risk-41082048",
+        "expansion-type-2-diabetes-41859618",
+        "melanoma-42200697",
+        "negative-statins-melanoma-42200697"
+      ],
+      "annotation_status": {
+        "draft": 7
+      },
+      "evidence_status": {
+        "direct": 2,
+        "indirect": 3,
+        "none": 2
+      }
+    },
+    "test": {
+      "rows": 7,
+      "unique_pmids": 5,
+      "pmids": [
+        "40824117",
+        "41102113",
+        "42045690",
+        "42090672",
+        "42185896"
+      ],
+      "annotation_ids": [
+        "diabetes-42185896",
+        "expansion-dietary-sodium-hypertension-40824117",
+        "expansion-melanoma-immunotherapy-survival-42045690",
+        "expansion-statins-cardiovascular-risk-41102113",
+        "negative-asthma-diabetes-42185896",
+        "negative-melanoma-sodium-42090672",
+        "sodium-42090672"
+      ],
+      "annotation_status": {
+        "draft": 7
+      },
+      "evidence_status": {
+        "direct": 2,
+        "indirect": 1,
+        "none": 4
+      }
+    }
+  },
+  "source_metadata": {
+    "dataset_id": "bioevidence-extraction-training-v1",
+    "target_schema": "https://bioevidence.local/schemas/model-evidence-extraction-v1.json",
+    "annotation_sources": [
+      "data/evaluations/evidence_extraction/pilot_annotations.jsonl",
+      "data/evaluations/evidence_extraction/expansion_annotations.v1.jsonl"
+    ],
+    "source_corpus": "data/corpora/demo/processed/demo.documents.jsonl",
+    "source_documents": "PubMed titles and abstracts",
+    "label_source": "model-assisted annotation",
+    "review_process": "Pilot labels received a second-model review; expansion labels were produced in Claude Desktop with schema and grounding validation.",
+    "rows": 60,
+    "evidence_status": {
+      "direct": 8,
+      "indirect": 29,
+      "none": 23
+    },
+    "known_coverage_limit": "Direct labels occur only for diabetes, statins, and sodium queries; asthma and melanoma have no direct labels in v1.",
+    "accepted_uses": [
+      "pipeline validation",
+      "structured-output fine-tuning experiment",
+      "held-out comparison with explicit dataset-version reporting"
+    ]
+  }
+}
