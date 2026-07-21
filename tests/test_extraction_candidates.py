@@ -64,6 +64,22 @@ def test_build_candidate_manifest_records_source_hash(tmp_path: Path) -> None:
     assert manifest["selection"]["high_per_topic"] == 4
 
 
+def test_candidate_manifest_hash_is_stable_across_line_endings(tmp_path: Path) -> None:
+    lf_corpus = tmp_path / "lf.jsonl"
+    crlf_corpus = tmp_path / "crlf.jsonl"
+    lf_corpus.write_bytes(b'{"pmid":"1"}\n{"pmid":"2"}\n')
+    crlf_corpus.write_bytes(b'{"pmid":"1"}\r\n{"pmid":"2"}\r\n')
+
+    lf_manifest = build_candidate_manifest([], source_corpus=lf_corpus, existing_annotations=Path("pilot.jsonl"))
+    crlf_manifest = build_candidate_manifest(
+        [],
+        source_corpus=crlf_corpus,
+        existing_annotations=Path("pilot.jsonl"),
+    )
+
+    assert lf_manifest["source_corpus_sha256"] == crlf_manifest["source_corpus_sha256"]
+
+
 def test_build_annotation_prompt_records_uses_runtime_prompt() -> None:
     candidate = ExtractionCandidate(
         id="candidate-1",

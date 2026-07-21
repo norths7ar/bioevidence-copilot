@@ -1,7 +1,7 @@
 {
   "format": "bioevidence_extraction_candidates_v1",
   "source_corpus": "data/corpora/demo/processed/demo.documents.jsonl",
-  "source_corpus_sha256": "de41c016897c004fa1a5f13c18cd625b4a356be57363f4dccf95c1625bb53b9d",
+  "source_corpus_sha256": "712abbbadc54a69e75eacfd7168c3d35e1d22839188b1ec81420ac8a41e83895",
   "existing_annotations": "data/evaluations/evidence_extraction/pilot_annotations.jsonl",
   "selection": {
     "high_per_topic": 4,

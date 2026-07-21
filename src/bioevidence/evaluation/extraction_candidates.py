@@ -128,7 +128,7 @@ def build_candidate_manifest(
     return {
         "format": "bioevidence_extraction_candidates_v1",
         "source_corpus": source_corpus.as_posix(),
-        "source_corpus_sha256": hashlib.sha256(source_corpus.read_bytes()).hexdigest(),
+        "source_corpus_sha256": _canonical_text_sha256(source_corpus),
         "existing_annotations": existing_annotations.as_posix(),
         "selection": {
             "high_per_topic": high_per_topic,
@@ -140,6 +140,13 @@ def build_candidate_manifest(
         "queries": dict(sorted(Counter(candidate.query for candidate in candidates).items())),
         "selection_bands": dict(sorted(Counter(candidate.selection_band for candidate in candidates).items())),
     }
+
+
+def _canonical_text_sha256(path: Path) -> str:
+    """Hash UTF-8 text with LF newlines so provenance is stable across OS checkouts."""
+
+    normalized = path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def build_annotation_prompt_records(candidates: Sequence[ExtractionCandidate]) -> list[dict[str, Any]]:

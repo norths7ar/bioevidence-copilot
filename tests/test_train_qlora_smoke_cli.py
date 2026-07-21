@@ -3,12 +3,28 @@ import subprocess
 import sys
 from pathlib import Path
 
+from bioevidence.evaluation.extraction_dataset import load_extraction_annotations
+from bioevidence.evaluation.extraction_sft import write_sft_dataset
+from bioevidence.retrieval.corpus import load_local_documents
 from training.evidence_extraction.scripts.train_qlora_smoke import _render_training_text
 
 
-def test_train_qlora_smoke_dry_run_validates_generated_dataset() -> None:
+def test_train_qlora_smoke_dry_run_validates_generated_dataset(tmp_path: Path) -> None:
+    annotations = load_extraction_annotations(
+        Path("data/evaluations/evidence_extraction/pilot_annotations.jsonl"),
+        load_local_documents(Path("data/corpora/demo")),
+    )
+    write_sft_dataset(annotations, tmp_path, source_dataset="pilot_annotations.jsonl")
     completed = subprocess.run(
-        [sys.executable, "training/evidence_extraction/scripts/train_qlora_smoke.py", "--dry-run"],
+        [
+            sys.executable,
+            "training/evidence_extraction/scripts/train_qlora_smoke.py",
+            "--dry-run",
+            "--train-file",
+            str(tmp_path / "train.jsonl"),
+            "--dev-file",
+            str(tmp_path / "dev.jsonl"),
+        ],
         check=False,
         capture_output=True,
         text=True,
