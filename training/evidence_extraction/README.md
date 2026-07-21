@@ -180,3 +180,9 @@ hf upload <namespace>/bioevidence-qwen3-4b-extraction-lora-v1 `
 The publication materials are tracked as `MODEL_CARD.md` and
 `DATASET_CARD.md`. Uploading requires an authenticated Hugging Face account and
 is intentionally separate from training and local release preparation.
+
+The v1 adapter is published at
+[`n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1`](https://huggingface.co/n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1)
+at revision `e6a61cd9749f373fc6c4fcdc3563b417ea57b401`. It was downloaded into a
+fresh directory after publication, and every file covered by the release
+manifest matched both its recorded size and SHA-256 hash.

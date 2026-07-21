@@ -106,6 +106,14 @@ Optional model failures fall back to the deterministic structured extractor.
 Successful structured predictions are exposed alongside the existing evidence
 row fields and do not require the API container to install the training stack.
 
+The published v1 adapter can be downloaded before running the same evaluator:
+
+```powershell
+hf download n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1 `
+  --revision e6a61cd9749f373fc6c4fcdc3563b417ea57b401 `
+  --local-dir artifacts/models/bioevidence-qwen3-4b-extraction-lora-v1
+```
+
 The first local prompted run uses the pinned 4-bit
 `unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit` snapshot. Reproduce it from
 the separate training environment with:

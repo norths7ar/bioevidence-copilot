@@ -94,5 +94,11 @@
     "workflow_evidence_fields_exposed": true,
     "first_item_latency_includes_model_load": true
   },
+  "publication": {
+    "repository": "https://huggingface.co/n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1",
+    "revision": "e6a61cd9749f373fc6c4fcdc3563b417ea57b401",
+    "visibility": "public",
+    "release_manifest_verified_after_download": true
+  },
   "interpretation": "The corrected adapter achieved strict JSON, schema validity, and grounded spans on all seven held-out draft examples. It improved semantic and outcome metrics over the prompted base, but evidence-status accuracy was lower. The test set is too small and draft-labeled for a broad extraction-quality claim."
 }

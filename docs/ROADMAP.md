@@ -239,7 +239,7 @@ The dataset builder combines the 20-row pilot with 40 model-assisted draft
 annotations, exports Qwen chat-format JSONL, and produces deterministic
 PMID-level train/dev/test assignments with a provenance-bearing manifest.
 
-### Milestone 21: Fine-tuning and offline evaluation [in progress]
+### Milestone 21: Fine-tuning and offline evaluation [completed]
 - keep training code under `training/evidence_extraction/` in this repository
 - use a separate environment and optional dependencies for the training stack
 - compare the fine-tuned model against both established baselines
@@ -250,10 +250,11 @@ training, dev evaluation, adapter saving, and adapter reload on the target RTX
 5070. The held-out comparison against rules and the prompted base model is
 tracked; external adapter publication remains.
 
-The model card, dataset card, and a non-destructive release builder are now
-tracked. The builder removes the machine-local base-model path from the PEFT
-configuration and emits a hash manifest. Only choosing a Hugging Face namespace
-and uploading the prepared adapter remain external actions.
+The model card, dataset card, and a non-destructive release builder are tracked.
+The builder removes the machine-local base-model path from the PEFT configuration
+and emits a hash manifest. The public adapter is published at
+`n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1`; a clean Hub download matched
+every recorded release-file size and SHA-256 hash.
 
 ### Milestone 22: Optional product inference backend [completed]
 - add deterministic, prompted, and fine-tuned extraction backends behind one
