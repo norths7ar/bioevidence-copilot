@@ -1,0 +1,89 @@
+{
+  "status": "completed",
+  "recorded_at": "2026-07-21",
+  "purpose": "first PMID-safe QLoRA extraction comparison",
+  "model": "unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit",
+  "revision": "7744afa8566e264af1a92a806d8d9aae00cc7c78",
+  "hardware": "NVIDIA RTX 5070 12 GB",
+  "dataset": {
+    "source_rows": 60,
+    "source_label_status": "draft",
+    "train_rows": 46,
+    "dev_rows": 7,
+    "test_rows": 7,
+    "split_unit": "PMID",
+    "test_evidence_status_counts": {
+      "direct": 2,
+      "indirect": 1,
+      "none": 4
+    }
+  },
+  "qlora": {
+    "load_in_4bit": true,
+    "max_seq_length": 4096,
+    "max_steps": 36,
+    "epochs": 3,
+    "effective_batch_size": 4,
+    "learning_rate": 0.0002,
+    "lora_r": 16,
+    "lora_alpha": 16,
+    "response_only_loss": true,
+    "assistant_target_starts_with_json": true,
+    "trainable_parameters": 33030144,
+    "trainable_parameter_rate": 0.0081
+  },
+  "training_result": {
+    "train_seconds": 238.299,
+    "train_loss": 0.427622973996525,
+    "pre_eval_loss": 0.9714518785476685,
+    "post_eval_loss": 0.2435523420572281,
+    "pytorch_peak_allocated_vram_gib": 5.808,
+    "adapter_reload_verified": true
+  },
+  "held_out_test": {
+    "rules": {
+      "json_parse_rate": 1.0,
+      "schema_validity_rate": 1.0,
+      "evidence_status_accuracy": 0.42857142857142855,
+      "study_design_accuracy": 0.8571428571428571,
+      "semantic_field_token_f1": 0.5714285714285714,
+      "outcome_name_token_f1": 0.42857142857142855,
+      "outcome_direction_accuracy": 0.42857142857142855,
+      "evidence_span_token_f1": 0.5130145625501663,
+      "evidence_span_support_rate": 1.0
+    },
+    "prompted_base": {
+      "json_parse_rate": 1.0,
+      "schema_validity_rate": 1.0,
+      "grounding_rate": 0.7142857142857143,
+      "evidence_status_accuracy": 0.7142857142857143,
+      "study_design_accuracy": 1.0,
+      "semantic_field_token_f1": 0.5402837902837903,
+      "outcome_name_token_f1": 0.41428571428571426,
+      "outcome_direction_accuracy": 0.5357142857142857,
+      "evidence_span_token_f1": 0.46065654378462256,
+      "evidence_span_support_rate": 0.8571428571428571,
+      "mean_generation_seconds": 20.07914285714286
+    },
+    "qlora": {
+      "json_parse_rate": 1.0,
+      "schema_validity_rate": 1.0,
+      "grounding_rate": 1.0,
+      "evidence_status_accuracy": 0.42857142857142855,
+      "study_design_accuracy": 0.8571428571428571,
+      "semantic_field_token_f1": 0.6676003734827265,
+      "outcome_name_token_f1": 0.6309523809523808,
+      "outcome_direction_accuracy": 0.7142857142857143,
+      "evidence_span_token_f1": 0.5111214087117701,
+      "evidence_span_support_rate": 1.0,
+      "mean_generation_seconds": 7.335857142857143
+    }
+  },
+  "superseded_run": {
+    "name": "qwen3_4b_qlora_v1",
+    "strict_json_parse_rate": 0.0,
+    "cause": "The complete-conversation chat template inserted assistant-side thinking scaffolding into the supervised response target.",
+    "resolution": "Render the system/user generation prompt first, then append the raw JSON assistant target and EOS token."
+  },
+  "interpretation": "The corrected adapter achieved strict JSON, schema validity, and grounded spans on all seven held-out draft examples. It improved semantic and outcome metrics over the prompted base, but evidence-status accuracy was lower. The test set is too small and draft-labeled for a broad extraction-quality claim."
+}

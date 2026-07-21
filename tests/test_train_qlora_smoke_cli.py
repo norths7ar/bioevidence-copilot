@@ -3,6 +3,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from training.evidence_extraction.scripts.train_qlora_smoke import _render_training_text
+
 
 def test_train_qlora_smoke_dry_run_validates_generated_dataset() -> None:
     completed = subprocess.run(
@@ -23,6 +25,36 @@ def test_train_qlora_smoke_dry_run_validates_generated_dataset() -> None:
     }
     assert payload["config"]["max_steps"] == 5
     assert payload["config"]["response_only_loss"] is True
+    assert payload["config"]["assistant_target_starts_with_json"] is True
+
+
+def test_training_render_keeps_template_scaffolding_out_of_assistant_target() -> None:
+    class FakeTokenizer:
+        eos_token = "<eos>"
+
+        def apply_chat_template(
+            self,
+            messages: list[dict[str, str]],
+            *,
+            tokenize: bool,
+            add_generation_prompt: bool,
+        ) -> str:
+            assert [message["role"] for message in messages] == ["system", "user"]
+            assert tokenize is False
+            assert add_generation_prompt is True
+            return "<assistant>\n"
+
+    rendered = _render_training_text(
+        [
+            {"role": "system", "content": "system"},
+            {"role": "user", "content": "user"},
+            {"role": "assistant", "content": '  {"evidence_status":"none"}  '},
+        ],
+        FakeTokenizer(),
+    )
+
+    assert rendered == '<assistant>\n{"evidence_status":"none"}<eos>'
+    assert "<think>" not in rendered
 
 
 def test_train_qlora_smoke_dry_run_rejects_pmid_leakage(tmp_path: Path) -> None:

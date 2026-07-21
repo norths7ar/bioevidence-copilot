@@ -268,3 +268,17 @@
 - Reuse the runtime extraction prompt for model-assisted drafting. Admit only
   JSON-, schema-, and span-grounding-valid outputs to the draft file, while
   retaining failures separately for diagnosis.
+
+## 2026-07-21: JSON-first QLoRA response targets
+
+- Render the system and user messages with the model's generation prompt, then
+  append the raw assistant JSON and EOS token for supervised training.
+- Do not render the complete training conversation when the chat template adds
+  assistant-side thinking or tool scaffolding; response-only masking would make
+  that scaffolding part of the learned output contract.
+- Keep strict JSON parse rate separate from recoverable content diagnostics.
+  A valid object wrapped in model-specific tags still fails the runtime JSON
+  contract and must not be reported as compliant.
+- Compare corrected adapters against rules and the prompted base model on the
+  same PMID-held-out split. Treat the seven-row draft test result as evidence
+  that the training path works, not as a general biomedical-quality benchmark.

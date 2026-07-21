@@ -67,6 +67,8 @@ The builder writes `train.jsonl`, `dev.jsonl`, `test.jsonl`, and
 `manifest.json` under `artifacts/training/evidence_extraction/pilot_sft/`.
 It also refreshes the tracked aggregate `pilot_split_manifest.json` beside the
 source annotations.
+Each split also gets a `*.annotations.jsonl` file in the generated directory so
+the same held-out labels can be passed directly to the extraction evaluator.
 Assignments are deterministic for a fixed seed, and every query variant for the
 same PMID stays in one split. Each row contains the exact runtime system/user
 prompt, a compact JSON assistant target, and inspectable annotation metadata.
@@ -91,6 +93,10 @@ python training/evidence_extraction/scripts/train_qlora_smoke.py
 
 The smoke run uses rank-16 LoRA on the attention and MLP projections, 4-bit base
 weights, BF16 when supported, effective batch size four, and response-only loss.
+Training examples are rendered from the system/user generation prompt plus the
+raw assistant JSON target. This deliberately excludes any assistant-side
+thinking or tool-call scaffolding that a model chat template may otherwise add,
+so the first supervised response character is `{` just as required at runtime.
 It evaluates dev loss before and after training, saves the adapter, reloads it,
 and writes an inspectable `report.json`. This is a pipeline validation run, not
 the final hyperparameter configuration.
@@ -123,3 +129,30 @@ average, and peaked at 4.38 GiB of allocated VRAM. It predicted 2.4 outcomes per
 item while the pilot labels contain 0.6 on average. This over-extraction explains
 most of the weaker outcome and span scores; the only JSON failure reached the
 1,024-token output limit before closing the object.
+
+## First expanded QLoRA comparison
+
+The first expanded run combines the 20 pilot rows with 40 model-assisted draft
+annotations. PMID-level splitting produced 46 train, 7 dev, and 7 held-out test
+rows. The corrected 36-step adapter was compared with the rules baseline and the
+prompted base model on exactly the same test split.
+
+| Metric | Rules | Qwen3-4B prompted | Qwen3-4B QLoRA |
+| --- | ---: | ---: | ---: |
+| JSON parse rate | 1.000 | 1.000 | 1.000 |
+| Schema validity | 1.000 | 1.000 | 1.000 |
+| Grounding rate | n/a | 0.714 | 1.000 |
+| Evidence status accuracy | 0.429 | 0.714 | 0.429 |
+| Study design accuracy | 0.857 | 1.000 | 0.857 |
+| Semantic-field token F1 | 0.571 | 0.540 | 0.668 |
+| Outcome-name token F1 | 0.429 | 0.414 | 0.631 |
+| Outcome direction accuracy | 0.429 | 0.536 | 0.714 |
+| Evidence-span token F1 | 0.513 | 0.461 | 0.511 |
+| Evidence-span support rate | 1.000 | 0.857 | 1.000 |
+
+The adapter cut mean generation time from 20.08 to 7.34 seconds and achieved the
+target strict JSON behavior. It did not improve evidence-status classification,
+so this result supports structured-output specialization but not a broad claim
+that the 60-row draft dataset improves every extraction dimension. The tracked
+configuration and aggregate are in
+`data/evaluations/evidence_extraction/qlora_training_v1_summary.json`.

@@ -188,13 +188,25 @@ def _load_rendered_dataset(path: Path, tokenizer: Any) -> Any:
     dataset = Dataset.from_list(_load_jsonl(path))
 
     def render_batch(batch: dict[str, list[Any]]) -> dict[str, list[str]]:
-        texts = [
-            tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
-            for messages in batch["messages"]
-        ]
+        texts = [_render_training_text(messages, tokenizer) for messages in batch["messages"]]
         return {"text": texts}
 
     return dataset.map(render_batch, batched=True, desc=f"Render {path.name}")
+
+
+def _render_training_text(messages: list[dict[str, str]], tokenizer: Any) -> str:
+    """Render a response-only example whose supervised target starts with JSON.
+
+    Some Qwen chat templates add assistant-side thinking scaffolding when a
+    complete conversation is rendered. Building the generation prompt first
+    keeps that scaffolding out of the labels, so the first supervised response
+    character is the opening JSON brace used at inference time.
+    """
+    prompt = tokenizer.apply_chat_template(messages[:-1], tokenize=False, add_generation_prompt=True)
+    assistant_content = messages[-1]["content"].strip()
+    if not assistant_content.startswith("{"):
+        raise ValueError("assistant target must start with a JSON object")
+    return f"{prompt}{assistant_content}{tokenizer.eos_token or ''}"
 
 
 def _validate_datasets(train_file: Path, dev_file: Path) -> dict[str, Any]:
@@ -262,6 +274,7 @@ def _config_payload(args: argparse.Namespace) -> dict[str, Any]:
         "lora_alpha": args.lora_alpha,
         "seed": args.seed,
         "response_only_loss": True,
+        "assistant_target_starts_with_json": True,
         "verify_reload": args.verify_reload,
     }
 
