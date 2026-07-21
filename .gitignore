@@ -31,6 +31,7 @@ Thumbs.db
 .ruff_cache/
 tmp*/
 artifacts/
+unsloth_compiled_cache/
 dist/
 build/
 *.egg-info/

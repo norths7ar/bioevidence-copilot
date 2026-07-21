@@ -37,9 +37,9 @@ closed schema and rejects outcome evidence spans that are not verbatim
 substrings of the referenced abstract.
 
 The initial 20 rows intentionally mix direct, indirect, and unrelated pairs.
-They remain `draft`; they pressure-test the annotation contract but are not yet
-gold labels and must not support model-quality claims until human review. See
-`docs/EVIDENCE_ANNOTATION_GUIDE.md` for field definitions and review rules.
+They remain a small schema-development pilot, with source and review provenance
+stored on each row. See `docs/EVIDENCE_ANNOTATION_GUIDE.md` for field definitions
+and review rules.
 
 Validate the tracked annotations against the current corpus:
 
@@ -78,6 +78,35 @@ F1, outcome matching and direction, span overlap/support, and latency. Provider
 cost is not inferred when the compatible endpoint does not expose a stable
 price contract; model name and experiment configuration should be recorded
 alongside published benchmark results.
+
+The first local prompted run uses the pinned 4-bit
+`unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit` snapshot. Reproduce it from
+the separate training environment with:
+
+```powershell
+conda activate bioevidence-training
+python training/evidence_extraction/scripts/smoke_test.py
+python training/evidence_extraction/scripts/run_local_extraction_eval.py --model-label "unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit@7744afa"
+```
+
+| Metric | Rules | Qwen3-4B prompted |
+| --- | ---: | ---: |
+| JSON parse rate | 1.000 | 0.950 |
+| Schema validity | 1.000 | 0.950 |
+| Evidence status accuracy | 0.400 | 0.650 |
+| Study design accuracy | 0.750 | 0.800 |
+| Semantic-field token F1 | 0.400 | 0.553 |
+| Outcome direction accuracy | 0.450 | 0.379 |
+| Evidence-span token F1 | 0.461 | 0.299 |
+| Evidence-span support rate | 1.000 | 0.815 |
+
+The prompted model averaged 22.26 seconds per item and peaked at 4.38 GiB of
+allocated VRAM on an RTX 5070 12 GB. It over-extracted outcomes (2.4 predicted
+versus 0.6 labeled per item), which lowered outcome-direction and span metrics.
+One response hit the 1,024-token output limit and ended as incomplete JSON. The
+environment lock, model download command, and full-run entry point are documented
+in `training/evidence_extraction/README.md`. The tracked machine-readable
+aggregate is `data/evaluations/evidence_extraction/baseline_summary.json`.
 
 ## Building Real Local Data
 

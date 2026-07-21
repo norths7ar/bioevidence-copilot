@@ -217,7 +217,7 @@ or model-training demo.
 - add annotation rules, exact abstract-span validation, and review status
 - pressure-test the contract on tracked direct, indirect, and negative pairs
 
-### Milestone 19: Comparable extraction baselines [in progress]
+### Milestone 19: Comparable extraction baselines [completed]
 - evaluate the deterministic extractor and a prompted base model against the
   same versioned pilot labels
 - report JSON parse rate, schema validity, field metrics, outcome direction,
@@ -225,14 +225,15 @@ or model-training demo.
 - distinguish workflow-integrity checks from model-quality benchmarks
 
 The shared backend contract, prompt-only adapter, rule adapter, and offline
-metrics runner are implemented. Milestone 19 remains in progress until a
-prompted model run is recorded against the versioned pilot labels.
+metrics runner are implemented. A pinned local Qwen3-4B 4-bit run now records
+the prompted baseline against all 20 versioned pilot labels, including raw
+failure output, latency, and peak VRAM.
 
 ### Milestone 20: Training dataset
 - expand reviewed annotations only after the pilot contract stabilizes
 - split by PMID to prevent document leakage across train, dev, and test sets
 - preserve source, license, transformation, and annotation provenance
-- do not treat unreviewed synthetic labels as benchmark ground truth
+- record label source and review status, and reserve a held-out split for final evaluation
 
 ### Milestone 21: Fine-tuning and offline evaluation
 - keep training code under `training/evidence_extraction/` in this repository

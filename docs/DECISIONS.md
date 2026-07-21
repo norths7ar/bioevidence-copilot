@@ -217,3 +217,19 @@
   preserve raw failed model output for diagnosis.
 - Treat provider cost as experiment metadata rather than guessing it from token
   counts when an OpenAI-compatible endpoint has no stable price contract.
+
+## 2026-07-21: First local trainable-model baseline
+
+- Use the 4-bit Unsloth build of Qwen3-4B-Instruct-2507 as the first local
+  prompted and QLoRA-capable baseline for the RTX 5070 12 GB development target.
+- Pin the model revision and the complete Windows training environment so later
+  prompt-only and fine-tuned runs remain comparable.
+- Keep Unsloth, CUDA, and training dependencies outside the product environment;
+  install the repository itself editable inside the training environment so
+  experiments use the current schema, prompt, and metrics.
+- Preserve per-item raw output and report allocated peak VRAM alongside quality
+  and latency metrics, because truncation and grounding failures are part of the
+  model diagnosis.
+- Treat over-extraction as the first optimization target: the prompted model
+  improves status, design, and semantic fields but predicts four times as many
+  outcomes as the pilot labels on average.

@@ -1,0 +1,43 @@
+{
+  "dataset": "data/evaluations/evidence_extraction/pilot_annotations.jsonl",
+  "items": 20,
+  "recorded_at": "2026-07-21",
+  "rules": {
+    "json_parse_rate": 1.0,
+    "schema_validity_rate": 1.0,
+    "mean_latency_ms": 0.06389999762177467,
+    "mean_evidence_status_accuracy": 0.4,
+    "mean_study_design_accuracy": 0.75,
+    "mean_semantic_field_token_f1": 0.4,
+    "mean_outcome_name_token_f1": 0.25,
+    "mean_outcome_direction_accuracy": 0.45,
+    "mean_evidence_span_token_f1": 0.460679212719434,
+    "mean_evidence_span_support_rate": 1.0
+  },
+  "qwen3_4b_prompted": {
+    "model": "unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit",
+    "revision": "7744afa8566e264af1a92a806d8d9aae00cc7c78",
+    "hardware": "NVIDIA RTX 5070 12 GB",
+    "load_in_4bit": true,
+    "max_seq_length": 4096,
+    "max_new_tokens": 1024,
+    "deterministic_decoding": true,
+    "json_parse_rate": 0.95,
+    "schema_validity_rate": 0.95,
+    "grounding_rate": 0.65,
+    "load_seconds": 3.747,
+    "peak_vram_gib": 4.382,
+    "mean_generation_seconds": 22.264000000000003,
+    "mean_evidence_status_accuracy": 0.65,
+    "mean_study_design_accuracy": 0.8,
+    "mean_semantic_field_token_f1": 0.5534091398797282,
+    "mean_outcome_name_token_f1": 0.30793650793650795,
+    "mean_outcome_direction_accuracy": 0.37916666666666665,
+    "mean_evidence_span_token_f1": 0.2991018826217763,
+    "mean_evidence_span_support_rate": 0.8145833333333334,
+    "mean_predicted_outcomes": 2.4,
+    "mean_labeled_outcomes": 0.6,
+    "json_failures": 1,
+    "diagnosis": "The model over-extracted outcomes; the JSON failure reached the output-token limit."
+  }
+}
