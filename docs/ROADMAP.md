@@ -248,7 +248,12 @@ PMID-level train/dev/test assignments with a provenance-bearing manifest.
 A corrected 36-step QLoRA run now verifies JSON-first response masking, BF16
 training, dev evaluation, adapter saving, and adapter reload on the target RTX
 5070. The held-out comparison against rules and the prompted base model is
-tracked; external adapter publication and its model card remain.
+tracked; external adapter publication remains.
+
+The model card, dataset card, and a non-destructive release builder are now
+tracked. The builder removes the machine-local base-model path from the PEFT
+configuration and emits a hash manifest. Only choosing a Hugging Face namespace
+and uploading the prepared adapter remain external actions.
 
 ### Milestone 22: Optional product inference backend [completed]
 - add deterministic, prompted, and fine-tuned extraction backends behind one

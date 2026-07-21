@@ -299,3 +299,15 @@
   do not add GPU training dependencies to the API package or Docker image.
 - Fall back to the deterministic structured extractor when an optional model is
   unconfigured, unavailable, invalid, or produces unsupported evidence spans.
+
+## 2026-07-21: Portable adapter publication boundary
+
+- Prepare publication files in a new ignored release directory; never mutate or
+  overwrite the original training adapter.
+- Replace the machine-local base snapshot in PEFT configuration with the pinned
+  public Unsloth model ID before upload.
+- Publish the adapter with its model card, tokenizer/chat-template files, and a
+  SHA-256 manifest; keep source annotations and detailed reports in the project
+  repository rather than bundling them with the weights.
+- Keep upload and remote-repository creation as an explicit authenticated step
+  after the user chooses the hosting namespace.

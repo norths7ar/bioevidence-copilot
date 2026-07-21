@@ -156,3 +156,27 @@ so this result supports structured-output specialization but not a broad claim
 that the 60-row draft dataset improves every extraction dimension. The tracked
 configuration and aggregate are in
 `data/evaluations/evidence_extraction/qlora_training_v1_summary.json`.
+
+## Prepare the adapter for publication
+
+The raw PEFT save records the local base-model snapshot path. Build a portable,
+non-destructive release directory that rewrites that path to the public base
+model ID, installs the reviewed model card, and hashes every release file:
+
+```powershell
+python training/evidence_extraction/scripts/prepare_adapter_release.py
+```
+
+The default output is ignored at
+`artifacts/releases/bioevidence-qwen3-4b-extraction-lora-v1/`. The script refuses
+to write into a non-empty destination. Inspect `release_manifest.json`, then
+upload only that prepared directory after choosing a Hugging Face namespace:
+
+```powershell
+hf upload <namespace>/bioevidence-qwen3-4b-extraction-lora-v1 `
+  artifacts/releases/bioevidence-qwen3-4b-extraction-lora-v1
+```
+
+The publication materials are tracked as `MODEL_CARD.md` and
+`DATASET_CARD.md`. Uploading requires an authenticated Hugging Face account and
+is intentionally separate from training and local release preparation.
