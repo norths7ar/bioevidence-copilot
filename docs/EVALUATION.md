@@ -42,6 +42,13 @@ stored in `pilot_dataset_metadata.json` and per-row stability status in the
 annotation JSONL. See `docs/EVIDENCE_ANNOTATION_GUIDE.md` for field definitions
 and review rules.
 
+The first expansion queue is tracked as
+`data/evaluations/evidence_extraction/expansion_candidates.v1.jsonl`, with its
+source hash and sampling configuration in the adjacent manifest. Selection
+bands describe how a pair entered the queue; they are not evidence-status
+labels. The model-assisted draft job must still produce schema-valid, grounded
+extractions before any row can enter the annotation dataset.
+
 Validate the tracked annotations against the current corpus:
 
 ```powershell

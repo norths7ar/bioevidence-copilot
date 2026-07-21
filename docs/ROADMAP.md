@@ -237,7 +237,9 @@ failure output, latency, and peak VRAM.
 
 The first dataset builder now exports the pilot to Qwen chat-format JSONL with
 deterministic PMID-level train/dev/test assignments and a provenance-bearing
-manifest. Expanding the query-document annotations is the remaining core work.
+manifest. A 40-pair expansion queue now adds query-balanced high-relevance,
+broad-coverage, and cross-topic hard-negative candidates with model-assisted
+drafting seams. Producing and reviewing those labels is the remaining core work.
 
 ### Milestone 21: Fine-tuning and offline evaluation [in progress]
 - keep training code under `training/evidence_extraction/` in this repository

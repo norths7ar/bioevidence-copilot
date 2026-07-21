@@ -255,3 +255,16 @@
   and reload it successfully before scaling annotation or training volume.
 - Keep adapter weights and detailed trainer output under ignored `artifacts/`;
   track the script, reproducible configuration, and compact result summary.
+
+## 2026-07-21: Extraction annotation expansion sampling
+
+- Build annotation queues from explicit query-document pairs rather than taking
+  only the retrieval top-k, which would underrepresent `none` and edge cases.
+- Sample per query from high-scoring same-topic documents, broader same-topic
+  coverage, and cross-topic hard negatives; treat these as selection bands, not
+  preassigned evidence labels.
+- Exclude already annotated query-PMID pairs, pin the source-corpus hash and
+  sampling counts, and preserve PMID ownership for later dataset rebuilding.
+- Reuse the runtime extraction prompt for model-assisted drafting. Admit only
+  JSON-, schema-, and span-grounding-valid outputs to the draft file, while
+  retaining failures separately for diagnosis.

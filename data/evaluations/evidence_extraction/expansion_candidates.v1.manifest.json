@@ -1,0 +1,25 @@
+{
+  "format": "bioevidence_extraction_candidates_v1",
+  "source_corpus": "data/corpora/demo/processed/demo.documents.jsonl",
+  "source_corpus_sha256": "de41c016897c004fa1a5f13c18cd625b4a356be57363f4dccf95c1625bb53b9d",
+  "existing_annotations": "data/evaluations/evidence_extraction/pilot_annotations.jsonl",
+  "selection": {
+    "high_per_topic": 4,
+    "broad_per_topic": 2,
+    "hard_negative_per_topic": 2
+  },
+  "candidate_pairs": 40,
+  "unique_pmids": 39,
+  "queries": {
+    "asthma corticosteroids exacerbations randomized trial": 8,
+    "dietary sodium hypertension blood pressure randomized trial": 8,
+    "melanoma immunotherapy survival checkpoint inhibitors": 8,
+    "statins cardiovascular risk primary prevention meta analysis": 8,
+    "type 2 diabetes metformin glycemic control clinical trial": 8
+  },
+  "selection_bands": {
+    "cross_topic_hard_negative": 10,
+    "topic_broad": 10,
+    "topic_high": 20
+  }
+}

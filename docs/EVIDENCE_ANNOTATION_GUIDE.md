@@ -158,3 +158,28 @@ corresponding tracked abstract.
 The tracked pilot intentionally contains direct, indirect, and negative pairs.
 It supports schema pressure-testing, pipeline validation, and a pilot SFT run;
 its dataset metadata records how the labels were produced and reviewed.
+
+## Expansion queue
+
+Build the next annotation batch with:
+
+```powershell
+python scripts/build_extraction_candidates.py
+```
+
+The deterministic queue excludes existing query-PMID pairs and samples three
+bands per query: high-scoring topic documents, broader topic coverage, and
+cross-topic hard negatives. Its manifest pins the source-corpus hash and
+selection counts. A full prompt queue using the runtime extraction prompt is
+written under ignored `artifacts/`.
+
+Validate the configured model-assisted drafting job without making requests:
+
+```powershell
+python scripts/draft_extraction_candidates.py --dry-run
+```
+
+Running the command without `--dry-run` uses `EXTRACTION_*` configuration, or
+falls back to the existing `AGENT_*` OpenAI-compatible endpoint. Only outputs
+that pass JSON parsing, the Pydantic contract, and exact span grounding enter
+the draft JSONL; raw failures remain separately inspectable.
