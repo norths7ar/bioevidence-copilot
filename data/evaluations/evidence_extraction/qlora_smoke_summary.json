@@ -1,0 +1,37 @@
+{
+  "status": "passed",
+  "recorded_at": "2026-07-21",
+  "purpose": "training pipeline validation",
+  "model": "unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit",
+  "revision": "7744afa8566e264af1a92a806d8d9aae00cc7c78",
+  "hardware": "NVIDIA RTX 5070 12 GB",
+  "dataset": {
+    "train_rows": 14,
+    "train_unique_pmids": 12,
+    "dev_rows": 4,
+    "dev_unique_pmids": 2
+  },
+  "qlora": {
+    "load_in_4bit": true,
+    "max_seq_length": 4096,
+    "max_steps": 5,
+    "effective_batch_size": 4,
+    "learning_rate": 0.0002,
+    "lora_r": 16,
+    "lora_alpha": 16,
+    "response_only_loss": true,
+    "trainable_parameters": 33030144,
+    "trainable_parameter_rate": 0.0081
+  },
+  "result": {
+    "load_seconds": 8.92,
+    "train_seconds": 38.847,
+    "train_loss": 1.80148344039917,
+    "pre_eval_loss": 1.9804069995880127,
+    "post_eval_loss": 1.2259716987609863,
+    "pytorch_peak_allocated_vram_gib": 5.407,
+    "adapter_bytes": 66127776,
+    "adapter_reload_verified": true
+  },
+  "interpretation": "The QLoRA path, response-only masking, evaluation, adapter save, and adapter reload all completed. The pilot is too small for a model-quality conclusion."
+}

@@ -77,6 +77,31 @@ quality comparison. Because the pilot has only three `direct` labels, its
 PMID-safe split leaves one direct example in each split; that is an honest smoke
 test constraint, not a training recipe for the final experiment.
 
+Validate the generated records without loading a model:
+
+```powershell
+python training/evidence_extraction/scripts/train_qlora_smoke.py --dry-run
+```
+
+Run the five-step QLoRA training check:
+
+```powershell
+python training/evidence_extraction/scripts/train_qlora_smoke.py
+```
+
+The smoke run uses rank-16 LoRA on the attention and MLP projections, 4-bit base
+weights, BF16 when supported, effective batch size four, and response-only loss.
+It evaluates dev loss before and after training, saves the adapter, reloads it,
+and writes an inspectable `report.json`. This is a pipeline validation run, not
+the final hyperparameter configuration.
+
+The first five-step run completed on the RTX 5070 in 38.85 seconds. Train loss
+was 1.801, dev loss moved from 1.980 before training to 1.226 afterward, and
+PyTorch reported 5.41 GiB peak allocated VRAM. The 66.1 MB adapter reloaded
+successfully. These numbers establish that the training path works; the tiny
+pilot makes the loss change unsuitable as a model-quality claim. The tracked
+aggregate is `data/evaluations/evidence_extraction/qlora_smoke_summary.json`.
+
 ## Recorded baseline
 
 The first local run used deterministic decoding, a 4,096-token context, and a

@@ -244,3 +244,14 @@
   source annotations, dataset-level provenance, and aggregate split manifest.
 - Treat annotation status as label stability rather than reviewer identity.
   Record model-assisted, manual, or imported label provenance explicitly.
+
+## 2026-07-21: QLoRA training preflight
+
+- Use response-only loss so the model learns the assistant JSON target without
+  treating the schema, query, title, and abstract prompt tokens as labels.
+- Start with rank-16 LoRA on attention and MLP projections, 4-bit base weights,
+  BF16 compute, and gradient accumulation for the 12 GB development GPU.
+- Require a smoke run to evaluate before and after training, save the adapter,
+  and reload it successfully before scaling annotation or training volume.
+- Keep adapter weights and detailed trainer output under ignored `artifacts/`;
+  track the script, reproducible configuration, and compact result summary.

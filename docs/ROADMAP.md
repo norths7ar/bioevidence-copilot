@@ -239,11 +239,15 @@ The first dataset builder now exports the pilot to Qwen chat-format JSONL with
 deterministic PMID-level train/dev/test assignments and a provenance-bearing
 manifest. Expanding the query-document annotations is the remaining core work.
 
-### Milestone 21: Fine-tuning and offline evaluation
+### Milestone 21: Fine-tuning and offline evaluation [in progress]
 - keep training code under `training/evidence_extraction/` in this repository
 - use a separate environment and optional dependencies for the training stack
 - compare the fine-tuned model against both established baselines
 - publish weights externally with a model card rather than committing them to Git
+
+A five-step QLoRA smoke run now verifies response-only masking, BF16 training,
+dev evaluation, adapter saving, and adapter reload on the target RTX 5070. A
+formal training and baseline comparison waits on the expanded Milestone 20 data.
 
 ### Milestone 22: Optional product inference backend
 - add deterministic, prompted, and fine-tuned extraction backends behind one
