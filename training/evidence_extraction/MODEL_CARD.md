@@ -126,6 +126,9 @@ improve over the prompted base model.
 - Evidence-span grounding checks copying, not whether a selected span is the
   best scientific interpretation.
 - The adapter can misclassify unrelated evidence as indirect.
+- The adapter can emit a logically inconsistent `none` result while retaining
+  population, intervention, or comparator fields. Product inference rejects
+  that output and records a schema fallback to the rules backend.
 - Results are specific to the pinned base model, schema, prompt, and split.
 
 ## Reproduction and inference

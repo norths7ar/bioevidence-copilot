@@ -60,3 +60,7 @@ def test_extract_evidence_can_attach_validated_model_fields():
 
     assert records[0].model_extraction is not None
     assert records[0].model_extraction.evidence_status.value in {"direct", "indirect"}
+    assert records[0].extraction_provenance is not None
+    assert records[0].extraction_provenance.attempted_backend == "rules"
+    assert records[0].extraction_provenance.used_backend == "rules"
+    assert records[0].extraction_provenance.fallback_reason is None

@@ -42,6 +42,15 @@ def evidence_table_rows(records: Sequence[EvidenceRecord]) -> list[dict[str, obj
                     "evidence_summary": extraction.evidence_summary,
                 }
             )
+        if record.extraction_provenance is not None:
+            provenance = record.extraction_provenance
+            row.update(
+                {
+                    "extraction_attempted_backend": provenance.attempted_backend,
+                    "extraction_backend": provenance.used_backend,
+                    "extraction_fallback_reason": provenance.fallback_reason,
+                }
+            )
         rows.append(row)
     return rows
 

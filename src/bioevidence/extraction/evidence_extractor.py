@@ -3,9 +3,9 @@ from __future__ import annotations
 import re
 from collections.abc import Sequence
 
-from bioevidence.extraction.model_backend import ExtractionBackend
+from bioevidence.extraction.model_backend import ExtractionBackend, resolve_extraction
 from bioevidence.schemas.document import Document, RetrievedCandidate
-from bioevidence.schemas.evidence import EvidenceRecord
+from bioevidence.schemas.evidence import EvidenceRecord, ExtractionProvenance
 from bioevidence.schemas.query import Query
 
 
@@ -77,7 +77,7 @@ def extract_evidence(
             document = item
             rank = index
             score = 0.0
-        model_extraction = backend.extract(query.rewritten_text or query.text, document) if backend else None
+        resolution = resolve_extraction(backend, query.rewritten_text or query.text, document) if backend else None
 
         records.append(
             EvidenceRecord(
@@ -88,7 +88,16 @@ def extract_evidence(
                 entities=_extract_entities(query_terms, document),
                 summary=_summarize_document(document),
                 relevance_score=_relevance_score(score, rank),
-                model_extraction=model_extraction,
+                model_extraction=resolution.extraction if resolution else None,
+                extraction_provenance=(
+                    ExtractionProvenance(
+                        attempted_backend=resolution.attempted_backend,
+                        used_backend=resolution.used_backend,
+                        fallback_reason=resolution.fallback_reason,
+                    )
+                    if resolution
+                    else None
+                ),
             )
         )
     return records

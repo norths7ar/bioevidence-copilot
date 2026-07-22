@@ -32,10 +32,11 @@ class ExtractionBackend(Protocol):
 
 
 class ExtractionBackendError(RuntimeError):
-    def __init__(self, message: str, *, kind: str, raw_output: str = "") -> None:
+    def __init__(self, message: str, *, kind: str, raw_output: str = "", details: str = "") -> None:
         super().__init__(message)
         self.kind = kind
         self.raw_output = raw_output
+        self.details = details
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +45,7 @@ class ExtractionAttempt:
     latency_ms: float
     error_kind: str | None = None
     error_message: str | None = None
+    error_details: str = ""
     raw_output: str = ""
 
     @property
@@ -53,6 +55,16 @@ class ExtractionAttempt:
     @property
     def schema_valid(self) -> bool:
         return self.extraction is not None or self.error_kind == "grounding"
+
+
+@dataclass(frozen=True, slots=True)
+class ExtractionResolution:
+    extraction: ModelEvidenceExtraction
+    attempted_backend: str
+    used_backend: str
+    fallback_reason: str | None = None
+    failed_raw_output: str = ""
+    failure_details: str = ""
 
 
 def run_extraction_attempt(
@@ -69,6 +81,7 @@ def run_extraction_attempt(
             latency_ms=(perf_counter() - started_at) * 1000,
             error_kind=exc.kind,
             error_message=str(exc),
+            error_details=exc.details,
             raw_output=exc.raw_output,
         )
     return ExtractionAttempt(extraction=extraction, latency_ms=(perf_counter() - started_at) * 1000)
@@ -215,14 +228,48 @@ class FallbackExtractionBackend:
         self._primary_unavailable = False
 
     def extract(self, query: str, document: Document) -> ModelEvidenceExtraction:
+        return self.resolve(query, document).extraction
+
+    def resolve(self, query: str, document: Document) -> ExtractionResolution:
         if self._primary_unavailable:
-            return self.fallback.extract(query, document)
+            return ExtractionResolution(
+                extraction=self.fallback.extract(query, document),
+                attempted_backend=self.primary.name,
+                used_backend=self.fallback.name,
+                fallback_reason="unavailable",
+            )
         try:
-            return self.primary.extract(query, document)
+            extraction = self.primary.extract(query, document)
         except ExtractionBackendError as exc:
             LOGGER.warning("extraction_backend_fallback backend=%s reason=%s", self.primary.name, exc.kind)
             self._primary_unavailable = exc.kind == "unavailable"
-            return self.fallback.extract(query, document)
+            return ExtractionResolution(
+                extraction=self.fallback.extract(query, document),
+                attempted_backend=self.primary.name,
+                used_backend=self.fallback.name,
+                fallback_reason=exc.kind,
+                failed_raw_output=exc.raw_output,
+                failure_details=exc.details,
+            )
+        return ExtractionResolution(
+            extraction=extraction,
+            attempted_backend=self.primary.name,
+            used_backend=self.primary.name,
+        )
+
+
+def resolve_extraction(
+    backend: ExtractionBackend,
+    query: str,
+    document: Document,
+) -> ExtractionResolution:
+    if isinstance(backend, FallbackExtractionBackend):
+        return backend.resolve(query, document)
+    return ExtractionResolution(
+        extraction=backend.extract(query, document),
+        attempted_backend=backend.name,
+        used_backend=backend.name,
+    )
 
 
 class RuleBasedExtractionBackend:
@@ -354,6 +401,11 @@ def _validate_model_output(raw_output: str, document: Document) -> ModelEvidence
             "Model output failed the extraction schema",
             kind="schema",
             raw_output=raw_output,
+            details=json.dumps(
+                exc.errors(include_url=False, include_input=False),
+                ensure_ascii=False,
+                default=str,
+            ),
         ) from exc
     if unsupported_evidence_spans(extraction, document.abstract):
         raise ExtractionBackendError(

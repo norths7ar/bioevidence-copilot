@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from bioevidence.extraction.table import evidence_table_rows, render_evidence_table
-from bioevidence.schemas.evidence import EvidenceRecord
+from bioevidence.schemas.evidence import EvidenceRecord, ExtractionProvenance
 from bioevidence.schemas.model_evidence import EvidenceStatus, ModelEvidenceExtraction, StudyDesign
 
 
@@ -69,6 +69,11 @@ def test_evidence_table_rows_surface_optional_model_extraction():
             outcomes=(),
             evidence_summary=None,
         ),
+        extraction_provenance=ExtractionProvenance(
+            attempted_backend="local_adapter",
+            used_backend="rules",
+            fallback_reason="schema",
+        ),
     )
 
     row = evidence_table_rows([record])[0]
@@ -76,3 +81,6 @@ def test_evidence_table_rows_surface_optional_model_extraction():
     assert row["evidence_status"] == "none"
     assert row["study_design"] == "study_protocol"
     assert row["outcomes"] == []
+    assert row["extraction_attempted_backend"] == "local_adapter"
+    assert row["extraction_backend"] == "rules"
+    assert row["extraction_fallback_reason"] == "schema"

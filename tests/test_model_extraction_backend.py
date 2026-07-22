@@ -9,6 +9,7 @@ from bioevidence.extraction.model_backend import (
     PromptedExtractionBackend,
     RuleBasedExtractionBackend,
     build_extraction_messages,
+    resolve_extraction,
     run_extraction_attempt,
 )
 from bioevidence.schemas.document import Document
@@ -61,6 +62,30 @@ def test_prompted_backend_reports_json_failure() -> None:
     assert attempt.schema_valid is False
 
 
+def test_prompted_backend_serializes_model_level_validation_details() -> None:
+    payload = {
+        "evidence_status": "none",
+        "study_design": "not_reported",
+        "population_or_system": "patients",
+        "intervention_or_exposure": None,
+        "comparator": None,
+        "outcomes": [],
+        "evidence_summary": None,
+    }
+    backend = PromptedExtractionBackend(
+        api_key="",
+        base_url="",
+        model="test-model",
+        completion=lambda messages: json.dumps(payload),
+    )
+
+    attempt = run_extraction_attempt(backend, "query", Document(pmid="1", abstract="Abstract"))
+
+    assert attempt.error_kind == "schema"
+    assert attempt.raw_output
+    assert "none evidence must not contain extracted evidence fields" in attempt.error_details
+
+
 def test_local_adapter_backend_uses_the_shared_strict_contract(tmp_path) -> None:
     document = Document(pmid="1", title="Trial", abstract="Treatment reduced symptom scores.")
     payload = {
@@ -107,6 +132,30 @@ def test_optional_model_backend_falls_back_to_rules() -> None:
 
     assert extraction.evidence_status is EvidenceStatus.NONE
     assert primary.calls == 1
+
+
+def test_fallback_resolution_preserves_failure_diagnostics() -> None:
+    class InvalidBackend:
+        name = "invalid"
+
+        def extract(self, query: str, document: Document):
+            raise ExtractionBackendError(
+                "invalid schema",
+                kind="schema",
+                raw_output='{"bad": true}',
+                details='[{"loc": ["evidence_status"]}]',
+            )
+
+    backend = FallbackExtractionBackend(InvalidBackend(), RuleBasedExtractionBackend())
+    document = Document(pmid="1", title="Trial protocol", abstract="This study protocol describes asthma.")
+
+    resolution = resolve_extraction(backend, "asthma intervention", document)
+
+    assert resolution.attempted_backend == "invalid"
+    assert resolution.used_backend == "rules"
+    assert resolution.fallback_reason == "schema"
+    assert resolution.failed_raw_output == '{"bad": true}'
+    assert resolution.failure_details == '[{"loc": ["evidence_status"]}]'
 
 
 def test_unavailable_backend_is_not_counted_as_parsed_json(tmp_path) -> None:

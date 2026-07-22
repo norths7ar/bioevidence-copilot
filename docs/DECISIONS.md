@@ -311,3 +311,18 @@
   repository rather than bundling them with the weights.
 - Keep upload and remote-repository creation as an explicit authenticated step
   after the user chooses the hosting namespace.
+
+## 2026-07-22: Inspectable extraction fallback provenance
+
+- Preserve the existing `ExtractionBackend.extract()` contract and add an
+  internal resolution layer rather than forcing product and evaluation callers
+  onto a new return type.
+- Attach the attempted backend, backend actually used, and fallback reason to
+  each evidence record so API, CLI, and Streamlit JSON exports do not present a
+  deterministic fallback as a successful model prediction.
+- Keep failed raw model output and detailed validation errors out of normal
+  evidence payloads. Expose them only through an explicit single-PMID
+  diagnostic command that writes to ignored local artifacts.
+- Treat schema and grounding failures as future hard-example inputs. Do not
+  silently weaken the v1 cross-field or verbatim-span validators to raise the
+  apparent model success rate.

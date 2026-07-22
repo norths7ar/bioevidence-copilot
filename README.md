@@ -126,6 +126,20 @@ activated environment already defines the same locations. The first local run
 loads the base model once; the backend then reuses it across all evidence rows
 in that process.
 
+Evidence rows produced by an optional extractor include
+`extraction_attempted_backend`, `extraction_backend`, and
+`extraction_fallback_reason`, so a schema or grounding fallback remains visible
+in normal JSON exports. To inspect one failed model response without placing raw
+model output in the API payload, run the opt-in diagnostic command; its default
+destination is ignored by Git:
+
+```powershell
+python scripts/diagnose_extraction.py `
+  --query "asthma corticosteroids exacerbations randomized trial" `
+  --pmid 41772161 `
+  --output artifacts/evaluations/extraction_diagnostic_41772161.json
+```
+
 Set `LOG_LEVEL` to `DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL` to control
 application logs. Logs go to the process stream by default, including under
 Docker. Agent run bundles retain `run.log`, Streamlit uses a rotating local log,

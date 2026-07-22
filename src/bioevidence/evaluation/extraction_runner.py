@@ -27,6 +27,7 @@ class ExtractionEvaluationItem:
             "schema_valid": self.attempt.schema_valid,
             "error_kind": self.attempt.error_kind,
             "error_message": self.attempt.error_message,
+            "error_details": self.attempt.error_details,
             "raw_output": self.attempt.raw_output,
             "metrics": self.metrics,
         }
