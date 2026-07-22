@@ -112,7 +112,7 @@ $env:HF_HOME="E:/huggingface-cache"
 $env:HF_HUB_CACHE="$env:HF_HOME/hub"
 $env:HF_XET_CACHE="$env:HF_HOME/xet"
 $env:EXTRACTION_BACKEND="local"
-$env:EXTRACTION_ADAPTER_PATH="artifacts/training/evidence_extraction/qwen3_4b_qlora_v2/adapter"
+$env:EXTRACTION_ADAPTER_PATH="artifacts/training/evidence_extraction/qwen3_4b_qlora_adapter_v2/adapter"
 python scripts/run_baseline.py `
   --query "asthma corticosteroids exacerbations randomized trial" `
   --top-k 3 `
@@ -125,6 +125,14 @@ from falling back to a slow or unwritable default cache. Omit them when the
 activated environment already defines the same locations. The first local run
 loads the base model once; the backend then reuses it across all evidence rows
 in that process.
+
+The second local adapter experiment extends the draft dataset from 60 to 120
+rows while preserving every v1 PMID split. On the resulting 13-row shared test
+set, adapter v2 reached 100% JSON/schema validity, 92.3% grounded spans, 61.5%
+evidence-status accuracy, and 0.681 semantic-field token F1. The prompted base
+model had higher status accuracy (76.9%) but only 92.3% schema validity, 61.5%
+grounding, 0.512 semantic F1, and slower mean generation (19.58 s versus
+11.23 s). These remain small draft-label results, not biomedical quality claims.
 
 Evidence rows produced by an optional extractor include
 `extraction_attempted_backend`, `extraction_backend`, and

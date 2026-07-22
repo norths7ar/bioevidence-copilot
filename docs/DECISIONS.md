@@ -342,3 +342,20 @@
   examples.
 - Require exact candidate id/query/PMID coverage in addition to schema and
   verbatim-span validation before admitting the v2 annotations.
+
+## 2026-07-22: Incremental adapter v2 comparison boundary
+
+- Preserve every v1 PMID assignment when building the 120-row dataset and
+  assign only unseen PMIDs with the original seed and ratios. This keeps the
+  seven old test rows directly comparable and prevents old-adapter training
+  PMIDs from leaking into the expanded test set.
+- Keep QLoRA architecture, learning rate, effective batch size, seed, and
+  approximate epoch count fixed. Increase optimizer steps from 36 to 72 only
+  because the training rows increased from 46 to 94.
+- Compare rules, prompted base, adapter v1, and adapter v2 on the same 13 rows
+  with deterministic decoding. Report tradeoffs rather than selecting a single
+  metric: adapter v2 improved status, study design, and semantic fields over v1,
+  while outcome-name/span metrics and latency regressed.
+- Treat direct-status calibration as unresolved. Adapter v2 fixed the observed
+  `indirect -> none` collapse on the expanded test, but all three direct test
+  rows were still classified as indirect.

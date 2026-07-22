@@ -1,0 +1,110 @@
+{
+  "status": "completed",
+  "recorded_at": "2026-07-22",
+  "purpose": "incremental QLoRA extraction comparison with frozen v1 PMID assignments",
+  "model": "unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit",
+  "revision": "7744afa8566e264af1a92a806d8d9aae00cc7c78",
+  "hardware": "NVIDIA RTX 5070 12 GB",
+  "dataset": {
+    "source_rows": 120,
+    "source_label_status": "draft",
+    "unique_pmids": 108,
+    "train_rows": 94,
+    "dev_rows": 13,
+    "test_rows": 13,
+    "split_unit": "PMID",
+    "v1_assignments_preserved": true,
+    "test_evidence_status_counts": {
+      "direct": 3,
+      "indirect": 4,
+      "none": 6
+    }
+  },
+  "qlora": {
+    "load_in_4bit": true,
+    "max_seq_length": 4096,
+    "max_steps": 72,
+    "epochs": 3,
+    "effective_batch_size": 4,
+    "learning_rate": 0.0002,
+    "lora_r": 16,
+    "lora_alpha": 16,
+    "response_only_loss": true,
+    "assistant_target_starts_with_json": true
+  },
+  "training_result": {
+    "train_seconds": 493.355,
+    "train_loss": 0.33391673314488596,
+    "pre_eval_loss": 1.1035943031311035,
+    "post_eval_loss": 0.24749138951301575,
+    "pytorch_peak_allocated_vram_gib": 5.811,
+    "adapter_reload_verified": true
+  },
+  "held_out_test": {
+    "items": 13,
+    "rules": {
+      "schema_validity_rate": 1.0,
+      "evidence_status_accuracy": 0.3076923076923077,
+      "study_design_accuracy": 0.7692307692307693,
+      "semantic_field_token_f1": 0.48717948717948717,
+      "outcome_name_token_f1": 0.23076923076923078,
+      "outcome_direction_accuracy": 0.3076923076923077,
+      "evidence_span_token_f1": 0.40861785926225414,
+      "evidence_span_support_rate": 1.0
+    },
+    "prompted_base": {
+      "json_parse_rate": 1.0,
+      "schema_validity_rate": 0.9230769230769231,
+      "grounding_rate": 0.6153846153846154,
+      "evidence_status_accuracy": 0.7692307692307693,
+      "study_design_accuracy": 0.7692307692307693,
+      "semantic_field_token_f1": 0.5124116624116625,
+      "outcome_name_token_f1": 0.32564102564102565,
+      "outcome_direction_accuracy": 0.41025641025641024,
+      "evidence_span_token_f1": 0.34176530623811796,
+      "evidence_span_support_rate": 0.7371794871794872,
+      "mean_generation_seconds": 19.576
+    },
+    "adapter_v1": {
+      "json_parse_rate": 1.0,
+      "schema_validity_rate": 1.0,
+      "grounding_rate": 0.9230769230769231,
+      "evidence_status_accuracy": 0.46153846153846156,
+      "study_design_accuracy": 0.6923076923076923,
+      "semantic_field_token_f1": 0.5945198592257416,
+      "outcome_name_token_f1": 0.632051282051282,
+      "outcome_direction_accuracy": 0.6923076923076923,
+      "evidence_span_token_f1": 0.5771709996392884,
+      "evidence_span_support_rate": 0.9230769230769231,
+      "mean_generation_seconds": 6.813999999999999
+    },
+    "adapter_v2": {
+      "json_parse_rate": 1.0,
+      "schema_validity_rate": 1.0,
+      "grounding_rate": 0.9230769230769231,
+      "evidence_status_accuracy": 0.6153846153846154,
+      "study_design_accuracy": 0.9230769230769231,
+      "semantic_field_token_f1": 0.6812211762199853,
+      "outcome_name_token_f1": 0.5260683760683761,
+      "outcome_direction_accuracy": 0.6923076923076923,
+      "evidence_span_token_f1": 0.5148478085413664,
+      "evidence_span_support_rate": 0.9230769230769231,
+      "mean_generation_seconds": 11.229000000000001,
+      "status_confusion": {
+        "direct_to_indirect": 3,
+        "indirect_to_indirect": 4,
+        "none_to_indirect": 2,
+        "none_to_none": 4
+      }
+    }
+  },
+  "product_inference_smoke": {
+    "query": "asthma corticosteroids exacerbations randomized trial",
+    "items": 3,
+    "model_successes": 3,
+    "fallbacks": 0,
+    "previous_schema_failure_pmid": "41772161",
+    "previous_schema_failure_resolved": true
+  },
+  "interpretation": "Adapter v2 fixed the observed indirect-to-none collapse on the expanded test and improved status, study-design, and semantic-field metrics over adapter v1. The prompted base retained higher status accuracy, while adapter v2 was more schema-valid, grounded, semantically aligned, and faster. Direct-status calibration remains unresolved."
+}
