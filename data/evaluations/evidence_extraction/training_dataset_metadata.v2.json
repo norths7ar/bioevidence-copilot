@@ -1,0 +1,26 @@
+{
+  "dataset_id": "bioevidence-extraction-training-v2",
+  "target_schema": "https://bioevidence.local/schemas/model-evidence-extraction-v1.json",
+  "annotation_sources": [
+    "data/evaluations/evidence_extraction/pilot_annotations.jsonl",
+    "data/evaluations/evidence_extraction/expansion_annotations.v1.jsonl",
+    "data/evaluations/evidence_extraction/expansion_annotations.v2.jsonl"
+  ],
+  "source_corpus": "data/corpora/demo/processed/demo.documents.jsonl",
+  "source_documents": "PubMed titles and abstracts",
+  "label_source": "model-assisted annotation",
+  "review_process": "The v1 sources retain their recorded provenance; the v2 expansion was produced in Claude Desktop and passed schema, grounding, duplicate, and exact candidate-coverage validation.",
+  "rows": 120,
+  "unique_pmids": 108,
+  "evidence_status": {
+    "direct": 20,
+    "indirect": 65,
+    "none": 35
+  },
+  "split_policy": "Preserve every v1 PMID assignment, then deterministically assign only previously unseen PMIDs with seed 42.",
+  "accepted_uses": [
+    "pipeline validation",
+    "structured-output fine-tuning experiment",
+    "held-out comparison with explicit dataset-version reporting"
+  ]
+}

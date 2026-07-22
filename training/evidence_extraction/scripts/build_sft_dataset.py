@@ -22,6 +22,7 @@ def main() -> int:
     included_statuses = {AnnotationStatus(value) for value in args.annotation_status}
     selected = [annotation for annotation in annotations if annotation.annotation_status in included_statuses]
     source_metadata = json.loads(args.metadata.read_text(encoding="utf-8")) if args.metadata else {}
+    fixed_assignments = _load_fixed_assignments(args.fixed_split_manifest) if args.fixed_split_manifest else None
     manifest = write_sft_dataset(
         selected,
         args.output_dir,
@@ -29,6 +30,7 @@ def main() -> int:
         ratios=SplitRatios(train=args.train_ratio, dev=args.dev_ratio, test=args.test_ratio),
         seed=args.seed,
         source_metadata=source_metadata,
+        fixed_assignments=fixed_assignments,
     )
     if args.manifest_output:
         args.manifest_output.parent.mkdir(parents=True, exist_ok=True)
@@ -65,6 +67,12 @@ def _parse_args() -> argparse.Namespace:
         default=Path("data/evaluations/evidence_extraction/pilot_split_manifest.json"),
     )
     parser.add_argument(
+        "--fixed-split-manifest",
+        type=Path,
+        default=None,
+        help="Optional earlier split manifest whose PMID assignments must be preserved.",
+    )
+    parser.add_argument(
         "--annotation-status",
         nargs="+",
         choices=[status.value for status in AnnotationStatus],
@@ -89,6 +97,24 @@ def _validate_unique_annotations(annotations: list[ExtractionAnnotation]) -> Non
             raise ValueError(f"duplicate query-PMID pair across datasets: {pair}")
         ids.add(annotation_id)
         pairs.add(pair)
+
+
+def _load_fixed_assignments(path: Path) -> dict[str, str]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    splits = payload.get("splits") if isinstance(payload, dict) else None
+    if not isinstance(splits, dict):
+        raise ValueError(f"{path}: split manifest requires a splits object")
+    assignments: dict[str, str] = {}
+    for split_name in ("train", "dev", "test"):
+        split_payload = splits.get(split_name)
+        pmids = split_payload.get("pmids") if isinstance(split_payload, dict) else None
+        if not isinstance(pmids, list):
+            raise ValueError(f"{path}: split {split_name!r} requires a PMID list")
+        for pmid in map(str, pmids):
+            if pmid in assignments:
+                raise ValueError(f"{path}: PMID {pmid} appears in multiple splits")
+            assignments[pmid] = split_name
+    return assignments
 
 
 if __name__ == "__main__":

@@ -38,14 +38,19 @@ def assign_pmid_splits(
     *,
     ratios: SplitRatios = SplitRatios(),
     seed: int = 42,
+    fixed_assignments: Mapping[str, str] | None = None,
 ) -> dict[str, str]:
     """Assign every unique PMID to one deterministic split."""
 
     pmids = sorted({annotation.document.pmid for annotation in annotations})
-    ranked_pmids = sorted(pmids, key=lambda pmid: _stable_rank(pmid, seed))
+    fixed_assignments = fixed_assignments or {}
+    unknown_splits = sorted(set(fixed_assignments.values()) - set(SPLIT_NAMES))
+    if unknown_splits:
+        raise ValueError(f"fixed PMID assignments contain unknown splits: {unknown_splits}")
+    assignments = {pmid: fixed_assignments[pmid] for pmid in pmids if pmid in fixed_assignments}
+    ranked_pmids = sorted((pmid for pmid in pmids if pmid not in assignments), key=lambda pmid: _stable_rank(pmid, seed))
     counts = _allocate_counts(len(ranked_pmids), ratios.as_dict())
 
-    assignments: dict[str, str] = {}
     offset = 0
     for split_name in SPLIT_NAMES:
         next_offset = offset + counts[split_name]
@@ -95,11 +100,17 @@ def write_sft_dataset(
     ratios: SplitRatios = SplitRatios(),
     seed: int = 42,
     source_metadata: Mapping[str, Any] | None = None,
+    fixed_assignments: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     if not annotations:
         raise ValueError("at least one annotation is required")
 
-    assignments = assign_pmid_splits(annotations, ratios=ratios, seed=seed)
+    assignments = assign_pmid_splits(
+        annotations,
+        ratios=ratios,
+        seed=seed,
+        fixed_assignments=fixed_assignments,
+    )
     grouped: dict[str, list[ExtractionAnnotation]] = {name: [] for name in SPLIT_NAMES}
     for annotation in sorted(annotations, key=lambda item: (item.document.pmid, item.id)):
         grouped[assignments[annotation.document.pmid]].append(annotation)
@@ -130,6 +141,10 @@ def write_sft_dataset(
         "splits": split_summaries,
         "source_metadata": dict(source_metadata or {}),
     }
+    if fixed_assignments:
+        manifest["fixed_assignment_pmids"] = dict(
+            sorted(Counter(split for pmid, split in fixed_assignments.items() if pmid in assignments).items())
+        )
     _write_text(output_dir / "manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     return manifest
 

@@ -28,6 +28,23 @@ def test_assign_pmid_splits_is_deterministic_and_keeps_documents_together() -> N
     assert sum(split == "test" for split in assignments.values()) == 1
 
 
+def test_assign_pmid_splits_preserves_fixed_pmids_and_assigns_new_ones() -> None:
+    annotations = [_annotation("a", "1"), _annotation("b", "2"), _annotation("c", "3"), _annotation("d", "4")]
+
+    assignments = assign_pmid_splits(
+        annotations,
+        ratios=SplitRatios(0.5, 0.25, 0.25),
+        seed=7,
+        fixed_assignments={"1": "test"},
+    )
+
+    assert assignments["1"] == "test"
+    assert set(assignments) == {"1", "2", "3", "4"}
+    assert sum(split == "train" for pmid, split in assignments.items() if pmid != "1") == 1
+    assert sum(split == "dev" for pmid, split in assignments.items() if pmid != "1") == 1
+    assert sum(split == "test" for pmid, split in assignments.items() if pmid != "1") == 1
+
+
 def test_build_chat_example_uses_runtime_prompt_and_compact_json_target() -> None:
     annotation = _annotation("example", "1")
 
@@ -82,6 +99,44 @@ def test_tracked_pilot_manifest_matches_current_annotations(tmp_path: Path) -> N
 
     tracked = json.loads(
         Path("data/evaluations/evidence_extraction/pilot_split_manifest.json").read_text(encoding="utf-8")
+    )
+    assert tracked == manifest
+
+
+def test_tracked_v2_manifest_preserves_v1_pmid_assignments(tmp_path: Path) -> None:
+    dataset_paths = [
+        Path("data/evaluations/evidence_extraction/pilot_annotations.jsonl"),
+        Path("data/evaluations/evidence_extraction/expansion_annotations.v1.jsonl"),
+        Path("data/evaluations/evidence_extraction/expansion_annotations.v2.jsonl"),
+    ]
+    metadata = json.loads(
+        Path("data/evaluations/evidence_extraction/training_dataset_metadata.v2.json").read_text(encoding="utf-8")
+    )
+    v1_manifest = json.loads(
+        Path("data/evaluations/evidence_extraction/training_split_manifest.v1.json").read_text(encoding="utf-8")
+    )
+    fixed_assignments = {
+        pmid: split_name
+        for split_name in ("train", "dev", "test")
+        for pmid in v1_manifest["splits"][split_name]["pmids"]
+    }
+    documents = load_local_documents(Path("data/corpora/demo"))
+    annotations = [
+        annotation
+        for dataset_path in dataset_paths
+        for annotation in load_extraction_annotations(dataset_path, documents)
+    ]
+
+    manifest = write_sft_dataset(
+        annotations,
+        tmp_path,
+        source_dataset=" + ".join(path.as_posix() for path in dataset_paths),
+        source_metadata=metadata,
+        fixed_assignments=fixed_assignments,
+    )
+
+    tracked = json.loads(
+        Path("data/evaluations/evidence_extraction/training_split_manifest.v2.json").read_text(encoding="utf-8")
     )
     assert tracked == manifest
 
