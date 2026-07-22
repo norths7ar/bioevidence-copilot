@@ -186,3 +186,8 @@ The v1 adapter is published at
 at revision `e6a61cd9749f373fc6c4fcdc3563b417ea57b401`. It was downloaded into a
 fresh directory after publication, and every file covered by the release
 manifest matched both its recorded size and SHA-256 hash.
+
+The v2 comparison adapter is published at
+[`n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v2`](https://huggingface.co/n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v2)
+at revision `20ae7837207fcb697ac99d71961e99d0aebcb4ab`. Its six manifest-covered
+files were also verified from a fresh download by size and SHA-256 hash.

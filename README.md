@@ -35,8 +35,11 @@ the `v0.1.0` release tag. The `v0.3.0` release adds a versioned semantic evidenc
 schema, PMID-safe fine-tuning data, a published local QLoRA adapter, and an
 optional fine-tuned extraction backend.
 
-The first extraction adapter is published on Hugging Face as
-[`n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1`](https://huggingface.co/n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1).
+The recommended extraction adapter is published on Hugging Face as
+[`n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v2`](https://huggingface.co/n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v2).
+The
+[`v1 adapter`](https://huggingface.co/n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1)
+remains available as the comparison checkpoint.
 
 ## Implemented modules
 - ingestion

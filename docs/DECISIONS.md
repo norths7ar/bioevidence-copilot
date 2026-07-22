@@ -327,6 +327,16 @@
   silently weaken the v1 cross-field or verbatim-span validators to raise the
   apparent model success rate.
 
+## 2026-07-22: Publish v2 as a separate comparison checkpoint
+
+- Publish the second adapter in a separate `-v2` Hugging Face repository so its
+  model card, weights, and metrics remain independently inspectable beside v1.
+- Treat v2 as the recommended experimental adapter while retaining v1 as the
+  immutable comparison checkpoint.
+- Reserve a versionless model repository with Git tags for a future stable
+  product line; the current numbered repositories represent experiment
+  checkpoints rather than semantic releases.
+
 ## 2026-07-22: Evidence extraction v2 candidate targeting
 
 - Use the first adapter's 46-row training-split run only as a failure-mode and
