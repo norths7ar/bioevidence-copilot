@@ -114,6 +114,36 @@ def test_local_adapter_backend_uses_the_shared_strict_contract(tmp_path) -> None
     assert extraction.evidence_status is EvidenceStatus.DIRECT
 
 
+def test_grounding_failure_records_unsupported_spans() -> None:
+    payload = {
+        "evidence_status": "direct",
+        "study_design": "randomized_controlled_trial",
+        "population_or_system": "patients",
+        "intervention_or_exposure": "treatment",
+        "comparator": None,
+        "outcomes": [
+            {
+                "name": "symptoms",
+                "direction": "decreased",
+                "result_text": "Symptoms decreased.",
+                "evidence_span": "This sentence is not in the abstract.",
+            }
+        ],
+        "evidence_summary": "Symptoms decreased.",
+    }
+    backend = PromptedExtractionBackend(
+        api_key="",
+        base_url="",
+        model="test-model",
+        completion=lambda messages: json.dumps(payload),
+    )
+
+    attempt = run_extraction_attempt(backend, "query", Document(pmid="1", abstract="Different abstract."))
+
+    assert attempt.error_kind == "grounding"
+    assert "This sentence is not in the abstract." in attempt.error_details
+
+
 def test_optional_model_backend_falls_back_to_rules() -> None:
     class UnavailableBackend:
         name = "unavailable"

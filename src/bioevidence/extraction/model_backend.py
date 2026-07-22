@@ -407,11 +407,13 @@ def _validate_model_output(raw_output: str, document: Document) -> ModelEvidence
                 default=str,
             ),
         ) from exc
-    if unsupported_evidence_spans(extraction, document.abstract):
+    unsupported_spans = unsupported_evidence_spans(extraction, document.abstract)
+    if unsupported_spans:
         raise ExtractionBackendError(
             "Model output contains evidence spans not copied from the abstract",
             kind="grounding",
             raw_output=raw_output,
+            details=json.dumps({"unsupported_evidence_spans": unsupported_spans}, ensure_ascii=False),
         )
     return extraction
 

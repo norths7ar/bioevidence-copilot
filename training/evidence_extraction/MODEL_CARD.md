@@ -117,6 +117,26 @@ training/inference path. Seven draft test rows are too few for a general claim
 about biomedical extraction quality, and evidence-status classification did not
 improve over the prompted base model.
 
+### Post-integration training-split diagnostic
+
+After product integration, the adapter was also run over all 46 training rows.
+This is a memorization and failure-mode diagnostic, not a held-out benchmark.
+
+| Diagnostic | Result |
+| --- | ---: |
+| Strict JSON parse rate | 1.000 |
+| Schema validity | 0.978 |
+| Evidence-status accuracy | 0.630 |
+| Evidence-span support rate | 0.935 |
+| Mean generation time | 6.49 s |
+
+The status confusion is strongly conservative: all 17 `none` rows were
+classified correctly, but only 11 of 25 `indirect` rows remained `indirect`
+and only one of four `direct` rows remained `direct`. Eleven `indirect` rows
+were reduced to `none`; three `direct` rows were reduced to `indirect`. This
+points to direct/indirect coverage and boundary examples as the first v2 data
+priority rather than simply adding more `none` examples.
+
 ## Known limitations
 
 - All 60 labels are draft, model-assisted annotations rather than expert gold.
