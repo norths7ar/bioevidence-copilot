@@ -18,6 +18,8 @@ def main() -> int:
     args = _parse_args()
     documents = load_local_documents(args.data_dir)
     annotations = load_extraction_annotations(args.annotations, documents)
+    for annotations_path in args.additional_annotations:
+        annotations.extend(load_extraction_annotations(annotations_path, documents))
     candidates = select_expansion_candidates(
         load_candidate_topics(args.corpus_manifest),
         documents,
@@ -30,6 +32,7 @@ def main() -> int:
         candidates,
         source_corpus=args.corpus,
         existing_annotations=args.annotations,
+        additional_annotations=args.additional_annotations,
         high_per_topic=args.high_per_topic,
         broad_per_topic=args.broad_per_topic,
         hard_negative_per_topic=args.hard_negative_per_topic,
@@ -59,6 +62,13 @@ def _parse_args() -> argparse.Namespace:
         "--annotations",
         type=Path,
         default=Path("data/evaluations/evidence_extraction/pilot_annotations.jsonl"),
+    )
+    parser.add_argument(
+        "--additional-annotations",
+        type=Path,
+        action="append",
+        default=[],
+        help="Additional annotation JSONL files whose query-PMID pairs should be excluded.",
     )
     parser.add_argument(
         "--output",

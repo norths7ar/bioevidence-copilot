@@ -121,11 +121,12 @@ def build_candidate_manifest(
     *,
     source_corpus: Path,
     existing_annotations: Path,
+    additional_annotations: Sequence[Path] = (),
     high_per_topic: int = 4,
     broad_per_topic: int = 2,
     hard_negative_per_topic: int = 2,
 ) -> dict[str, Any]:
-    return {
+    manifest = {
         "format": "bioevidence_extraction_candidates_v1",
         "source_corpus": source_corpus.as_posix(),
         "source_corpus_sha256": _canonical_text_sha256(source_corpus),
@@ -140,6 +141,9 @@ def build_candidate_manifest(
         "queries": dict(sorted(Counter(candidate.query for candidate in candidates).items())),
         "selection_bands": dict(sorted(Counter(candidate.selection_band for candidate in candidates).items())),
     }
+    if additional_annotations:
+        manifest["additional_annotations"] = [path.as_posix() for path in additional_annotations]
+    return manifest
 
 
 def _canonical_text_sha256(path: Path) -> str:

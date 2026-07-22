@@ -326,3 +326,19 @@
 - Treat schema and grounding failures as future hard-example inputs. Do not
   silently weaken the v1 cross-field or verbatim-span validators to raise the
   apparent model success rate.
+
+## 2026-07-22: Evidence extraction v2 candidate targeting
+
+- Use the first adapter's 46-row training-split run only as a failure-mode and
+  memorization diagnostic, not as a held-out quality claim. It showed perfect
+  training `none` classification but substantial `direct -> indirect` and
+  `indirect -> none` collapse.
+- Build the next 60-pair annotation queue after excluding both tracked v1
+  annotation files. Select same-topic high and broad documents only; set
+  cross-topic hard negatives to zero because additional `none` coverage is not
+  the current bottleneck.
+- Candidate selection must not dictate labels. Annotators still apply the
+  written query-focused rules, and the queue may legitimately contain `none`
+  examples.
+- Require exact candidate id/query/PMID coverage in addition to schema and
+  verbatim-span validation before admitting the v2 annotations.

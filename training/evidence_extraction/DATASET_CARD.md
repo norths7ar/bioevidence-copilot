@@ -55,3 +55,13 @@ clinical benchmark or expert-gold biomedical corpus.
 Known coverage is uneven: direct labels occur only in the diabetes, statin, and
 sodium query groups. All labels remain drafts, and the seven-row test set makes
 metric estimates unstable.
+
+## Planned v2 expansion
+
+The tracked `expansion_candidates.v2.jsonl` queue contains 60 currently
+unlabeled query-PMID pairs after excluding all 60 v1 annotations. It samples 40
+same-topic high-ranking and 20 same-topic broad documents, with no additional
+cross-topic hard negatives. This targets the first adapter's conservative
+direct/indirect failure mode; it does not prescribe the eventual label
+distribution. The queue is not part of the v1 training dataset until a matching
+validated annotation file is completed.
