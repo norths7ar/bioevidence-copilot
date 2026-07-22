@@ -114,8 +114,9 @@ conda activate bioevidence-training
 $env:HF_HOME="E:/huggingface-cache"
 $env:HF_HUB_CACHE="$env:HF_HOME/hub"
 $env:HF_XET_CACHE="$env:HF_HOME/xet"
+python scripts/setup_extraction_adapter.py
 $env:EXTRACTION_BACKEND="local"
-$env:EXTRACTION_ADAPTER_PATH="artifacts/training/evidence_extraction/qwen3_4b_qlora_adapter_v2/adapter"
+$env:EXTRACTION_ADAPTER_PATH="artifacts/models/bioevidence-qwen3-4b-extraction-lora-v2"
 python scripts/run_baseline.py `
   --query "asthma corticosteroids exacerbations randomized trial" `
   --top-k 3 `
@@ -136,6 +137,8 @@ evidence-status accuracy, and 0.681 semantic-field token F1. The prompted base
 model had higher status accuracy (76.9%) but only 92.3% schema validity, 61.5%
 grounding, 0.512 semantic F1, and slower mean generation (19.58 s versus
 11.23 s). These remain small draft-label results, not biomedical quality claims.
+The complete comparison and failure analysis are summarized in
+[`docs/EXTRACTION_MODEL_REPORT.md`](docs/EXTRACTION_MODEL_REPORT.md).
 
 Evidence rows produced by an optional extractor include
 `extraction_attempted_backend`, `extraction_backend`, and

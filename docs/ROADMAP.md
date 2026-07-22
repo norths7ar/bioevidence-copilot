@@ -267,3 +267,29 @@ The product workflow now supports legacy, deterministic rules, OpenAI-compatible
 prompted, and lazy local-adapter modes. One backend instance is reused across a
 run, validated model fields appear in evidence rows, and optional model failures
 fall back to rules. The default API dependency set remains unchanged.
+
+## v0.4: Reproducible public adapter delivery
+
+### Milestone 23: Expanded adapter comparison [completed]
+
+- expand the draft extraction dataset from 60 to 120 query-PMID pairs
+- preserve all v1 PMID assignments while assigning only unseen PMIDs
+- train adapter v2 under the same architecture and approximate epoch schedule
+- compare rules, prompted base, adapter v1, and adapter v2 on one held-out set
+
+Adapter v2 improves evidence-status accuracy, study-design accuracy, and
+semantic-field token F1 over v1 on the 13-row PMID-held-out draft test set. The
+tracked report also preserves regressions in outcome-name/span metrics, the
+remaining direct-to-indirect calibration failure, and the small-sample boundary.
+
+### Milestone 24: Public adapter reproducibility [completed]
+
+- publish v2 as a separate immutable comparison checkpoint on Hugging Face
+- pin the exact Hub commit used by the repository
+- provide one command that downloads, verifies, and installs the public adapter
+- keep Hugging Face and GPU packages outside the normal product dependencies
+
+The setup command downloads the pinned v2 snapshot through the optional
+training environment, verifies all six manifest-covered files by size and
+SHA-256, and atomically installs them under ignored local artifacts. Repeated
+runs verify and reuse the installed adapter without another network request.
