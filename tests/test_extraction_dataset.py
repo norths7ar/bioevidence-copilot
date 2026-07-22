@@ -46,6 +46,29 @@ def test_tracked_extraction_expansion_is_valid_and_covers_all_candidates() -> No
     assert sum(annotation.extraction.evidence_status == "none" for annotation in annotations) == 16
 
 
+def test_tracked_v2_expansion_is_valid_and_covers_all_candidates() -> None:
+    documents = load_local_documents(Path("data/corpora/demo"))
+    annotations = load_extraction_annotations(
+        Path("data/evaluations/evidence_extraction/expansion_annotations.v2.jsonl"),
+        documents,
+    )
+    candidates = [
+        json.loads(line)
+        for line in Path("data/evaluations/evidence_extraction/expansion_candidates.v2.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+
+    assert len(annotations) == 60
+    assert {(annotation.id, annotation.query, annotation.document.pmid) for annotation in annotations} == {
+        (candidate["id"], candidate["query"], candidate["pmid"]) for candidate in candidates
+    }
+    assert sum(annotation.extraction.evidence_status == "direct" for annotation in annotations) == 12
+    assert sum(annotation.extraction.evidence_status == "indirect" for annotation in annotations) == 36
+    assert sum(annotation.extraction.evidence_status == "none" for annotation in annotations) == 12
+
+
 def test_extraction_dataset_rejects_non_verbatim_evidence_span(tmp_path: Path) -> None:
     dataset_path = tmp_path / "annotations.jsonl"
     payload = {
