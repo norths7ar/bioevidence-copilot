@@ -171,6 +171,8 @@ class LocalAdapterExtractionBackend:
                 f"Local adapter directory does not exist: {self.adapter_path}",
                 kind="unavailable",
             )
+        import_started = perf_counter()
+        LOGGER.info("local_adapter_runtime_import_started")
         try:
             import torch
             from unsloth import FastLanguageModel
@@ -179,6 +181,12 @@ class LocalAdapterExtractionBackend:
                 "Local adapter inference requires the separate training environment",
                 kind="unavailable",
             ) from exc
+        LOGGER.info(
+            "local_adapter_runtime_import_completed duration_ms=%.1f",
+            (perf_counter() - import_started) * 1000,
+        )
+        load_started = perf_counter()
+        LOGGER.info("local_adapter_model_load_started")
         try:
             model, tokenizer = FastLanguageModel.from_pretrained(
                 model_name=str(self.adapter_path),
@@ -189,6 +197,10 @@ class LocalAdapterExtractionBackend:
             FastLanguageModel.for_inference(model)
         except Exception as exc:
             raise ExtractionBackendError("Local adapter could not be loaded", kind="unavailable") from exc
+        LOGGER.info(
+            "local_adapter_model_load_completed duration_ms=%.1f",
+            (perf_counter() - load_started) * 1000,
+        )
         self._runtime = (model, tokenizer, torch)
         return self._runtime
 

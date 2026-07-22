@@ -34,6 +34,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Local corpus data directory. The workflow reads processed/*.documents.jsonl under this path.",
     )
     parser.add_argument(
+        "--top-k",
+        type=int,
+        default=10,
+        help="Number of retrieved papers to keep. Use a small value for local-model smoke runs.",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=None,
@@ -44,9 +50,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.top_k <= 0:
+        raise ValueError("--top-k must be positive")
     settings = load_settings()
     configure_logging(settings.log_level)
-    query = Query(text=args.query)
+    query = Query(text=args.query, top_k=args.top_k)
     try:
         result = run_rag_pipeline(query, data_dir=args.data_dir, settings=settings)
     except (PubMedRequestError, URLError, OSError) as exc:

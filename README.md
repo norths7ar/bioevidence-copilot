@@ -104,6 +104,28 @@ query-focused fields to evidence rows. Local QLoRA inference also requires
 `EXTRACTION_ADAPTER_PATH` and the separate `bioevidence-training` environment;
 the normal API installation remains GPU-toolchain-free.
 
+Run a short end-to-end local-adapter demo from the training environment:
+
+```powershell
+conda activate bioevidence-training
+$env:HF_HOME="E:/huggingface-cache"
+$env:HF_HUB_CACHE="$env:HF_HOME/hub"
+$env:HF_XET_CACHE="$env:HF_HOME/xet"
+$env:EXTRACTION_BACKEND="local"
+$env:EXTRACTION_ADAPTER_PATH="artifacts/training/evidence_extraction/qwen3_4b_qlora_v2/adapter"
+python scripts/run_baseline.py `
+  --query "asthma corticosteroids exacerbations randomized trial" `
+  --top-k 3 `
+  --output artifacts/runs/extraction_demo/local.json
+```
+
+Replace `HF_HOME` with the directory containing the existing Hugging Face model
+cache. Explicit cache variables also prevent Unsloth's Windows startup probe
+from falling back to a slow or unwritable default cache. Omit them when the
+activated environment already defines the same locations. The first local run
+loads the base model once; the backend then reuses it across all evidence rows
+in that process.
+
 Set `LOG_LEVEL` to `DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL` to control
 application logs. Logs go to the process stream by default, including under
 Docker. Agent run bundles retain `run.log`, Streamlit uses a rotating local log,
