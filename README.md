@@ -64,11 +64,12 @@ Suggested local setup:
 Example commands:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e ".[dev,serve,graph,web]"
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_baseline.py
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m streamlit run interfaces/web/streamlit_app.py
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pytest
+conda activate bioevidence-copilot
+pip install -e ".[dev,serve,graph,web]"
+python scripts/run_baseline.py
+python -m streamlit run interfaces/web/streamlit_app.py
+python scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
+python -m pytest
 ```
 
 For a portfolio or interview demo, `streamlit run interfaces/web/streamlit_app.py` is the
@@ -111,7 +112,7 @@ Run a short end-to-end local-adapter demo from the training environment:
 
 ```powershell
 conda activate bioevidence-training
-$env:HF_HOME="E:/huggingface-cache"
+$env:HF_HOME="<path-to-hugging-face-cache>"
 $env:HF_HUB_CACHE="$env:HF_HOME/hub"
 $env:HF_XET_CACHE="$env:HF_HOME/xet"
 python scripts/setup_extraction_adapter.py
@@ -194,13 +195,13 @@ The evaluation harness is file-based and local:
 - an example demo report is tracked at `data/evaluations/demo/demo_eval_report.json`
 - seed a real PubMed demo corpus with `scripts/seed_demo_corpus.py`
 - convert BioASQ Task B data with `scripts/convert_bioasq.py`
-- run the harness with `C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl`
+- run the harness with `python scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl`
 - add `--data-dir data/corpora/demo` to evaluate against the seeded demo corpus
 - add `--mode agent` to evaluate the agent workflow instead of the baseline
 - add `--limit N` for BioASQ smoke runs before attempting the full dataset
 - optionally add `--output path/to/report.json` to write a compact report artifact
-- run the agent workflow with `C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_agent.py --query "asthma corticosteroids" --data-dir data/corpora/demo --artifacts-dir artifacts/runs`
-- with Neo4j configured, compare baseline and graph-expanded PMID retrieval with `C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_graph_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --limit 5`
+- run the agent workflow with `python scripts/run_agent.py --query "asthma corticosteroids" --data-dir data/corpora/demo --artifacts-dir artifacts/runs`
+- with Neo4j configured, compare baseline and graph-expanded PMID retrieval with `python scripts/run_graph_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --limit 5`
 
 Agent CLI output is intentionally split by responsibility. The console prints a
 short run summary. With `--artifacts-dir`, each run creates a timestamped,
@@ -242,10 +243,10 @@ GitHub Actions runs the project quality gate on push and pull request:
 Run the same checks locally:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m ruff check --no-cache .
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m mypy src/bioevidence/schemas src/bioevidence/evaluation src/bioevidence/workflows src/bioevidence/graph --no-sqlite-cache --no-incremental
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pytest
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --limit 1
+python -m ruff check --no-cache .
+python -m mypy src/bioevidence/schemas src/bioevidence/evaluation src/bioevidence/workflows src/bioevidence/graph --no-sqlite-cache --no-incremental
+python -m pytest
+python scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --limit 1
 ```
 
 ## API
@@ -255,13 +256,13 @@ of `src/bioevidence/`.
 Install the service runtime extra when needed:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e ".[dev,serve,graph,web]"
+pip install -e ".[dev,serve,graph,web]"
 ```
 
 Run the API locally:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m uvicorn interfaces.api.main:app --reload
+python -m uvicorn interfaces.api.main:app --reload
 ```
 
 Build and run the FastAPI service with Docker:
@@ -293,7 +294,7 @@ Run the graph-enabled local service composition:
 ```powershell
 docker compose up --build -d
 $env:NEO4J_PASSWORD="bioevidence-local"
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/import_hetionet.py --hetionet-root E:/GitHub-Repos/hetionet-main
+python scripts/import_hetionet.py --hetionet-root "<path-to-hetionet>"
 ```
 
 Compose starts FastAPI on port `8000`, Neo4j Browser on `7474`, and Bolt on

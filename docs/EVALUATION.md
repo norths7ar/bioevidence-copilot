@@ -3,6 +3,9 @@
 BioEvidence Copilot keeps evaluation local and file-based so demo runs are
 repeatable and inspectable.
 
+The PowerShell examples below assume the `bioevidence-copilot` environment is
+already active.
+
 ## Demo Dataset
 
 The tracked demo dataset lives at:
@@ -52,13 +55,13 @@ extractions before any row can enter the annotation dataset.
 Validate the tracked annotations against the current corpus:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/validate_extraction_annotations.py
+python scripts/validate_extraction_annotations.py
 ```
 
 Render a local review packet:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/render_extraction_review.py
+python scripts/render_extraction_review.py
 ```
 
 ## Evidence extraction baselines
@@ -68,14 +71,14 @@ backend and writes predictions, failure categories, per-item metrics, latency,
 and aggregate metrics to JSON. Run the inspectable rule baseline with:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_extraction_eval.py --backend rules
+python scripts/run_extraction_eval.py --backend rules
 ```
 
 For the prompt-only baseline, configure `EXTRACTION_API_KEY`,
 `EXTRACTION_BASE_URL`, and `EXTRACTION_MODEL`, then run:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_extraction_eval.py --backend prompted
+python scripts/run_extraction_eval.py --backend prompted
 ```
 
 The prompt-only backend sends the query, title, abstract, and versioned output
@@ -148,7 +151,7 @@ aggregate is `data/evaluations/evidence_extraction/baseline_summary.json`.
 Seed a small PubMed corpus with real E-utilities abstracts:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/seed_demo_corpus.py --retmax-per-topic 30 --output-dir data/corpora/demo
+python scripts/seed_demo_corpus.py --retmax-per-topic 30 --output-dir data/corpora/demo
 ```
 
 The default topics cover asthma, type 2 diabetes, statins, melanoma
@@ -162,7 +165,7 @@ data/corpora/demo/processed/demo.documents.jsonl
 Convert BioASQ Task B data into the same local file conventions:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/convert_bioasq.py --input tmp/BioASQ-training13b/training13b.json --corpus-output-dir data/corpora/bioasq --eval-output-dir data/evaluations/bioasq
+python scripts/convert_bioasq.py --input tmp/BioASQ-training13b/training13b.json --corpus-output-dir data/corpora/bioasq --eval-output-dir data/evaluations/bioasq
 ```
 
 The converter writes:
@@ -179,19 +182,19 @@ retriever can load it by using `data/corpora/bioasq` as the data directory.
 Baseline mode:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --output tmp/demo-baseline-report.json
+python scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --output tmp/demo-baseline-report.json
 ```
 
 Agent mode:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode agent --output tmp/demo-agent-report.json
+python scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode agent --output tmp/demo-agent-report.json
 ```
 
 BioASQ smoke mode:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_eval.py --dataset data/evaluations/bioasq/bioasq13b_eval.jsonl --data-dir data/corpora/bioasq --mode baseline --limit 20 --output tmp/bioasq-smoke-report.json
+python scripts/run_eval.py --dataset data/evaluations/bioasq/bioasq13b_eval.jsonl --data-dir data/corpora/bioasq --mode baseline --limit 20 --output tmp/bioasq-smoke-report.json
 ```
 
 Use `--limit` for BioASQ smoke runs. Full `training13b` evaluation contains
@@ -259,7 +262,7 @@ PMIDs as the literature baseline. For each question the evaluator:
 Run a graph-enabled comparison after Neo4j has been populated:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_graph_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --limit 5 --output tmp/graph-gain-report.json
+python scripts/run_graph_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --limit 5 --output tmp/graph-gain-report.json
 ```
 
 The result is an ablation report, not a claim that graph augmentation always

@@ -35,19 +35,20 @@ It is not a clinical decision system.
 Install or refresh local development dependencies:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m pip install -e ".[dev,serve,graph,web]"
+conda activate bioevidence-copilot
+pip install -e ".[dev,serve,graph,web]"
 ```
 
 Run the review console:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m streamlit run interfaces/web/streamlit_app.py
+python -m streamlit run interfaces/web/streamlit_app.py
 ```
 
 Run the FastAPI service locally:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe -m uvicorn interfaces.api.main:app --reload
+python -m uvicorn interfaces.api.main:app --reload
 ```
 
 Check the API:
@@ -59,7 +60,7 @@ Invoke-WebRequest -UseBasicParsing http://localhost:8000/api/v1/health
 Run the agent workflow with retained run artifacts:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_agent.py --query "asthma corticosteroids" --data-dir data/corpora/demo --artifacts-dir artifacts/runs
+python scripts/run_agent.py --query "asthma corticosteroids" --data-dir data/corpora/demo --artifacts-dir artifacts/runs
 ```
 
 The command prints a short summary and creates one timestamped directory with
@@ -69,7 +70,7 @@ internal workflow payload is needed.
 Run the evaluation smoke path:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --limit 1
+python scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --limit 1
 ```
 
 Build and run the API container:

@@ -32,7 +32,7 @@ metadata rather than inferring authority from the status name.
 Generate a local Markdown review packet with full abstracts and checklists:
 
 ```powershell
-C:/Users/jnkyl/miniconda3/envs/bioevidence-copilot/python.exe scripts/render_extraction_review.py
+python scripts/render_extraction_review.py
 ```
 
 The report is written under `artifacts/annotation_reviews/`, which is ignored by

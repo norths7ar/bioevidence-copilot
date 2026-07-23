@@ -25,9 +25,9 @@ To keep model and compilation caches off the system drive, configure paths
 before loading Unsloth:
 
 ```powershell
-$env:HF_HOME = "E:/huggingface-cache"
-$env:TRITON_CACHE_DIR = "E:/triton-cache"
-$env:UNSLOTH_COMPILE_LOCATION = "E:/unsloth-compiled-cache"
+$env:HF_HOME = "<path-to-hugging-face-cache>"
+$env:TRITON_CACHE_DIR = "<path-to-triton-cache>"
+$env:UNSLOTH_COMPILE_LOCATION = "<path-to-unsloth-compile-cache>"
 ```
 
 Download the pinned model snapshot:
