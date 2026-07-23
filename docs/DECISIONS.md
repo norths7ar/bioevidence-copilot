@@ -122,7 +122,7 @@
 - Keep the type-checking gate focused on stable schema, evaluation, and workflow modules rather than forcing whole-repository strict typing before the exploratory layers settle.
 - Use `--no-sqlite-cache --no-incremental` for mypy because the local Windows environment showed SQLite cache I/O errors; the focused check remains deterministic without cache.
 - Treat the evaluation smoke test as a workflow integrity check, not a benchmark or model-quality claim.
-- Keep documentation split by audience: README for the shortest path, `DEMO_SCRIPT.md` for walkthroughs, `EVALUATION.md` for metrics and datasets, and `LIMITATIONS.md` for medical and engineering boundaries.
+- Keep documentation split by audience: README for the shortest path, `EVALUATION.md` for metrics and datasets, and `LIMITATIONS.md` for medical and engineering boundaries.
 
 ## 2026-07-20: v0.1 release boundary and GraphRAG integration
 

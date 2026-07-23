@@ -22,7 +22,7 @@ Each row uses the same JSONL schema as the runtime evaluation harness:
 - optional `reference_answer`
 - optional `top_k`
 
-The file contains stable demo questions for interview walkthroughs. Large raw
+The file contains stable demo questions for repeatable walkthroughs. Large raw
 downloads and caches under `data/` remain ignored, but curated eval and corpus
 artifacts are intentionally trackable.
 

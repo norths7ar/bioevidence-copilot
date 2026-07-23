@@ -39,7 +39,7 @@ Repeated runs validate and reuse the existing installation. Hugging Face and
 GPU dependencies remain confined to the separate training environment, so the
 normal API and Docker dependency boundary is unchanged.
 
-## Portfolio report
+## Summary report
 
 `docs/EXTRACTION_MODEL_REPORT.md` presents the experimental boundary, complete
 four-system metric table, v1-to-v2 trade-offs, status confusion, product

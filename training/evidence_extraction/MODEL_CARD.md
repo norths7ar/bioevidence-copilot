@@ -35,7 +35,7 @@ JSON Schema. Output is exactly one JSON object containing:
 - verbatim evidence spans copied from the abstract;
 - a short evidence summary.
 
-Use the adapter for reproducible portfolio experiments, offline extraction
+Use the adapter for reproducible extraction experiments, offline extraction
 evaluation, and optional enrichment inside BioEvidence Copilot. Validate every
 response against the schema and verify evidence spans against the source text.
 

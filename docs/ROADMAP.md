@@ -42,23 +42,18 @@
 - reuse the existing presentation helpers and workflow outputs
 - keep the browser view presentation-only and read-only
 
-## Next phase: Portfolio productization
+## Next phase: Productization
 
-The next phase should make the project stronger in two complementary ways:
-
-1. deepen the biomedical evidence-assistant value of the project
-2. broaden the visible engineering stack for portfolio and job-search purposes
-
-The product-depth work should stay close to the repository's original identity:
-a citation-grounded biomedical literature evidence assistant over PubMed
-metadata and abstracts. The engineering-stack work should expose the same
-core pipeline through conventional backend service boundaries without turning
-the project into a generic chatbot or framework-first demo.
+The next phase deepens the biomedical evidence-assistant capabilities and
+broadens the engineering stack. Product-depth work stays close to the
+repository's identity: a citation-grounded literature evidence assistant
+over PubMed metadata and abstracts. Engineering-stack work exposes the same
+core pipeline through conventional backend service boundaries.
 
 ## Track A: Product depth
 
 ### Milestone 7: Reproducible demo and evaluation suite [done]
-- define a fixed interview/demo query set
+- define a fixed demo query set
 - build or document a fixed local PubMed abstract corpus for repeatable demos
 - expand the evaluation dataset beyond the minimal example fixture
 - generate a saved evaluation report with aggregate and per-query results
@@ -122,7 +117,7 @@ POST /api/v1/evaluations/run
 - document local Python startup and Docker startup separately
 - make configuration flow through environment variables
 - include a health check path
-- keep Docker focused on portfolio/backend-stack breadth, not as the primary
+- keep Docker focused on the FastAPI service, not as the primary
   local development workflow
 
 ### Milestone 13: Optional service composition
@@ -143,7 +138,7 @@ POST /api/v1/evaluations/run
 ### Documentation [done]
 - keep `docs/DECISIONS.md` updated for meaningful architecture decisions
 - maintain `docs/EVALUATION.md` for evaluation datasets, metrics, and commands
-- add `docs/DEMO_SCRIPT.md` for interview or portfolio walkthroughs
+- maintain usage documentation and walkthrough examples
 - add `docs/LIMITATIONS.md` to document medical, data, and model limitations
 - keep README focused on the shortest practical demo path first
 

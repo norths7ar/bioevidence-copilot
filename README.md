@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/norths7ar/bioevidence-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/norths7ar/bioevidence-copilot/actions/workflows/ci.yml)
 
-BioEvidence Copilot is a portfolio project for biomedical literature evidence retrieval, structured evidence, evaluation, LangGraph orchestration, and optional Hetionet discovery.
+BioEvidence Copilot is a biomedical literature evidence retrieval system with structured extraction, evaluation, LangGraph orchestration, and optional Hetionet discovery.
 
 It is intentionally built in two stages:
 
@@ -72,8 +72,8 @@ python scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
 python -m pytest
 ```
 
-For a portfolio or interview demo, `streamlit run interfaces/web/streamlit_app.py` is the
-best first command because it shows the baseline/agent comparison in tabs.
+The quickest way to see the system is `streamlit run interfaces/web/streamlit_app.py`,
+which shows the baseline/agent comparison in tabs.
 The CLI entrypoints remain useful for debugging and automated checks.
 
 Editable install is the supported local workflow. CLI entrypoints live under
@@ -316,7 +316,6 @@ data/               curated corpora/evaluation artifacts plus ignored runtime ca
 ```
 
 ## Documentation
-- `docs/DEMO_SCRIPT.md`: portfolio and interview walkthrough commands
 - `docs/EVALUATION.md`: dataset format, metrics, and evaluation commands
 - `docs/LIMITATIONS.md`: medical, data, model, agent, and deployment boundaries
 - `docs/ARCHITECTURE.md`: system organization and interface boundaries
@@ -324,5 +323,5 @@ data/               curated corpora/evaluation artifacts plus ignored runtime ca
 - `docs/ROADMAP.md`: completed milestones and optional future work
 
 ## Notes
-This is a portfolio and research-engineering project.
+This is a research-engineering project.
 It is not a clinical product and should not be used for medical decision-making.

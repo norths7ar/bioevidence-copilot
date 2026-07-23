@@ -1,8 +1,7 @@
 # AGENTS.md
 
 ## Project identity
-This repository is a product-style portfolio project, not a throwaway demo.
-The goal is to build a biomedical literature evidence assistant in two stages:
+This repository is a biomedical literature evidence assistant built in two stages:
 
 1. Stage 1: citation-grounded RAG baseline
 2. Stage 2: agentic orchestration on top of the same RAG system

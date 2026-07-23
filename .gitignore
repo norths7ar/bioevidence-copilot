@@ -19,6 +19,9 @@ data/cache/
 # AI coding tools (machine-local)
 .claude/
 
+# Internal planning and interview prep (not public)
+docs/internal/
+
 # OS
 Thumbs.db
 

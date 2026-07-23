@@ -1,6 +1,6 @@
 # Limitations
 
-BioEvidence Copilot is a portfolio and research-engineering project. It is not
+BioEvidence Copilot is a research-engineering project. It is not
 a clinical product, medical device, diagnostic tool, treatment recommender, or
 substitute for professional medical judgment.
 
@@ -61,7 +61,7 @@ substitute for professional medical judgment.
 
 ## Engineering Limitations
 
-- The FastAPI service is a local portfolio service boundary. It does not include
+- The FastAPI service is a local service boundary. It does not include
   authentication, authorization, rate limiting, persistence, background job
   orchestration, or production observability.
 - Docker packages the API, and Compose adds a local Neo4j service. Neither is a
@@ -78,7 +78,7 @@ Appropriate uses include:
   architecture
 - exploring local PubMed abstract retrieval behavior
 - testing evaluation and citation-faithfulness checks on small fixtures
-- portfolio walkthroughs and engineering discussion
+- engineering discussion and architecture review
 
 Inappropriate uses include:
 

@@ -95,7 +95,7 @@ Core workflow orchestration lives under `src/bioevidence/workflows/` so the
 baseline RAG path, agent workflow, and retrieval stack are not coupled to the
 UI, API, or agent-specific helper modules.
 
-The FastAPI service is the deployable backend boundary for portfolio purposes.
+The FastAPI service is the deployable backend boundary.
 Docker packages that API service with the curated local demo corpus and a health
 check, while the Streamlit review console remains a local presentation surface
 over normalized workflow payloads.
