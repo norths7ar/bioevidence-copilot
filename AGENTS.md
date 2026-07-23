@@ -10,6 +10,9 @@ Do not redesign the project into an unrelated chatbot, general assistant, or toy
 
 ## Working style
 - Prefer small, reviewable changes.
+- This is a single-maintainer repository. When the user asks to commit and push
+  accepted changes, commit directly to `main` and push `main`; do not create a
+  feature branch or pull request unless the user explicitly asks for one.
 - Before large edits, inspect the surrounding files and preserve architectural consistency.
 - When adding a new module, also add minimal tests or stubs.
 - Keep code readable and boring over clever.
