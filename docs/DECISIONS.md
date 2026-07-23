@@ -369,3 +369,10 @@
 - Treat direct-status calibration as unresolved. Adapter v2 fixed the observed
   `indirect -> none` collapse on the expanded test, but all three direct test
   rows were still classified as indirect.
+
+## 2026-07-23: Locked local and CI dependencies
+
+- Keep `pyproject.toml` as the human-maintained declaration of supported dependency ranges and commit the generated `uv.lock` as the exact dependency resolution.
+- Use `uv sync --locked --all-extras` for local and CI installation so a dependency change must be an explicit, reviewable update to the lock file.
+- Create an ignored, project-local `.venv` instead of modifying a shared Conda environment. An existing Python 3.12 Conda interpreter may be selected as the provider when the environment is first created.
+- Pin the CI setup action and the uv version, and make CI fail when `uv.lock` is stale relative to `pyproject.toml`.

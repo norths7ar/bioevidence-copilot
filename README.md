@@ -57,19 +57,18 @@ This repository uses a `src/` layout and targets Python 3.12.
 
 Suggested local setup:
 
-1. create and activate a Python 3.12 environment
-2. install the project in editable mode with test extras
+1. install [uv](https://docs.astral.sh/uv/getting-started/installation/) and ensure Python 3.12 is available
+2. create the project-local environment from the committed dependency lock
 3. run the baseline CLI, Streamlit UI, API, or tests
 
 Example commands:
 
 ```powershell
-conda activate bioevidence-copilot
-pip install -e ".[dev,serve,graph,web]"
-python scripts/run_baseline.py
-python -m streamlit run interfaces/web/streamlit_app.py
-python scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
-python -m pytest
+uv sync --locked --all-extras --no-managed-python
+uv run python scripts/run_baseline.py
+uv run streamlit run interfaces/web/streamlit_app.py
+uv run python scripts/ingest_pubmed.py "asthma corticosteroids" --retmax 5
+uv run pytest
 ```
 
 The quickest way to see the system is `streamlit run interfaces/web/streamlit_app.py`,
@@ -78,6 +77,19 @@ The CLI entrypoints remain useful for debugging and automated checks.
 
 Editable install is the supported local workflow. CLI entrypoints live under
 `scripts/`, and external interfaces live under `interfaces/`.
+
+### Reproducible dependencies
+
+`pyproject.toml` declares supported dependency ranges, while the committed
+`uv.lock` records the exact, resolved dependency set used by development and
+CI. Do not edit `uv.lock` by hand. After intentionally changing dependencies,
+run `uv lock`, review both files, and validate with `uv lock --check`.
+
+`uv sync --locked --all-extras --no-managed-python` creates or exactly synchronizes the ignored
+project-local `.venv`; it does not alter a Conda base environment. To keep an
+existing Conda installation as the Python provider, pass its Python 3.12
+interpreter explicitly to the initial `uv sync` command, for example
+`uv sync --locked --all-extras --no-managed-python --python C:\\path\\to\\python.exe`.
 
 To enable the dense retriever, configure the embedding backend via the generic
 `.env` fields:
@@ -243,10 +255,10 @@ GitHub Actions runs the project quality gate on push and pull request:
 Run the same checks locally:
 
 ```powershell
-python -m ruff check --no-cache .
-python -m mypy src/bioevidence/schemas src/bioevidence/evaluation src/bioevidence/workflows src/bioevidence/graph --no-sqlite-cache --no-incremental
-python -m pytest
-python scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --limit 1
+uv run ruff check --no-cache .
+uv run mypy src/bioevidence/schemas src/bioevidence/evaluation src/bioevidence/workflows src/bioevidence/graph --no-sqlite-cache --no-incremental
+uv run pytest
+uv run python scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --limit 1
 ```
 
 ## API
@@ -256,13 +268,13 @@ of `src/bioevidence/`.
 Install the service runtime extra when needed:
 
 ```powershell
-pip install -e ".[dev,serve,graph,web]"
+uv sync --locked --all-extras --no-managed-python
 ```
 
 Run the API locally:
 
 ```powershell
-python -m uvicorn interfaces.api.main:app --reload
+uv run uvicorn interfaces.api.main:app --reload
 ```
 
 Build and run the FastAPI service with Docker:
