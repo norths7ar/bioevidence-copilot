@@ -124,9 +124,7 @@ def _load_config(*, require_credentials: bool) -> DraftConfig:
     api_key = os.getenv("EXTRACTION_API_KEY") or os.getenv("AGENT_API_KEY", "")
     base_url = os.getenv("EXTRACTION_BASE_URL") or os.getenv("AGENT_BASE_URL", "")
     model = os.getenv("EXTRACTION_MODEL") or os.getenv("AGENT_MODEL", "")
-    max_output_tokens = int(
-        os.getenv("EXTRACTION_MAX_OUTPUT_TOKENS") or os.getenv("AGENT_MAX_OUTPUT_TOKENS", "2048")
-    )
+    max_output_tokens = int(os.getenv("EXTRACTION_MAX_OUTPUT_TOKENS") or os.getenv("AGENT_MAX_OUTPUT_TOKENS", "2048"))
     if require_credentials and (not api_key or not base_url or not model):
         raise ValueError("Configure EXTRACTION_* or AGENT_API_KEY, AGENT_BASE_URL, and AGENT_MODEL")
     return DraftConfig(

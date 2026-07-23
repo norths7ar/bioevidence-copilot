@@ -21,8 +21,7 @@ def test_validate_extraction_annotations_cli(monkeypatch, capsys) -> None:
 def test_load_candidate_keys_rejects_duplicates(tmp_path: Path) -> None:
     path = tmp_path / "candidates.jsonl"
     path.write_text(
-        '{"id":"one","query":"query","pmid":"1"}\n'
-        '{"id":"one","query":"query","pmid":"1"}\n',
+        '{"id":"one","query":"query","pmid":"1"}\n{"id":"one","query":"query","pmid":"1"}\n',
         encoding="utf-8",
     )
 

@@ -447,7 +447,9 @@ def _first_sentence(text: str) -> str | None:
 
 
 def _result_sentence(text: str) -> str | None:
-    return next((sentence for sentence in _sentences(text) if any(cue in sentence.casefold() for cue in _RESULT_CUES)), None)
+    return next(
+        (sentence for sentence in _sentences(text) if any(cue in sentence.casefold() for cue in _RESULT_CUES)), None
+    )
 
 
 def _infer_direction(text: str) -> OutcomeDirection:

@@ -61,15 +61,9 @@ def read_relationship_mapping(types_path: Path, metaedges_path: Path) -> dict[st
     ensure_real_data_file(types_path)
     ensure_real_data_file(metaedges_path)
     with metaedges_path.open("r", encoding="utf-8", newline="") as file:
-        abbreviations = {
-            row["metaedge"]: row["abbreviation"]
-            for row in csv.DictReader(file, delimiter="\t")
-        }
+        abbreviations = {row["metaedge"]: row["abbreviation"] for row in csv.DictReader(file, delimiter="\t")}
     with types_path.open("r", encoding="utf-8", newline="") as file:
-        return {
-            abbreviations[row["metaedge"]]: row["rel_type"]
-            for row in csv.DictReader(file, delimiter="\t")
-        }
+        return {abbreviations[row["metaedge"]]: row["rel_type"] for row in csv.DictReader(file, delimiter="\t")}
 
 
 def read_nodes(path: Path, labels: dict[str, str]) -> Iterator[dict[str, str]]:
@@ -102,8 +96,7 @@ def create_indexes(session: Any, labels: Iterable[str]) -> None:
     for label in sorted(set(labels)):
         index_name = f"hetionet_{label.lower()}_id"
         session.run(
-            f"CREATE INDEX {quote_identifier(index_name)} IF NOT EXISTS "
-            f"FOR (n:{quote_identifier(label)}) ON (n.id)"
+            f"CREATE INDEX {quote_identifier(index_name)} IF NOT EXISTS FOR (n:{quote_identifier(label)}) ON (n.id)"
         ).consume()
     session.run("CALL db.awaitIndexes()").consume()
 

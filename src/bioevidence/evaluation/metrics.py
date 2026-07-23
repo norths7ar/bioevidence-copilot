@@ -73,7 +73,10 @@ def token_overlap_f1(prediction: str, reference: str) -> float:
 
     predicted_counts = Counter(prediction_tokens)
     reference_counts = Counter(reference_tokens)
-    overlap = sum(min(predicted_counts[token], reference_counts[token]) for token in predicted_counts.keys() & reference_counts.keys())
+    overlap = sum(
+        min(predicted_counts[token], reference_counts[token])
+        for token in predicted_counts.keys() & reference_counts.keys()
+    )
     precision = overlap / sum(predicted_counts.values())
     recall = overlap / sum(reference_counts.values())
     return _f1(precision, recall)

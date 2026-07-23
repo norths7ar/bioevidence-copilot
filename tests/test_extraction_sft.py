@@ -3,7 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from bioevidence.evaluation.extraction_dataset import AnnotationStatus, ExtractionAnnotation, load_extraction_annotations
+from bioevidence.evaluation.extraction_dataset import (
+    AnnotationStatus,
+    ExtractionAnnotation,
+    load_extraction_annotations,
+)
 from bioevidence.evaluation.extraction_sft import (
     SplitRatios,
     assign_pmid_splits,

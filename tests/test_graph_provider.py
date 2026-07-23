@@ -45,6 +45,4 @@ def test_expansion_term_is_compared_as_tokens_not_a_substring() -> None:
         ),
     )
 
-    assert build_expansion_queries("rare disease evidence", paths, max_queries=1) == (
-        "rare disease evidence SEA",
-    )
+    assert build_expansion_queries("rare disease evidence", paths, max_queries=1) == ("rare disease evidence SEA",)

@@ -16,7 +16,9 @@ from bioevidence.schemas.evidence import EvidenceRecord
 from bioevidence.schemas.query import Query
 
 
-def _build_workflow_result(query_text: str, pmids: tuple[str, ...], citations: tuple[str, ...], source: str) -> WorkflowResult:
+def _build_workflow_result(
+    query_text: str, pmids: tuple[str, ...], citations: tuple[str, ...], source: str
+) -> WorkflowResult:
     documents = tuple(
         Document(
             pmid=pmid,
@@ -208,11 +210,15 @@ def test_run_evaluation_accepts_agent_workflow_results(tmp_path: Path):
         evidence_records=(evidence_record,),
         answer=baseline.answer,
         source="agent:local_corpus",
-        state=AgentState(query=Query(text="asthma corticosteroids"), sufficient=True, stop_reason="sufficient_evidence"),
+        state=AgentState(
+            query=Query(text="asthma corticosteroids"), sufficient=True, stop_reason="sufficient_evidence"
+        ),
         comparison={"branch_count": 0, "stop_reason": "sufficient_evidence"},
     )
 
-    report = run_evaluation(dataset, mode="agent", pipeline=lambda query, *, data_dir=None, documents=None, settings=None: agent_result)
+    report = run_evaluation(
+        dataset, mode="agent", pipeline=lambda query, *, data_dir=None, documents=None, settings=None: agent_result
+    )
 
     assert report.summary["items"] == 1
     assert report.mode == "agent"

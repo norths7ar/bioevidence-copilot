@@ -17,7 +17,13 @@ from bioevidence.evaluation.graph_gain import (
     compare_retrieval_gain,
     run_graph_gain_evaluation,
 )
-from bioevidence.evaluation.runner import EvaluationItemResult, EvaluationReport, format_report, run_evaluation, write_report
+from bioevidence.evaluation.runner import (
+    EvaluationItemResult,
+    EvaluationReport,
+    format_report,
+    run_evaluation,
+    write_report,
+)
 
 __all__ = [
     "AnnotationStatus",

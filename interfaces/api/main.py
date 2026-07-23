@@ -120,10 +120,13 @@ def _serialize_stream_event(event: dict[str, object]) -> str:
 
 
 def _serialize_stream_error(status_code: int, detail: str) -> str:
-    return json.dumps(
-        {"event": "error", "error": {"status_code": status_code, "detail": detail}},
-        ensure_ascii=True,
-    ) + "\n"
+    return (
+        json.dumps(
+            {"event": "error", "error": {"status_code": status_code, "detail": detail}},
+            ensure_ascii=True,
+        )
+        + "\n"
+    )
 
 
 def _workflow_response(result: WorkflowResult | AgentWorkflowResult) -> dict[str, Any]:

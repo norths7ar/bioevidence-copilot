@@ -48,7 +48,9 @@ def assign_pmid_splits(
     if unknown_splits:
         raise ValueError(f"fixed PMID assignments contain unknown splits: {unknown_splits}")
     assignments = {pmid: fixed_assignments[pmid] for pmid in pmids if pmid in fixed_assignments}
-    ranked_pmids = sorted((pmid for pmid in pmids if pmid not in assignments), key=lambda pmid: _stable_rank(pmid, seed))
+    ranked_pmids = sorted(
+        (pmid for pmid in pmids if pmid not in assignments), key=lambda pmid: _stable_rank(pmid, seed)
+    )
     counts = _allocate_counts(len(ranked_pmids), ratios.as_dict())
 
     offset = 0

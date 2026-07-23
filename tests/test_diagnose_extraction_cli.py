@@ -43,9 +43,7 @@ def test_diagnostic_cli_writes_failure_provenance(tmp_path: Path, monkeypatch, c
     monkeypatch.setattr(diagnose_script, "create_product_extraction_backend", lambda settings: backend)
     monkeypatch.setattr(diagnose_script, "load_local_documents", lambda data_dir, settings: [document])
 
-    exit_code = diagnose_script.main(
-        ["--query", "asthma trial", "--pmid", "123", "--output", str(output)]
-    )
+    exit_code = diagnose_script.main(["--query", "asthma trial", "--pmid", "123", "--output", str(output)])
 
     report = json.loads(output.read_text(encoding="utf-8"))
     assert exit_code == 0

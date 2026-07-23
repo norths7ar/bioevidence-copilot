@@ -85,7 +85,9 @@ def select_expansion_candidates(
     for topic in topics:
         topic_documents = [documents_by_pmid[pmid] for pmid in topic.pmids if pmid in documents_by_pmid]
         same_topic_ranked = [
-            item for item in _rank_documents(topic.query, topic_documents) if (topic.query, item[0].pmid) not in existing_pairs
+            item
+            for item in _rank_documents(topic.query, topic_documents)
+            if (topic.query, item[0].pmid) not in existing_pairs
         ]
         high = same_topic_ranked[:high_per_topic]
         high_pmids = {document.pmid for document, _, _ in high}

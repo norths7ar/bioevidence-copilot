@@ -76,12 +76,14 @@ def test_run_agent_cli_prints_summary_and_writes_compact_output(tmp_path: Path, 
         lambda query, data_dir=None, settings=None, trace_recorder=None: _agent_result(),
     )
 
-    exit_code = run_agent_script.main([
-        "--query",
-        "asthma corticosteroids",
-        "--output",
-        str(output_path),
-    ])
+    exit_code = run_agent_script.main(
+        [
+            "--query",
+            "asthma corticosteroids",
+            "--output",
+            str(output_path),
+        ]
+    )
 
     captured = capsys.readouterr()
 

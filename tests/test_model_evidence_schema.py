@@ -34,10 +34,13 @@ def test_model_evidence_schema_accepts_grounded_direct_evidence() -> None:
     extraction = _direct_extraction()
 
     assert extraction.evidence_status == "direct"
-    assert unsupported_evidence_spans(
-        extraction,
-        "RESULTS: The salt substitute reduced systolic blood pressure.",
-    ) == ()
+    assert (
+        unsupported_evidence_spans(
+            extraction,
+            "RESULTS: The salt substitute reduced systolic blood pressure.",
+        )
+        == ()
+    )
 
 
 def test_model_evidence_schema_rejects_direct_evidence_without_outcome() -> None:

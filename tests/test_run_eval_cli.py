@@ -14,7 +14,10 @@ import scripts.run_eval as run_eval_script
 
 def test_run_eval_cli_prints_summary_and_writes_report(tmp_path: Path, capsys, monkeypatch):
     dataset = tmp_path / "dataset.jsonl"
-    dataset.write_text('{"id": "item-1", "query": "asthma corticosteroids", "gold_pmids": ["111"], "reference_answer": "Answer for asthma corticosteroids"}\n', encoding="utf-8")
+    dataset.write_text(
+        '{"id": "item-1", "query": "asthma corticosteroids", "gold_pmids": ["111"], "reference_answer": "Answer for asthma corticosteroids"}\n',
+        encoding="utf-8",
+    )
     output = tmp_path / "report.json"
 
     item = EvaluationItemResult(

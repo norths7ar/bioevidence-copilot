@@ -76,10 +76,7 @@ class GraphDiscoveryResult:
             ],
             "paths": [
                 {
-                    "nodes": [
-                        {"id": node.id, "name": node.name, "label": node.label}
-                        for node in path.nodes
-                    ],
+                    "nodes": [{"id": node.id, "name": node.name, "label": node.label} for node in path.nodes],
                     "relationships": list(path.relationships),
                     "hop_count": path.hop_count,
                     "pattern": path.pattern,

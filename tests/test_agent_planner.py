@@ -91,7 +91,9 @@ def test_plan_next_steps_falls_back_when_llm_unavailable(monkeypatch):
 
     monkeypatch.setattr(planner_module, "load_settings", _settings)
     monkeypatch.setattr(planner_module, "create_agent_client", lambda settings: object())
-    monkeypatch.setattr(planner_module, "chat_json", lambda *args, **kwargs: (_ for _ in ()).throw(AgentLLMError("boom")))
+    monkeypatch.setattr(
+        planner_module, "chat_json", lambda *args, **kwargs: (_ for _ in ()).throw(AgentLLMError("boom"))
+    )
 
     branch_queries = planner_module.plan_next_steps(state, branch_count=2)
 
@@ -106,7 +108,9 @@ def test_plan_next_steps_with_trace_marks_fallback(monkeypatch):
 
     monkeypatch.setattr(planner_module, "load_settings", _settings)
     monkeypatch.setattr(planner_module, "create_agent_client", lambda settings: object())
-    monkeypatch.setattr(planner_module, "chat_json", lambda *args, **kwargs: (_ for _ in ()).throw(AgentLLMError("boom")))
+    monkeypatch.setattr(
+        planner_module, "chat_json", lambda *args, **kwargs: (_ for _ in ()).throw(AgentLLMError("boom"))
+    )
 
     result = planner_module.plan_next_steps_with_trace(state, branch_count=1)
 

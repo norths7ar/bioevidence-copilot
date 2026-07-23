@@ -138,7 +138,9 @@ def _cache_matches(cache: dict[str, object] | None, corpus_signature: str, setti
     )
 
 
-def _cosine_similarity_batch(query_embedding: Sequence[float], document_embeddings: Sequence[Sequence[float]]) -> list[float]:
+def _cosine_similarity_batch(
+    query_embedding: Sequence[float], document_embeddings: Sequence[Sequence[float]]
+) -> list[float]:
     query_vector = np.asarray(query_embedding, dtype=np.float32)
     document_matrix = np.asarray(document_embeddings, dtype=np.float32)
     if query_vector.ndim != 1 or document_matrix.ndim != 2:

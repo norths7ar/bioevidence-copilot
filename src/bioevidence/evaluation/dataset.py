@@ -37,9 +37,7 @@ def _parse_item(payload: Any, line_number: int) -> EvaluationItem:
     query = _require_str(payload, "query", line_number)
     gold_pmids = _parse_pmids(payload, line_number)
     reference_answer = payload.get("reference_answer")
-    if reference_answer is not None and (
-        not isinstance(reference_answer, str) or not reference_answer.strip()
-    ):
+    if reference_answer is not None and (not isinstance(reference_answer, str) or not reference_answer.strip()):
         raise ValueError(f"Line {line_number}: reference_answer must be a non-empty string if provided")
 
     top_k_value = payload.get("top_k", 10)

@@ -8,6 +8,7 @@ from bioevidence.config import Settings, load_settings
 from bioevidence.retrieval.scoring import document_text
 from bioevidence.schemas.document import Document
 
+
 class DenseRetrievalError(RuntimeError):
     pass
 

@@ -48,7 +48,10 @@ def _fake_embed_texts(texts, *, client=None, settings=None):
 def _fake_embed_documents(documents, *, client=None, settings=None):
     del client, settings
     vector_map = {
-        "Corticosteroids for asthma control Corticosteroids reduce asthma exacerbations and improve control.": [1.0, 0.0],
+        "Corticosteroids for asthma control Corticosteroids reduce asthma exacerbations and improve control.": [
+            1.0,
+            0.0,
+        ],
         "Asthma management in children This study discusses pediatric asthma care.": [0.7, 0.7],
         "Unrelated biomedical topic This abstract does not discuss the query terms.": [0.0, 1.0],
     }

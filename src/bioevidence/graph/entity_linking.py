@@ -31,8 +31,7 @@ def _best_window_similarity(query_tokens: Sequence[str], normalized_name: str) -
         return 0.0
     window_size = min(len(name_tokens), len(query_tokens))
     windows = (
-        " ".join(query_tokens[index : index + window_size])
-        for index in range(0, len(query_tokens) - window_size + 1)
+        " ".join(query_tokens[index : index + window_size]) for index in range(0, len(query_tokens) - window_size + 1)
     )
     normalized_name = " ".join(name_tokens)
     return max(SequenceMatcher(None, window, normalized_name).ratio() for window in windows)

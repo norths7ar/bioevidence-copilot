@@ -28,7 +28,9 @@ class AgentState:
         return True
 
     def merge_candidates(self, candidates: Sequence[RetrievedCandidate]) -> None:
-        merged: dict[str, RetrievedCandidate] = {candidate.document.pmid: candidate for candidate in self.all_candidates}
+        merged: dict[str, RetrievedCandidate] = {
+            candidate.document.pmid: candidate for candidate in self.all_candidates
+        }
         for candidate in candidates:
             pmid = candidate.document.pmid
             current = merged.get(pmid)

@@ -27,11 +27,7 @@ def bm25_retrieve(
 
     document_token_lists = [document_tokens(document) for document in documents]
     scores = bm25_score(query_tokens, document_token_lists)
-    ranked_documents = [
-        (document, score)
-        for document, score in zip(documents, scores, strict=False)
-        if score > 0
-    ]
+    ranked_documents = [(document, score) for document, score in zip(documents, scores, strict=False) if score > 0]
     ranked_documents.sort(key=lambda item: (-item[1], item[0].pmid))
     return [
         RetrievedCandidate(document=document, score=score, rank=index + 1)

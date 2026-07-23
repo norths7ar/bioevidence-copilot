@@ -26,6 +26,7 @@ LOGGER = logging.getLogger(__name__)
 
 def _cache_data(*decorator_args, **decorator_kwargs) -> Callable[[Callable[..., object]], Callable[..., object]]:
     if st is None:
+
         def _identity(func: Callable[..., object]) -> Callable[..., object]:
             return func
 
@@ -198,7 +199,9 @@ def _filter_sort_evidence_rows(
         return sorted(filtered, key=lambda row: (_as_int(row.get("year")), str(row.get("pmid", ""))))
     if sort_by == "PMID":
         return sorted(filtered, key=lambda row: str(row.get("pmid", "")))
-    return sorted(filtered, key=lambda row: (_as_float(row.get("relevance_score")), str(row.get("pmid", ""))), reverse=True)
+    return sorted(
+        filtered, key=lambda row: (_as_float(row.get("relevance_score")), str(row.get("pmid", ""))), reverse=True
+    )
 
 
 def _as_float(value: object) -> float:
@@ -239,7 +242,9 @@ def _render_agent_diagnostics(payload: dict[str, object]) -> None:
     if branch_count > 0:
         st.success(f"Agent expanded retrieval with {branch_count} branch queries over {iterations} iteration(s).")
     else:
-        st.info(f"Agent did not add branch retrieval because the baseline evidence was sufficient. Stop reason: {stop_reason}.")
+        st.info(
+            f"Agent did not add branch retrieval because the baseline evidence was sufficient. Stop reason: {stop_reason}."
+        )
 
     st.markdown("**Agent run summary**")
     st.table(
@@ -375,7 +380,9 @@ def main() -> None:
         layout="wide",
     )
     st.title("BioEvidence Copilot")
-    st.caption("A biomedical evidence assistant built around PubMed retrieval, structured evidence, and agentic comparison.")
+    st.caption(
+        "A biomedical evidence assistant built around PubMed retrieval, structured evidence, and agentic comparison."
+    )
 
     with st.form("query_form", clear_on_submit=False):
         query_text = st.text_input("Biomedical question", value=DEFAULT_QUERY)

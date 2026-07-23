@@ -23,7 +23,11 @@ def run_retrieval_stack(
     extraction_backend: ExtractionBackend | None = None,
 ) -> tuple[list[Document], list[RetrievedCandidate], list[EvidenceRecord], str]:
     settings = settings or load_settings()
-    documents = list(documents) if documents is not None else load_local_documents(data_dir or settings.data_dir, settings=settings)
+    documents = (
+        list(documents)
+        if documents is not None
+        else load_local_documents(data_dir or settings.data_dir, settings=settings)
+    )
     source = "local_corpus"
     if not documents:
         documents = search_pubmed(query, settings=settings)

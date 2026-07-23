@@ -328,9 +328,7 @@ def _build_agent_graph(
             )
             merge_candidates(state, branch_result.retrieved_candidates)
             merge_evidence_records(state, branch_result.evidence_records)
-            new_pmids = sorted(
-                {candidate.document.pmid for candidate in ranked_candidates} - pmids_before_branch
-            )
+            new_pmids = sorted({candidate.document.pmid for candidate in ranked_candidates} - pmids_before_branch)
             LOGGER.info(
                 "branch_retrieval_completed iteration=%d source=%s candidates=%d evidence=%d new_pmids=%d",
                 state.iterations,

@@ -47,4 +47,3 @@ def test_load_dataset_rejects_invalid_rows(tmp_path: Path):
 
     with pytest.raises(ValueError, match="gold_pmids"):
         load_dataset(dataset)
-

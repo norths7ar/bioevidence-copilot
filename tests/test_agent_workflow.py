@@ -16,6 +16,7 @@ def test_run_rag_pipeline_uses_local_corpus(tmp_path: Path, monkeypatch):
         + "\n",
         encoding="utf-8",
     )
+
     def fake_embed_texts(texts, *, client=None, settings=None):
         del client, settings
         vector_map = {

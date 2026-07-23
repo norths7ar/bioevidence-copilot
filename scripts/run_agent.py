@@ -67,9 +67,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     settings = load_settings()
     recorder = TraceRecorder()
-    artifact_paths = (
-        create_run_artifact_paths(args.artifacts_dir, recorder) if args.artifacts_dir is not None else None
-    )
+    artifact_paths = create_run_artifact_paths(args.artifacts_dir, recorder) if args.artifacts_dir is not None else None
     configure_logging(settings.log_level, log_file=artifact_paths.log if artifact_paths else None)
     query = Query(text=args.query)
     try:

@@ -4,7 +4,11 @@ import argparse
 import json
 from pathlib import Path
 
-from bioevidence.evaluation.extraction_dataset import AnnotationStatus, ExtractionAnnotation, load_extraction_annotations
+from bioevidence.evaluation.extraction_dataset import (
+    AnnotationStatus,
+    ExtractionAnnotation,
+    load_extraction_annotations,
+)
 from bioevidence.evaluation.extraction_sft import SplitRatios, write_sft_dataset
 from bioevidence.retrieval.corpus import load_local_documents
 

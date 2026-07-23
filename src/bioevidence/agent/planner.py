@@ -126,7 +126,9 @@ def _fallback_branch_queries(state: AgentState, *, branch_count: int) -> list[st
 def _fallback_rationale(state: AgentState) -> str:
     if not state.evidence_records:
         return "Fallback planning broadened the original query because no evidence records were available yet."
-    return "Fallback planning broadened the original query using generic review, recency, and clinical-evidence variants."
+    return (
+        "Fallback planning broadened the original query using generic review, recency, and clinical-evidence variants."
+    )
 
 
 def _evidence_hint(records: Sequence[EvidenceRecord]) -> str:

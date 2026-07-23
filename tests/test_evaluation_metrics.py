@@ -48,4 +48,3 @@ def test_compute_metrics_aggregates_text_scores():
 
     assert metrics["exact_match"] == 0.5
     assert 0.0 < metrics["token_overlap"] <= 1.0
-

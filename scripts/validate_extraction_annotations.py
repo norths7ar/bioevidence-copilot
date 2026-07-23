@@ -26,9 +26,7 @@ def main() -> None:
         missing = candidate_keys - annotation_keys
         extra = annotation_keys - candidate_keys
         if missing or extra:
-            raise ValueError(
-                f"candidate coverage mismatch: missing={len(missing)}, extra={len(extra)}"
-            )
+            raise ValueError(f"candidate coverage mismatch: missing={len(missing)}, extra={len(extra)}")
         print(f"Candidate coverage: {len(annotation_keys)}/{len(candidate_keys)}")
 
 

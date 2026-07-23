@@ -141,10 +141,7 @@ class KGPathRetriever:
                 limit=limit_per_template,
             )
             records = (
-                tuple(
-                    path_record_from_neo4j(record, template.raw)
-                    for record in self._session.run(cypher, parameters)
-                )
+                tuple(path_record_from_neo4j(record, template.raw) for record in self._session.run(cypher, parameters))
                 if any(anchors.values())
                 else ()
             )

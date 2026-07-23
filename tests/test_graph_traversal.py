@@ -24,9 +24,7 @@ def test_relationship_aliases_group_hetionet_types() -> None:
 
 
 def test_build_template_query_links_question_anchor() -> None:
-    linker = EntityLinker(
-        [KGNode(id="Disease::DOID:10652", name="Alzheimer's disease", label="Disease")]
-    )
+    linker = EntityLinker([KGNode(id="Disease::DOID:10652", name="Alzheimer's disease", label="Disease")])
     template = parse_path_template("Disease -ASSOCIATES-> Gene -PARTICIPATES-> BiologicalProcess")
 
     cypher, parameters, anchors, _ = build_template_query(

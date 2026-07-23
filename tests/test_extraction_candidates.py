@@ -23,10 +23,13 @@ def test_select_expansion_candidates_stratifies_and_excludes_existing_pairs() ->
         CandidateTopic(query="asthma trial", pmids=("1", "2", "3", "4")),
         CandidateTopic(query="diabetes trial", pmids=("5", "6", "7", "8")),
     ]
-    documents = [Document(pmid=str(index), title=title, abstract="trial") for index, title in enumerate(
-        ["asthma", "asthma steroid", "asthma biologic", "airway", "diabetes", "metformin", "glucose", "insulin"],
-        start=1,
-    )]
+    documents = [
+        Document(pmid=str(index), title=title, abstract="trial")
+        for index, title in enumerate(
+            ["asthma", "asthma steroid", "asthma biologic", "airway", "diabetes", "metformin", "glucose", "insulin"],
+            start=1,
+        )
+    ]
     existing = [_annotation("existing", "asthma trial", documents[0])]
 
     candidates = select_expansion_candidates(
@@ -133,9 +136,7 @@ def test_tracked_expansion_candidates_match_current_corpus_and_pilot() -> None:
         if line.strip()
     ]
     tracked_manifest = json.loads(
-        Path("data/evaluations/evidence_extraction/expansion_candidates.v1.manifest.json").read_text(
-            encoding="utf-8"
-        )
+        Path("data/evaluations/evidence_extraction/expansion_candidates.v1.manifest.json").read_text(encoding="utf-8")
     )
 
     assert tracked_records == [candidate.to_record() for candidate in candidates]
@@ -170,9 +171,7 @@ def test_tracked_v2_candidates_exclude_all_v1_annotations() -> None:
         if line.strip()
     ]
     tracked_manifest = json.loads(
-        Path("data/evaluations/evidence_extraction/expansion_candidates.v2.manifest.json").read_text(
-            encoding="utf-8"
-        )
+        Path("data/evaluations/evidence_extraction/expansion_candidates.v2.manifest.json").read_text(encoding="utf-8")
     )
 
     assert tracked_records == [candidate.to_record() for candidate in candidates]

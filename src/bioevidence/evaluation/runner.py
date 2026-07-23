@@ -206,7 +206,9 @@ def _summarize(results: list[EvaluationItemResult]) -> dict[str, float | int | N
         "faithful_rate": _mean(1.0 if result.quality_checks.is_faithful else 0.0 for result in results),
         "unsupported_citation_count": sum(len(result.quality_checks.unsupported_citations) for result in results),
         "missing_citation_count": sum(len(result.quality_checks.missing_citations) for result in results),
-        "forced_conclusion_count": sum(1 for result in results if result.quality_checks.forced_conclusion_without_evidence),
+        "forced_conclusion_count": sum(
+            1 for result in results if result.quality_checks.forced_conclusion_without_evidence
+        ),
     }
     if summary["reference_items"] == 0:
         summary["mean_answer_exact_match"] = None
