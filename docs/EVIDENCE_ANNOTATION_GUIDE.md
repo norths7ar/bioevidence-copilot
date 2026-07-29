@@ -184,9 +184,6 @@ falls back to the existing `AGENT_*` OpenAI-compatible endpoint. Only outputs
 that pass JSON parsing, the Pydantic contract, and exact span grounding enter
 the draft JSONL; raw failures remain separately inspectable.
 
-The v2 queue excludes both tracked v1 annotation files and intentionally
-selects only same-topic high and broad documents. The first adapter classified
-all 17 training `none` rows correctly but collapsed many `direct` and
-`indirect` rows toward lower evidence status, so this queue does not add more
-cross-topic hard negatives. See `docs/EXTRACTION_ANNOTATION_TASK_V2.md` for the
-exact input, output, and validation contract.
+Use held-out errors to adjust the sampling mix for later queues without
+preassigning their labels. Candidate selection should improve coverage of known
+decision boundaries while the annotation rules remain unchanged.

@@ -1,170 +1,130 @@
-# ARCHITECTURE
+# Architecture
 
-## System overview
+## System shape
 
-The system is organized into six main layers:
+BioEvidence Copilot separates six concerns:
 
-1. Ingestion
-2. Retrieval
-3. Generation
-4. Extraction
-5. Agent orchestration
-6. Evaluation
+1. ingestion
+2. retrieval
+3. evidence extraction
+4. answer generation
+5. agent orchestration
+6. evaluation
 
-These layers should remain loosely coupled.
+The baseline and agent paths share the same retrieval and extraction modules.
+External interfaces call workflow functions rather than reimplementing domain
+logic.
 
-## Recommended initial flow
+## Request flows
 
-### Stage 1 flow
-User query
--> retrieval query normalization
--> PubMed candidate fetch / local index lookup
--> hybrid retrieval
--> deterministic final ranking
--> evidence extraction
--> answer generation
--> app output
-
-### Stage 2 flow
-User query
--> planner
--> one or more retrieval branches
--> planning and branch diagnostics
--> deduplication / merge
--> sufficiency check
--> evidence extraction
--> answer generation
--> final output
-
-LangGraph controls routing between the existing retrieval, graph discovery,
-stopping, and extraction layers. The baseline templated answer path remains
-available for comparison, while the agent can use an OpenAI-compatible LLM
-backend for planning and final synthesis. Each run produces ordered execution
-events with a shared run ID. The CLI can retain those events as JSONL beside a
-compact report and run log, while the FastAPI streaming endpoint emits the same
-event schema. The complete internal workflow payload is debug-only. The app
-surface stays lightweight; agent comparison is exposed through CLI artifacts
-and a read-only Streamlit review console rather than a heavier interactive UI.
-
-The evidence layer can optionally attach a query-focused
-`ModelEvidenceExtraction` object to each existing `EvidenceRecord`. Product
-workflows create one extraction backend at the workflow boundary and reuse it
-across baseline and agent retrieval branches. The default legacy path stays
-dependency-free; local QLoRA inference imports its Unsloth runtime lazily and
-falls back to the deterministic schema backend when unavailable.
-
-## Data model expectations
-At minimum define schemas for:
-- Query
-- Document
-- RetrievedCandidate
-- EvidenceRecord
-- AnswerBundle
-
-## App contract
-The app should make intermediate artifacts visible:
-- rewritten query if any
-- top retrieved papers
-- evidence table
-- final answer
-
-The browser demo is a thin Streamlit presentation layer that renders baseline
-and agent outputs in tabs while reusing the same normalized view payloads as
-the CLI and demo scripts.
-
-Agent demo payloads should also expose:
-- original and rewritten query
-- planner source and rationale for each planning step
-- accepted branch queries
-- branch-level new / overlapping PMIDs
-- stopping reason and evidence sufficiency status
-
-The Streamlit interface can add review-console ergonomics such as evidence
-filtering, sorting, summary metrics, and report exports, but should continue to
-consume presentation payloads rather than calling lower-level retrieval,
-generation, or agent helpers directly.
-
-## Interface layout
-
-External entrypoints are grouped under `interfaces/`:
-
-- `interfaces/web/`: Streamlit browser demo
-- `interfaces/api/`: FastAPI service boundary
-
-Core workflow orchestration lives under `src/bioevidence/workflows/` so the
-baseline RAG path, agent workflow, and retrieval stack are not coupled to the
-UI, API, or agent-specific helper modules.
-
-The FastAPI service is the deployable backend boundary.
-Docker packages that API service with the curated local demo corpus and a health
-check, while the Streamlit review console remains a local presentation surface
-over normalized workflow payloads.
-
-## Evaluation flow
-Evaluation should stay local and file-based:
-
-- load JSONL items from disk
-- run the existing workflow per item
-- compute retrieval and answer metrics
-- emit a summary report plus per-item results that can be written as JSON
-
-## Implementation constraints
-- keep local development first-class
-- use environment variables for secrets
-- keep external dependencies moderate
-- keep Docker focused on FastAPI service packaging, not as the only workflow
-- do not commit to a heavyweight framework too early
-
-## Quality gates
-CI should remain lightweight and deterministic:
-
-- lint with Ruff
-- run focused mypy checks over stable schema, evaluation, and workflow modules
-- run the pytest suite
-- run a small evaluation smoke test over tracked demo artifacts
-
-These checks are intended to catch regressions in the code and evidence workflow
-without requiring external model-provider credentials.
-
-## Graph-augmented discovery
-
-The knowledge graph is a discovery source, not a substitute for citable
-literature. Hetionet entity linking and path traversal can identify related
-diseases, compounds, genes, pathways, and biological processes. Those graph
-results are converted into follow-up literature queries and fed back through
-the existing PubMed retrieval and evidence pipeline.
+### Baseline RAG
 
 ```text
-question
--> baseline literature retrieval
--> optional Hetionet entity linking and path discovery
--> graph-derived query expansion
--> follow-up literature retrieval
--> deduplication and sufficiency check
--> structured evidence extraction
--> citation-grounded synthesis
+query
+-> normalize retrieval query
+-> load a local corpus or search PubMed
+-> lexical retrieval with optional dense scores
+-> deterministic final ranking
+-> extract one evidence record per selected paper
+-> build a templated answer and PMID citations
 ```
 
-Graph paths remain visible in the workflow trace, including linked entities,
-relationships, and generated branch queries. Final answer citations continue
-to identify PubMed records only.
+The baseline is intentionally inspectable: ranked papers, evidence rows, and
+citations remain available alongside the answer.
 
-Neo4j is accessed behind an optional provider boundary. A disabled, empty, or
-unavailable graph must not break the baseline literature workflow. This keeps
-local fixtures and CI deterministic while allowing a composed API plus Neo4j
-runtime for graph-enabled demos.
+### Agent workflow
 
-## Agent runtime
+```text
+query
+-> run the baseline
+-> optional Hetionet entity/path discovery
+-> plan one or more follow-up literature queries
+-> retrieve and merge branch results
+-> check deterministic stopping criteria
+-> repeat or synthesize a final answer
+```
 
-LangGraph owns workflow routing, node execution, and streaming updates. Saved
-JSONL traces and streamed API events use the same ordered event contract. Domain
-behavior remains in project modules:
+LangGraph controls node routing and streaming. Project modules still own query
+planning, graph access, retrieval, evidence extraction, stopping, and
+synthesis. This keeps the workflow testable without encoding biomedical
+behavior in generic framework nodes.
 
-- the planner proposes follow-up searches
-- the graph provider returns discovery context and query expansions
-- the retrieval stack returns ranked PubMed candidates
-- deterministic rules decide evidence sufficiency
-- the answerer synthesizes only from accumulated evidence
+## Evidence boundary
 
-This split uses a maintained orchestration runtime without hiding biomedical
-retrieval decisions inside framework-specific agents or generic tool loops.
+`Document` owns PubMed metadata and abstract text. `RetrievedCandidate` adds
+retrieval scores and rank. `EvidenceRecord` is the product-facing evidence row
+used by answers and citations.
+
+Optional semantic extraction reads:
+
+```text
+current query + one paper title + one abstract
+```
+
+and returns a validated `ModelEvidenceExtraction` containing query-specific
+evidence status, study design, semantic fields, outcomes, and verbatim evidence
+spans. The result is attached to the existing `EvidenceRecord`; it does not
+regenerate PMID, title, year, journal, or retrieval score.
+
+The extraction interface has four product modes:
+
+- `legacy`: original compatibility path
+- `rules`: deterministic output for the model schema
+- `prompted`: an OpenAI-compatible model constrained by the same schema
+- `local`: the published QLoRA adapter
+
+One mode is selected for a workflow run. Baseline and agent retrieval branches
+use that same selection, which makes their evidence rows comparable.
+
+## Graph boundary
+
+Hetionet is a discovery source, not an evidence source. Entity linking and graph
+paths may produce related terms for follow-up PubMed searches, but final answers
+cite retrieved PMID records only.
+
+Neo4j sits behind an optional provider interface. Disabling the graph or losing
+the connection must not break the literature-only baseline.
+
+## Generation boundary
+
+The baseline answerer stitches structured evidence into a deterministic
+response. The agent answerer can use an OpenAI-compatible LLM to synthesize from
+the accumulated evidence.
+
+Neither answer path owns retrieval. Citation checks compare returned PMIDs with
+the evidence records available to that run.
+
+## Interfaces and observability
+
+Core orchestration lives in `src/bioevidence/workflows/`. External entrypoints
+are:
+
+- `scripts/`: CLI workflows and evaluation utilities
+- `interfaces/api/`: FastAPI service and streamed agent events
+- `interfaces/web/`: Streamlit review console
+
+Workflow results are normalized into presentation payloads before they reach
+the API or UI. Agent runs also emit ordered events with a shared run ID so CLI
+artifacts and the streaming API expose the same execution history.
+
+## Evaluation boundary
+
+Evaluation remains file-based:
+
+```text
+versioned JSONL items
+-> run an existing workflow or extraction backend
+-> compute per-item metrics and checks
+-> aggregate a machine-readable report
+```
+
+Retrieval, citation, graph-gain, and extraction experiments use explicit
+datasets and preserve intermediate predictions. CI runs a small deterministic
+smoke test; model-quality comparisons are separate offline experiments.
+
+## Dependency boundaries
+
+- provider credentials and runtime choices stay in environment configuration;
+- the default product environment does not install the local QLoRA training stack;
+- Docker packages the FastAPI service, while Streamlit remains a local review interface;
+- large model weights and external datasets stay outside Git.

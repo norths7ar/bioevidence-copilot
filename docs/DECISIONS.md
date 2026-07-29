@@ -1,378 +1,87 @@
-# DECISIONS
-
-## 2026-04-14: Milestone 0 scaffold choices
-
-- Use Python 3.12 as the project target.
-- Use a `src/` layout for the importable package.
-- Keep the first milestone flat and conservative: dataclass schemas, module stubs, and simple scripts rather than framework-heavy abstractions.
-- Keep Stage 1 centered on PubMed metadata and abstracts; defer full-text parsing and real agent orchestration.
-
-## 2026-04-14: PubMed ingestion implementation shape
-
-- Use the NCBI E-utilities API directly from the standard library instead of adding a new HTTP client dependency.
-- Keep PubMed ingestion inspectable by saving raw search JSON, raw fetch XML, processed JSONL documents, and a manifest.
-- Keep parsing logic local and explicit in the ingestion module so tests can inject fake responses without network access.
-
-## 2026-04-14: PubMed transport policy
-
-- Use a module-local request policy for PubMed rather than a shared networking framework.
-- Default to a fixed request timeout, retry transient network failures and 429/5xx responses, and surface a clear `PubMedRequestError` after retries are exhausted.
-- Keep retry/backoff behavior deterministic and testable by injecting fake openers and monkeypatching sleep in tests.
-
-## 2026-04-14: Milestone 2 retrieval baseline
-
-- Load the baseline corpus from local `processed/*.documents.jsonl` artifacts under the configured corpus directory rather than introducing a database or external index.
-- Use BM25-style lexical scoring over document title plus abstract, plus a deterministic overlap-based dense adapter so the hybrid retriever has two inspectable signals.
-- Keep merge and final ranking behavior deterministic, and return the ranked candidates alongside the final answer so the app can expose intermediate artifacts.
-
-## 2026-04-15: Dense embedding backend
-
-- Use an OpenAI-compatible embedding backend configured through generic `EMBEDDING_*` fields in `.env`.
-- Keep the implementation provider-agnostic in code; the example configuration can point at Qwen `text-embedding-v4` or another OpenAI-compatible provider without code changes.
-- Cache corpus embeddings on disk keyed by corpus signature, model, and dimensions so repeated dense retrieval does not re-embed unchanged documents.
-- Fall back to lexical-only ranking when the dense backend is unavailable, rather than failing the whole retrieval flow.
-
-## 2026-04-17: Structured evidence table output
-
-- Keep evidence extraction deterministic for milestone 3 and derive structured `EvidenceRecord` rows directly from ranked retrieval output.
-- Surface the evidence table in the app and demo output as a first-class artifact, alongside the final answer and citations.
-- Store real demo corpus and evaluation artifacts under `data/` so reviewers can inspect the evidence-table shape without relying on fabricated examples.
-
-## 2026-04-17: Local evaluation harness
-
-- Keep evaluation file-based and local by loading JSONL datasets from disk and running the existing RAG workflow per item.
-- Score retrieval with hit@k, recall@k, and MRR, and score answers with citation precision / recall / F1 plus normalized exact match and token overlap when a reference answer is available.
-- Return a structured evaluation report with per-item records and aggregate summary metrics, and make the CLI optionally write the full report as JSON.
-
-## 2026-04-17: Custom agentic orchestration
-
-- Keep the agent controller custom and lightweight instead of adopting LangChain or LangGraph for the first agent milestone.
-- Use generic `AGENT_*` environment variables for the agent backend so provider choice stays in `.env` rather than in code.
-- Keep the agent backend OpenAI-compatible so DeepSeek, Qwen Chat, MiMo, and similar providers can be swapped without code changes.
-- Keep sufficiency deterministic: stop when the loop has accumulated enough unique PMIDs with a minimum relevance floor, otherwise continue until max iterations.
-- Surface the agent report in CLI / JSON form and let callers write real report artifacts for reviewability.
-
-## 2026-04-17: Streamlit presentation layer
-
-- Use Streamlit only as a thin presentation layer on top of the existing workflow outputs, not as a second place for business logic.
-- Show baseline RAG and agent outputs in tabs so the comparison is easy to inspect in a browser.
-- Keep the browser demo aligned with the CLI/demo helpers by normalizing workflow results into shared presentation payloads.
-- Document baseline answer generation honestly as evidence stitching / templated synthesis and keep the final ranking step explicitly deterministic rather than learned.
-
-## 2026-05-29: Demo evaluation and quality checks
-
-- Track curated demo evaluation and converted corpus artifacts under `data/`, while keeping large raw downloads and caches ignored.
-- Extend the existing file-based evaluation report instead of introducing a separate experiment tracker.
-- Support both baseline and agent evaluation modes through the same runner so reports stay comparable.
-- Add deterministic citation/evidence quality checks before considering any LLM-as-judge evaluation.
-- Keep PICO-like enrichment as derived report metadata for now rather than expanding the core `EvidenceRecord` schema prematurely.
-
-## 2026-05-29: Real demo data preparation
-
-- Seed the first real corpus through PubMed E-utilities using a small set of biomedical demo topics.
-- Store the combined PubMed corpus as `data/corpora/demo/processed/demo.documents.jsonl`, matching the existing retriever's `*.documents.jsonl` convention.
-- Convert BioASQ Task B questions into the existing evaluation JSONL schema and convert snippets into the same document JSONL shape.
-- Ignore local BioASQ raw zip/extracted files because they are large external benchmark inputs, not curated project artifacts.
-
-## 2026-05-29: Evaluation corpus reuse
-
-- Preload `data_dir` corpora once in `run_evaluation()` and pass the documents into each workflow call.
-- Keep workflow functions able to accept explicit `documents` so evaluation does not repeatedly read the same `*.documents.jsonl` corpus.
-- Add a CLI `--limit` option for BioASQ smoke runs because the full dataset is thousands of queries over tens of thousands of snippet documents.
-
-## 2026-05-29: FastAPI service boundary
-
-- Add FastAPI as a thin service layer around the existing workflow functions.
-- Keep retrieval, generation, extraction, evaluation, and agent orchestration in `src/bioevidence/`.
-- Expose baseline and agent query endpoints first; defer evaluation endpoints, background jobs, auth, Docker, and Streamlit API-client conversion.
-- Treat the API as an additional backend interface, not a replacement for the local CLI and Streamlit demo paths.
-
-## 2026-06-02: Interface and workflow cleanup
-
-- Move external entrypoints under `interfaces/` so the Streamlit UI and FastAPI API are clearly separate from core package logic.
-- Move baseline and agent orchestration into `src/bioevidence/workflows/`, keeping `src/bioevidence/agent/` focused on agent-specific planner, state, tools, and LLM helpers.
-- Rename the deterministic ranking step from `rerank.py` to `ranking.py` to avoid implying a learned reranking model.
-- Remove placeholder notebooks, fake milestone examples, empty app pages, stale bytecode caches, and unused scaffold scripts.
-
-## 2026-07-01: Agent traceability surface
-
-- Keep agent traceability as structured workflow output instead of adding a separate tracing framework.
-- Preserve the existing agent report shape while adding a `trace` payload with original query, rewritten query, planning steps, branch diagnostics, retrieval coverage, and deterministic stop metadata.
-- Keep planner compatibility by retaining the list-returning `plan_next_steps()` helper and adding a traced planner result for workflow use.
-- Surface the same trace payload through CLI JSON, FastAPI responses, and the Streamlit review console so branch planning and coverage improvements are inspectable from every demo path.
-
-## 2026-07-01: Streamlit review console polish
-
-- Keep Streamlit as a read-only review console over normalized presentation payloads, not as a second workflow implementation.
-- Add evidence-table filtering, sorting, and wider dataframe views in the web interface while keeping the underlying evidence rows unchanged.
-- Add Markdown, JSON, and CSV exports from presentation payloads so demo results can be shared without rerunning the workflow.
-- Keep trace summaries and branch diagnostics table-shaped for reviewer inspection instead of relying on raw JSON as the primary view.
-
-## 2026-07-02: FastAPI Docker packaging
-
-- Package only the FastAPI service path in Docker; keep Streamlit and conda-based commands as local development and demo workflows.
-- Install the project with the `serve` extra so `uvicorn` is available inside the image while keeping business logic in `src/bioevidence/`.
-- Copy curated local corpus artifacts into the image so `/api/v1/health` and local-corpus query paths can run without external downloads.
-- Route embedding cache writes to `/tmp/bioevidence-cache` and run the service as a non-root user.
-- Keep Docker configuration environment-driven so `.env` can be supplied at runtime without baking secrets into the image.
-
-## 2026-07-02: CI quality gates and documentation closeout
-
-- Run GitHub Actions on push and pull request with Ruff linting, focused mypy type checking, the pytest suite, and a one-item baseline evaluation smoke test.
-- Keep the type-checking gate focused on stable schema, evaluation, and workflow modules rather than forcing whole-repository strict typing before the exploratory layers settle.
-- Use `--no-sqlite-cache --no-incremental` for mypy because the local Windows environment showed SQLite cache I/O errors; the focused check remains deterministic without cache.
-- Treat the evaluation smoke test as a workflow integrity check, not a benchmark or model-quality claim.
-- Keep documentation split by audience: README for the shortest path, `EVALUATION.md` for metrics and datasets, and `LIMITATIONS.md` for medical and engineering boundaries.
-
-## 2026-07-20: v0.1 release boundary and GraphRAG integration
-
-- Freeze the completed literature evidence assistant at the `v0.1.0` tag
-  before introducing knowledge-graph and orchestration-runtime changes.
-- Integrate useful Hetionet capabilities into this repository rather than
-  preserving a second product-shaped API, Docker image, CI workflow, and
-  evaluation shell from `biomedical-graphrag`.
-- Treat Hetionet as a discovery and query-expansion source. Graph paths can
-  explain why a literature search was broadened, but only retrieved papers can
-  support final answer citations.
-- Access Neo4j behind an optional provider boundary so baseline workflows,
-  local fixtures, and CI do not require a graph database.
-- Use LangGraph for routing and streaming while retaining project-owned
-  planner, retrieval, evidence, stopping, and synthesis functions as domain
-  nodes.
-- Evaluate graph augmentation against relevant PMIDs and report deltas over the
-  literature baseline. Do not reuse graph-generated pseudo ground truth.
-- Add Docker Compose only for local FastAPI plus Neo4j composition. Defer React,
-  hosted deployment, and a general-purpose application database.
-- Keep Streamlit in a `web` extra so the FastAPI container does not install the
-  UI-only Pandas, PyArrow, and Streamlit dependency chain.
-
-## 2026-07-20: Canonical Neo4j runtime and environment contract
-
-- Use the Docker Compose Neo4j service and its named volumes as the canonical
-  local product runtime. Neo4j Desktop is not required to run the product.
-- Keep Hetionet ingestion explicit: Compose creates an empty database, and the
-  import script rebuilds it from the external Hetionet source files.
-- Use purpose-grouped environment variables (`AGENT_*`, `EMBEDDING_*`,
-  `NEO4J_*`, and `GRAPH_*`) instead of a repository-wide `BIOEVIDENCE_*`
-  prefix.
-- Reserve `NEO4J_*` for connection settings and `GRAPH_*` for discovery-layer
-  behavior so local scripts and containers share one unambiguous contract.
-- Default agent output capacity to 8192 tokens because reasoning models consume
-  the same completion budget for internal reasoning and structured response
-  text. Keep a bounded default rather than allowing unbounded model output.
-- Let the Compose API service read the local `.env` for provider credentials,
-  while overriding container-only paths and the Neo4j service-network address.
-
-## 2026-07-20: Application logging boundary
-
-- Keep logging helpers local to `bioevidence.utils` instead of restoring the
-  separately installed `myutils` dependency.
-- Configure the root logger once at each application entrypoint and use
-  module-level `logging.getLogger(__name__)` instances throughout the package.
-- Write logs to the process stream by default so Docker and local runners use
-  the same behavior; do not create implicit per-script log directories.
-- Keep third-party HTTP and Neo4j INFO traffic quiet and log application
-  lifecycle counts, fallback reasons, and failures without prompts, abstracts,
-  credentials, or complete PMID collections.
-- Retain CLI logs beside their report and trace in a timestamped run directory;
-  keep Streamlit logs in one rotating file and use Docker log rotation for the
-  long-running API service.
-- Separate user-facing reports from execution traces. Store evidence once in
-  the compact report, write ordered execution events as JSONL, and generate the
-  full internal payload only when `--debug` is explicitly requested.
-- Reuse the same event schema for saved traces and the FastAPI NDJSON stream so
-  the service does not maintain a second tracing contract.
-- This supersedes the Milestone 9 decision to keep trace, report, and complete
-  internal state in one JSON payload; the Streamlit review payload remains an
-  in-memory presentation model rather than the persisted report format.
-
-## 2026-07-21: Fine-tuned evidence extraction boundary
-
-- Keep fine-tuning inside the BioEvidence Copilot repository because the model
-  is one evidence-pipeline capability, not an independently released product.
-- Keep future training and offline evaluation under `training/`, runtime model
-  adapters under `src/bioevidence/extraction/`, and model weights in an external
-  registry or ignored local artifact directory.
-- Define a separate `ModelEvidenceExtraction` contract for semantic predictions;
-  do not ask the model to regenerate PMID, title, year, journal, or retrieval
-  relevance scores that the workflow already owns deterministically.
-- Require query-focused evidence status, explicit nulls, closed enums, and
-  verbatim abstract evidence spans so structured output can be validated and
-  evaluated beyond JSON parse success.
-- Preserve the current deterministic extractor as a baseline and compare it
-  with a prompted base model before making fine-tuning quality claims.
-- Treat the first tracked annotations as schema-development drafts and retain
-  annotation/review provenance when promoting any labels into a benchmark.
-- Keep the v0.3 sequence evaluation-first: stabilize the contract and pilot,
-  establish baselines, expand reviewed data, train, then add optional inference.
-
-## 2026-07-21: Shared extraction baseline interface
-
-- Put rule-based and prompt-only semantic extraction behind the same typed
-  `ExtractionBackend` contract and validate both against
-  `ModelEvidenceExtraction`.
-- Keep extraction model credentials and model selection under `EXTRACTION_*`
-  rather than coupling experiments to the agent planner/synthesizer settings.
-- Record parse, schema, grounding, field-quality, and latency results per item;
-  preserve raw failed model output for diagnosis.
-- Treat provider cost as experiment metadata rather than guessing it from token
-  counts when an OpenAI-compatible endpoint has no stable price contract.
-
-## 2026-07-21: First local trainable-model baseline
-
-- Use the 4-bit Unsloth build of Qwen3-4B-Instruct-2507 as the first local
-  prompted and QLoRA-capable baseline for the RTX 5070 12 GB development target.
-- Pin the model revision and the complete Windows training environment so later
-  prompt-only and fine-tuned runs remain comparable.
-- Keep Unsloth, CUDA, and training dependencies outside the product environment;
-  install the repository itself editable inside the training environment so
-  experiments use the current schema, prompt, and metrics.
-- Preserve per-item raw output and report allocated peak VRAM alongside quality
-  and latency metrics, because truncation and grounding failures are part of the
-  model diagnosis.
-- Treat over-extraction as the first optimization target: the prompted model
-  improves status, design, and semantic fields but predicts four times as many
-  outcomes as the pilot labels on average.
-
-## 2026-07-21: SFT dataset format and split ownership
-
-- Export supervised examples as three-message chat records using the exact
-  runtime extraction prompt and a compact JSON assistant target.
-- Assign splits by PMID with a deterministic seed so query variants for one
-  document cannot cross train, dev, and test boundaries.
-- Keep generated training JSONL under ignored `artifacts/`; track the builder,
-  source annotations, dataset-level provenance, and aggregate split manifest.
-- Treat annotation status as label stability rather than reviewer identity.
-  Record model-assisted, manual, or imported label provenance explicitly.
-
-## 2026-07-21: QLoRA training preflight
-
-- Use response-only loss so the model learns the assistant JSON target without
-  treating the schema, query, title, and abstract prompt tokens as labels.
-- Start with rank-16 LoRA on attention and MLP projections, 4-bit base weights,
-  BF16 compute, and gradient accumulation for the 12 GB development GPU.
-- Require a smoke run to evaluate before and after training, save the adapter,
-  and reload it successfully before scaling annotation or training volume.
-- Keep adapter weights and detailed trainer output under ignored `artifacts/`;
-  track the script, reproducible configuration, and compact result summary.
-
-## 2026-07-21: Extraction annotation expansion sampling
-
-- Build annotation queues from explicit query-document pairs rather than taking
-  only the retrieval top-k, which would underrepresent `none` and edge cases.
-- Sample per query from high-scoring same-topic documents, broader same-topic
-  coverage, and cross-topic hard negatives; treat these as selection bands, not
-  preassigned evidence labels.
-- Exclude already annotated query-PMID pairs, pin the source-corpus hash and
-  sampling counts, and preserve PMID ownership for later dataset rebuilding.
-- Reuse the runtime extraction prompt for model-assisted drafting. Admit only
-  JSON-, schema-, and span-grounding-valid outputs to the draft file, while
-  retaining failures separately for diagnosis.
-
-## 2026-07-21: JSON-first QLoRA response targets
-
-- Render the system and user messages with the model's generation prompt, then
-  append the raw assistant JSON and EOS token for supervised training.
-- Do not render the complete training conversation when the chat template adds
-  assistant-side thinking or tool scaffolding; response-only masking would make
-  that scaffolding part of the learned output contract.
-- Keep strict JSON parse rate separate from recoverable content diagnostics.
-  A valid object wrapped in model-specific tags still fails the runtime JSON
-  contract and must not be reported as compliant.
-- Compare corrected adapters against rules and the prompted base model on the
-  same PMID-held-out split. Treat the seven-row draft test result as evidence
-  that the training path works, not as a general biomedical-quality benchmark.
-
-## 2026-07-21: Optional semantic extraction in product workflows
-
-- Attach validated semantic extraction as an optional nested capability on the
-  existing evidence record instead of replacing deterministic document metadata
-  or retrieval relevance.
-- Keep the existing summary and citation path unchanged in this first product
-  integration; expose model fields for inspection until a larger benchmark
-  supports using status predictions to filter or rewrite cited evidence.
-- Construct one backend at the workflow boundary and reuse it for baseline and
-  agent branches so local weights are not reloaded for each document or query.
-- Keep `legacy` as the compatibility default. Expose `rules`, `prompted`, and
-  `local` as explicit modes through `EXTRACTION_BACKEND`.
-- Import the local Unsloth runtime lazily from the separate training environment;
-  do not add GPU training dependencies to the API package or Docker image.
-- Fall back to the deterministic structured extractor when an optional model is
-  unconfigured, unavailable, invalid, or produces unsupported evidence spans.
-
-## 2026-07-21: Portable adapter publication boundary
-
-- Prepare publication files in a new ignored release directory; never mutate or
-  overwrite the original training adapter.
-- Replace the machine-local base snapshot in PEFT configuration with the pinned
-  public Unsloth model ID before upload.
-- Publish the adapter with its model card, tokenizer/chat-template files, and a
-  SHA-256 manifest; keep source annotations and detailed reports in the project
-  repository rather than bundling them with the weights.
-- Keep upload and remote-repository creation as an explicit authenticated step
-  after the user chooses the hosting namespace.
-
-## 2026-07-22: Inspectable extraction fallback provenance
-
-- Preserve the existing `ExtractionBackend.extract()` contract and add an
-  internal resolution layer rather than forcing product and evaluation callers
-  onto a new return type.
-- Attach the attempted backend, backend actually used, and fallback reason to
-  each evidence record so API, CLI, and Streamlit JSON exports do not present a
-  deterministic fallback as a successful model prediction.
-- Keep failed raw model output and detailed validation errors out of normal
-  evidence payloads. Expose them only through an explicit single-PMID
-  diagnostic command that writes to ignored local artifacts.
-- Treat schema and grounding failures as future hard-example inputs. Do not
-  silently weaken the v1 cross-field or verbatim-span validators to raise the
-  apparent model success rate.
-
-## 2026-07-22: Publish v2 as a separate comparison checkpoint
-
-- Publish the second adapter in a separate `-v2` Hugging Face repository so its
-  model card, weights, and metrics remain independently inspectable beside v1.
-- Treat v2 as the recommended experimental adapter while retaining v1 as the
-  immutable comparison checkpoint.
-- Reserve a versionless model repository with Git tags for a future stable
-  product line; the current numbered repositories represent experiment
-  checkpoints rather than semantic releases.
-
-## 2026-07-22: Evidence extraction v2 candidate targeting
-
-- Use the first adapter's 46-row training-split run only as a failure-mode and
-  memorization diagnostic, not as a held-out quality claim. It showed perfect
-  training `none` classification but substantial `direct -> indirect` and
-  `indirect -> none` collapse.
-- Build the next 60-pair annotation queue after excluding both tracked v1
-  annotation files. Select same-topic high and broad documents only; set
-  cross-topic hard negatives to zero because additional `none` coverage is not
-  the current bottleneck.
-- Candidate selection must not dictate labels. Annotators still apply the
-  written query-focused rules, and the queue may legitimately contain `none`
-  examples.
-- Require exact candidate id/query/PMID coverage in addition to schema and
-  verbatim-span validation before admitting the v2 annotations.
-
-## 2026-07-22: Incremental adapter v2 comparison boundary
-
-- Preserve every v1 PMID assignment when building the 120-row dataset and
-  assign only unseen PMIDs with the original seed and ratios. This keeps the
-  seven old test rows directly comparable and prevents old-adapter training
-  PMIDs from leaking into the expanded test set.
-- Keep QLoRA architecture, learning rate, effective batch size, seed, and
-  approximate epoch count fixed. Increase optimizer steps from 36 to 72 only
-  because the training rows increased from 46 to 94.
-- Compare rules, prompted base, adapter v1, and adapter v2 on the same 13 rows
-  with deterministic decoding. Report tradeoffs rather than selecting a single
-  metric: adapter v2 improved status, study design, and semantic fields over v1,
-  while outcome-name/span metrics and latency regressed.
-- Treat direct-status calibration as unresolved. Adapter v2 fixed the observed
-  `indirect -> none` collapse on the expanded test, but all three direct test
-  rows were still classified as indirect.
-
-## 2026-07-23: Locked local and CI dependencies
-
-- Keep `pyproject.toml` as the human-maintained declaration of supported dependency ranges and commit the generated `uv.lock` as the exact dependency resolution.
-- Use `uv sync --locked --all-extras` for local and CI installation so a dependency change must be an explicit, reviewable update to the lock file.
-- Create an ignored, project-local `.venv` instead of modifying a shared Conda environment. An existing Python 3.12 Conda interpreter may be selected as the provider when the environment is first created.
-- Pin the CI setup action and the uv version, and make CI fail when `uv.lock` is stale relative to `pyproject.toml`.
+# Current architectural decisions
+
+This file records choices that are not obvious from the directory layout and
+still constrain the current system. Implementation history remains available
+in Git.
+
+## Literature is the evidence boundary
+
+- The core evidence source is PubMed metadata and abstracts.
+- Hetionet paths are discovery hints used to expand literature searches; they
+  do not support final claims or replace PMID citations.
+- Full-text parsing, clinical recommendations, and systematic-review coverage
+  remain outside the current product boundary.
+
+## Baseline and agent workflows share domain modules
+
+- The deterministic RAG baseline remains available as a comparison path.
+- LangGraph orchestrates existing planner, graph, retrieval, stopping,
+  extraction, and synthesis functions rather than replacing them with generic
+  tool wrappers.
+- CLI, FastAPI, and Streamlit call the same workflow layer and consume
+  normalized results.
+
+## Retrieval remains inspectable
+
+- Local `*.documents.jsonl` corpora are the reproducible default; live PubMed is
+  used when a local corpus is unavailable.
+- Lexical and optional dense scores feed a deterministic final ranking step.
+- Ranked candidates and evidence records remain visible rather than being
+  hidden behind the final answer.
+- Neo4j and external model providers are optional; their failure must not break
+  the literature-only path.
+
+## Stopping and citations use deterministic checks
+
+- Agent branches stop on explicit iteration, evidence-count, and relevance
+  criteria instead of asking an LLM whether the search is complete.
+- Answer citations must refer to PMIDs present in the run's evidence records.
+- Deterministic checks are treated as engineering safeguards, not proof of
+  clinical sufficiency or claim-level scientific correctness.
+
+## Semantic extraction has a separate model contract
+
+- `ModelEvidenceExtraction` contains only query-focused predictions: evidence
+  status, study design, semantic fields, outcomes, and verbatim abstract spans.
+- PMID, bibliographic metadata, and retrieval scores remain workflow-owned
+  fields and are never regenerated by the model.
+- Rules, prompted inference, and local QLoRA implement one typed extraction
+  interface so they can be evaluated on the same examples.
+- JSON parsing, schema validity, semantic quality, grounding, and latency are
+  reported separately.
+
+## Fine-tuning data is split and evaluated by PMID
+
+- Query variants for one PMID stay in one split to prevent document leakage.
+- Training examples use the same prompt and JSON response contract as runtime
+  inference.
+- Response-only loss starts at the assistant JSON object.
+- Draft-label provenance, source-corpus identity, split manifests, and held-out
+  predictions remain tracked with each experiment.
+- Small draft test sets support engineering comparisons, not broad biomedical
+  benchmark claims.
+
+## Local QLoRA is optional product enrichment
+
+- Training code stays under `training/evidence_extraction/`; the runtime adapter
+  stays behind the extraction interface.
+- The normal API and Docker environment do not install Unsloth or the GPU
+  training stack.
+- Model output is validated against the schema and verbatim abstract spans
+  before it is attached to an evidence record.
+- Invalid or unavailable optional inference falls back to deterministic
+  extraction, and each row records the attempted backend, actual backend, and
+  fallback reason.
+- Adapter weights are published externally with model cards and immutable
+  revisions rather than committed to Git.
+
+## Evaluation artifacts stay local and reproducible
+
+- Evaluation loads versioned JSONL datasets and writes per-item plus aggregate
+  reports without introducing an experiment database.
+- Retrieval, citation, answer, graph-gain, and extraction metrics reuse the
+  production workflow boundaries.
+- CI verifies code quality and a small workflow smoke path without requiring
+  provider credentials; offline model experiments remain separate.
+- `pyproject.toml` declares supported dependencies and the committed `uv.lock`
+  pins the resolved local and CI environment.

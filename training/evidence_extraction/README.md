@@ -1,193 +1,125 @@
 # Evidence extraction training
 
-This directory contains the optional local-model environment and experiment
-entry points for the v0.3 evidence-extraction track. The product environment
-does not depend on this stack.
+This directory contains the optional local environment and scripts used to
+train and evaluate the query-focused evidence-extraction adapters. The normal
+product environment does not depend on Unsloth or the GPU training stack.
 
-## Reproduce the environment
+## Environment
 
-The checked-in lock file is an exact snapshot from Windows 11, Python 3.12.13,
-and an NVIDIA RTX 5070 12 GB. From the repository root:
+The lock file records the Windows 11, Python 3.12.13, CUDA, and package versions
+used on an NVIDIA RTX 5070 12 GB.
 
 ```powershell
 conda activate bioevidence-training
-pip install -r training/evidence_extraction/requirements.lock.txt --extra-index-url https://download.pytorch.org/whl/cu130
+pip install -r training/evidence_extraction/requirements.lock.txt `
+  --extra-index-url https://download.pytorch.org/whl/cu130
 pip install -e .
 pip check
 ```
 
-The editable install exposes the repository's `src/` package and keeps schema,
-prompt, and metric changes immediately visible to the experiment scripts. The
-dependency direction stays one-way: the training environment includes the
-product package, while the product environment does not include Unsloth.
-
-To keep model and compilation caches off the system drive, configure paths
-before loading Unsloth:
+Optional cache locations can keep model and compilation artifacts off the
+system drive:
 
 ```powershell
-$env:HF_HOME = "<path-to-hugging-face-cache>"
-$env:TRITON_CACHE_DIR = "<path-to-triton-cache>"
-$env:UNSLOTH_COMPILE_LOCATION = "<path-to-unsloth-compile-cache>"
+$env:HF_HOME="<path-to-hugging-face-cache>"
+$env:TRITON_CACHE_DIR="<path-to-triton-cache>"
+$env:UNSLOTH_COMPILE_LOCATION="<path-to-unsloth-compile-cache>"
 ```
 
-Download the pinned model snapshot:
+Download the pinned base snapshot:
 
 ```powershell
-hf download unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit --revision 7744afa8566e264af1a92a806d8d9aae00cc7c78
+hf download unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit `
+  --revision 7744afa8566e264af1a92a806d8d9aae00cc7c78
 ```
 
-## Run the prompted baseline
+## Prompted baseline
 
-Start with one end-to-end schema and grounding check:
+Run one schema and grounding check:
 
 ```powershell
 python training/evidence_extraction/scripts/smoke_test.py
 ```
 
-Then evaluate all 20 query-document pairs:
+Run the prompted model over the original pilot:
 
 ```powershell
 python training/evidence_extraction/scripts/run_local_extraction_eval.py `
   --model-label "unsloth/Qwen3-4B-Instruct-2507-unsloth-bnb-4bit@7744afa"
 ```
 
-Reports are written under ignored `artifacts/` directories. The full runner
-preserves every prediction and raw model response so parse, schema, grounding,
-and field-level failures remain inspectable.
+Predictions and raw responses are written under ignored `artifacts/` paths.
 
-## Build the SFT dataset
+## Build the v2 SFT dataset
 
-Convert the validated annotations into Qwen chat-format JSONL:
-
-```powershell
-python training/evidence_extraction/scripts/build_sft_dataset.py
-```
-
-The builder writes `train.jsonl`, `dev.jsonl`, `test.jsonl`, and
-`manifest.json` under `artifacts/training/evidence_extraction/pilot_sft/`.
-It also refreshes the tracked aggregate `pilot_split_manifest.json` beside the
-source annotations.
-Each split also gets a `*.annotations.jsonl` file in the generated directory so
-the same held-out labels can be passed directly to the extraction evaluator.
-Assignments are deterministic for a fixed seed, and every query variant for the
-same PMID stays in one split. Each row contains the exact runtime system/user
-prompt, a compact JSON assistant target, and inspectable annotation metadata.
-
-The 20-row pilot is enough to validate the complete data and training pipeline,
-but dataset expansion remains the main Milestone 20 task before a meaningful
-quality comparison. Because the pilot has only three `direct` labels, its
-PMID-safe split leaves one direct example in each split; that is an honest smoke
-test constraint, not a training recipe for the final experiment.
-
-Validate the generated records without loading a model:
+The current experiment combines the pilot, v1 expansion, and v2 expansion.
+Every recorded PMID assignment is fixed by the tracked v2 split manifest.
 
 ```powershell
-python training/evidence_extraction/scripts/train_qlora_smoke.py --dry-run
+python training/evidence_extraction/scripts/build_sft_dataset.py `
+  --dataset data/evaluations/evidence_extraction/pilot_annotations.jsonl `
+  --dataset data/evaluations/evidence_extraction/expansion_annotations.v1.jsonl `
+  --dataset data/evaluations/evidence_extraction/expansion_annotations.v2.jsonl `
+  --metadata data/evaluations/evidence_extraction/training_dataset_metadata.v2.json `
+  --fixed-split-manifest data/evaluations/evidence_extraction/training_split_manifest.v1.json `
+  --output-dir artifacts/training/evidence_extraction/training_v2_sft `
+  --manifest-output artifacts/training/evidence_extraction/training_v2_sft/split_manifest.json
 ```
 
-Run the five-step QLoRA training check:
+The generated directory contains Qwen chat-format `train.jsonl`, `dev.jsonl`,
+and `test.jsonl`, plus matching `*.annotations.jsonl` files for evaluation.
+Examples use the runtime system/user prompt and a compact JSON assistant target.
+
+## Train QLoRA v2
+
+Validate data and configuration without loading a model:
 
 ```powershell
-python training/evidence_extraction/scripts/train_qlora_smoke.py
+python training/evidence_extraction/scripts/train_qlora_smoke.py `
+  --train-file artifacts/training/evidence_extraction/training_v2_sft/train.jsonl `
+  --dev-file artifacts/training/evidence_extraction/training_v2_sft/dev.jsonl `
+  --output-dir artifacts/training/evidence_extraction/qwen3_4b_qlora_v2 `
+  --max-steps 72 `
+  --dry-run
 ```
 
-The smoke run uses rank-16 LoRA on the attention and MLP projections, 4-bit base
-weights, BF16 when supported, effective batch size four, and response-only loss.
-Training examples are rendered from the system/user generation prompt plus the
-raw assistant JSON target. This deliberately excludes any assistant-side
-thinking or tool-call scaffolding that a model chat template may otherwise add,
-so the first supervised response character is `{` just as required at runtime.
-It evaluates dev loss before and after training, saves the adapter, reloads it,
-and writes an inspectable `report.json`. This is a pipeline validation run, not
-the final hyperparameter configuration.
+Remove `--dry-run` to train. The recorded v2 run used:
 
-The first five-step run completed on the RTX 5070 in 38.85 seconds. Train loss
-was 1.801, dev loss moved from 1.980 before training to 1.226 afterward, and
-PyTorch reported 5.41 GiB peak allocated VRAM. The 66.1 MB adapter reloaded
-successfully. These numbers establish that the training path works; the tiny
-pilot makes the loss change unsuitable as a model-quality claim. The tracked
-aggregate is `data/evaluations/evidence_extraction/qlora_smoke_summary.json`.
+- 4-bit base weights with BF16 compute
+- rank 16 and alpha 16 LoRA on attention and MLP projections
+- effective batch size 4
+- learning rate `2e-4`
+- response-only loss beginning at the assistant JSON object
+- maximum sequence length 4,096
+- 72 optimizer steps
 
-## Recorded baseline
+It completed in 493.4 seconds, peaked at 5.81 GiB of allocated PyTorch VRAM,
+and reduced dev loss from 1.104 to 0.247. The script saves and reloads the
+adapter before reporting success.
 
-The first local run used deterministic decoding, a 4,096-token context, and a
-1,024-token output limit on the 20-row extraction pilot.
-
-| Metric | Rules | Qwen3-4B prompted |
-| --- | ---: | ---: |
-| JSON parse rate | 1.000 | 0.950 |
-| Schema validity | 1.000 | 0.950 |
-| Evidence status accuracy | 0.400 | 0.650 |
-| Study design accuracy | 0.750 | 0.800 |
-| Semantic-field token F1 | 0.400 | 0.553 |
-| Outcome direction accuracy | 0.450 | 0.379 |
-| Evidence-span token F1 | 0.461 | 0.299 |
-| Evidence-span support rate | 1.000 | 0.815 |
-
-The local model loaded in 3.75 seconds, generated each item in 22.26 seconds on
-average, and peaked at 4.38 GiB of allocated VRAM. It predicted 2.4 outcomes per
-item while the pilot labels contain 0.6 on average. This over-extraction explains
-most of the weaker outcome and span scores; the only JSON failure reached the
-1,024-token output limit before closing the object.
-
-## First expanded QLoRA comparison
-
-The first expanded run combines the 20 pilot rows with 40 model-assisted draft
-annotations. PMID-level splitting produced 46 train, 7 dev, and 7 held-out test
-rows. The corrected 36-step adapter was compared with the rules baseline and the
-prompted base model on exactly the same test split.
-
-| Metric | Rules | Qwen3-4B prompted | Qwen3-4B QLoRA |
-| --- | ---: | ---: | ---: |
-| JSON parse rate | 1.000 | 1.000 | 1.000 |
-| Schema validity | 1.000 | 1.000 | 1.000 |
-| Grounding rate | n/a | 0.714 | 1.000 |
-| Evidence status accuracy | 0.429 | 0.714 | 0.429 |
-| Study design accuracy | 0.857 | 1.000 | 0.857 |
-| Semantic-field token F1 | 0.571 | 0.540 | 0.668 |
-| Outcome-name token F1 | 0.429 | 0.414 | 0.631 |
-| Outcome direction accuracy | 0.429 | 0.536 | 0.714 |
-| Evidence-span token F1 | 0.513 | 0.461 | 0.511 |
-| Evidence-span support rate | 1.000 | 0.857 | 1.000 |
-
-The adapter cut mean generation time from 20.08 to 7.34 seconds and achieved the
-target strict JSON behavior. It did not improve evidence-status classification,
-so this result supports structured-output specialization but not a broad claim
-that the 60-row draft dataset improves every extraction dimension. The tracked
-configuration and aggregate are in
-`data/evaluations/evidence_extraction/qlora_training_v1_summary.json`.
-
-## Prepare the adapter for publication
-
-The raw PEFT save records the local base-model snapshot path. Build a portable,
-non-destructive release directory that rewrites that path to the public base
-model ID, installs the reviewed model card, and hashes every release file:
+## Evaluate the adapter
 
 ```powershell
-python training/evidence_extraction/scripts/prepare_adapter_release.py
+python scripts/run_extraction_eval.py `
+  --backend local `
+  --adapter-path artifacts/training/evidence_extraction/qwen3_4b_qlora_v2/adapter `
+  --dataset artifacts/training/evidence_extraction/training_v2_sft/test.annotations.jsonl `
+  --output artifacts/evaluations/extraction_local_adapter_v2.json
 ```
 
-The default output is ignored at
-`artifacts/releases/bioevidence-qwen3-4b-extraction-lora-v1/`. The script refuses
-to write into a non-empty destination. Inspect `release_manifest.json`, then
-upload only that prepared directory after choosing a Hugging Face namespace:
+The full four-system comparison and its limitations are in
+[`docs/EXTRACTION_MODEL_REPORT.md`](../../docs/EXTRACTION_MODEL_REPORT.md).
+Tracked configuration and aggregate results are in
+`data/evaluations/evidence_extraction/qlora_training_v2_summary.json`.
 
-```powershell
-hf upload <namespace>/bioevidence-qwen3-4b-extraction-lora-v1 `
-  artifacts/releases/bioevidence-qwen3-4b-extraction-lora-v1
-```
+## Published adapters
 
-The publication materials are tracked as `MODEL_CARD.md` and
-`DATASET_CARD.md`. Uploading requires an authenticated Hugging Face account and
-is intentionally separate from training and local release preparation.
+- [v2](https://huggingface.co/n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v2)
+  at revision `20ae7837207fcb697ac99d71961e99d0aebcb4ab`
+- [v1](https://huggingface.co/n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1)
+  at revision `e6a61cd9749f373fc6c4fcdc3563b417ea57b401`
 
-The v1 adapter is published at
-[`n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1`](https://huggingface.co/n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v1)
-at revision `e6a61cd9749f373fc6c4fcdc3563b417ea57b401`. It was downloaded into a
-fresh directory after publication, and every file covered by the release
-manifest matched both its recorded size and SHA-256 hash.
-
-The v2 comparison adapter is published at
-[`n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v2`](https://huggingface.co/n0rths7ar/bioevidence-qwen3-4b-extraction-lora-v2)
-at revision `20ae7837207fcb697ac99d71961e99d0aebcb4ab`. Its six manifest-covered
-files were also verified from a fresh download by size and SHA-256 hash.
+`prepare_adapter_release.py` builds a non-destructive release directory,
+rewrites the machine-local base-model path to the pinned public model ID, and
+records SHA-256 hashes. Model weights remain outside Git; model and dataset
+cards stay in this directory.
