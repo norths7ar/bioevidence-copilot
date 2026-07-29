@@ -44,12 +44,12 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("artifacts/releases/bioevidence-qwen3-4b-extraction-lora-v1"),
+        default=Path("artifacts/releases/bioevidence-qwen3-4b-extraction-lora-v2"),
     )
     parser.add_argument(
         "--model-card",
         type=Path,
-        default=Path("training/evidence_extraction/MODEL_CARD.md"),
+        default=Path("training/evidence_extraction/MODEL_CARD_V2.md"),
     )
     parser.add_argument("--base-model", default=DEFAULT_BASE_MODEL)
     return parser.parse_args(argv)

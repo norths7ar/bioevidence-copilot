@@ -7,8 +7,17 @@ import pytest
 
 from training.evidence_extraction.scripts.prepare_adapter_release import (
     DEFAULT_BASE_MODEL,
+    _parse_args,
     prepare_adapter_release,
 )
+
+
+def test_release_defaults_target_v2_adapter_and_model_card() -> None:
+    args = _parse_args([])
+
+    assert args.adapter_dir == Path("artifacts/training/evidence_extraction/qwen3_4b_qlora_v2/adapter")
+    assert args.output_dir == Path("artifacts/releases/bioevidence-qwen3-4b-extraction-lora-v2")
+    assert args.model_card == Path("training/evidence_extraction/MODEL_CARD_V2.md")
 
 
 def test_prepare_adapter_release_rewrites_local_base_path_and_adds_card(tmp_path: Path) -> None:
