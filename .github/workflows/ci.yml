@@ -37,7 +37,7 @@ jobs:
         run: uv run mypy src/bioevidence/schemas src/bioevidence/evaluation src/bioevidence/workflows src/bioevidence/graph --no-sqlite-cache --no-incremental
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run python -m pytest
 
       - name: Run evaluation smoke test
         run: uv run python scripts/run_eval.py --dataset data/evaluations/demo/demo_eval_dataset.jsonl --data-dir data/corpora/demo --mode baseline --limit 1

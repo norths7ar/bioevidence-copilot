@@ -79,7 +79,7 @@ reproducible local and CI environments.
 uv sync --locked --all-extras --no-managed-python
 uv run python scripts/run_baseline.py
 uv run streamlit run interfaces/web/streamlit_app.py
-uv run pytest
+uv run python -m pytest
 ```
 
 The baseline works with the tracked local demo corpus. Optional providers and
@@ -154,7 +154,7 @@ python scripts/import_hetionet.py --hetionet-root "<path-to-hetionet>"
 ```powershell
 uv run ruff check --no-cache .
 uv run mypy src/bioevidence/schemas src/bioevidence/evaluation src/bioevidence/workflows src/bioevidence/graph --no-sqlite-cache --no-incremental
-uv run pytest
+uv run python -m pytest
 uv run python scripts/run_eval.py `
   --dataset data/evaluations/demo/demo_eval_dataset.jsonl `
   --data-dir data/corpora/demo `
