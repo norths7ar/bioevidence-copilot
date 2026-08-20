@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/norths7ar/bioevidence-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/norths7ar/bioevidence-copilot/actions/workflows/ci.yml)
 
+> **Project status:** This project is complete and no longer actively maintained. Version `v0.4.1` is the final release; the repository remains available as a reproducible reference implementation.
+
 BioEvidence Copilot retrieves biomedical literature, turns PubMed abstracts
 into inspectable evidence records, and produces citation-grounded answers.
 
