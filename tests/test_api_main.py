@@ -55,6 +55,13 @@ def test_health_endpoint():
     assert response.json()["status"] == "ok"
 
 
+def test_api_version_matches_package_version():
+    from bioevidence import __version__
+    from interfaces.api.main import app
+
+    assert app.version == __version__
+
+
 def test_agent_stream_endpoint_emits_ndjson(monkeypatch):
     from fastapi.testclient import TestClient
 
@@ -63,7 +70,7 @@ def test_agent_stream_endpoint_emits_ndjson(monkeypatch):
     monkeypatch.setattr(
         api_main,
         "stream_agent_workflow",
-        lambda query, data_dir=None: iter(
+        lambda query, *, settings=None: iter(
             [
                 {"node": "retrieve_baseline"},
                 {"node": "discover_graph", "graph_discovery": {"status": "disabled"}},
@@ -86,8 +93,8 @@ def test_agent_stream_endpoint_returns_error_status_before_stream_starts(monkeyp
 
     import interfaces.api.main as api_main
 
-    def failed_stream(query, data_dir=None):
-        del query, data_dir
+    def failed_stream(query, *, settings=None):
+        del query, settings
         raise FileNotFoundError("missing corpus")
         yield
 
@@ -105,8 +112,8 @@ def test_agent_stream_endpoint_emits_terminal_error_after_stream_starts(monkeypa
 
     import interfaces.api.main as api_main
 
-    def failed_stream(query, data_dir=None):
-        del query, data_dir
+    def failed_stream(query, *, settings=None):
+        del query, settings
         yield {"node": "retrieve_baseline"}
         raise RuntimeError("bug")
 
@@ -129,7 +136,7 @@ def test_baseline_endpoint_returns_workflow_shape(monkeypatch):
 
     import interfaces.api.main as api_main
 
-    monkeypatch.setattr(api_main, "run_rag_pipeline", lambda query, *, data_dir=None: _workflow_result(query.text))
+    monkeypatch.setattr(api_main, "run_rag_pipeline", lambda query, *, settings=None: _workflow_result(query.text))
     client = TestClient(api_main.app)
 
     response = client.post("/api/v1/query/baseline", json={"query": "asthma corticosteroids", "top_k": 5})
@@ -161,7 +168,7 @@ def test_agent_endpoint_returns_compact_report(monkeypatch):
         state=AgentState(query=baseline.query, sufficient=True, stop_reason="sufficient_evidence"),
         comparison={"branch_count": 0, "stop_reason": "sufficient_evidence"},
     )
-    monkeypatch.setattr(api_main, "run_agent_workflow", lambda query, *, data_dir=None: agent_result)
+    monkeypatch.setattr(api_main, "run_agent_workflow", lambda query, *, settings=None: agent_result)
     client = TestClient(api_main.app)
 
     response = client.post("/api/v1/query/agent", json={"query": "asthma corticosteroids"})
@@ -184,5 +191,19 @@ def test_baseline_endpoint_rejects_empty_query():
 
     client = TestClient(app)
     response = client.post("/api/v1/query/baseline", json={"query": ""})
+
+    assert response.status_code == 422
+
+
+def test_query_request_rejects_client_data_dir():
+    from fastapi.testclient import TestClient
+
+    from interfaces.api.main import app
+
+    client = TestClient(app)
+    response = client.post(
+        "/api/v1/query/baseline",
+        json={"query": "asthma evidence", "data_dir": "C:/untrusted"},
+    )
 
     assert response.status_code == 422

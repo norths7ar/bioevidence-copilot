@@ -20,7 +20,6 @@ except ModuleNotFoundError:  # pragma: no cover - import smoke test path
 
 
 DEFAULT_QUERY = "What evidence exists for asthma corticosteroids?"
-DEFAULT_DATA_DIR = "data/corpora/demo"
 LOGGER = logging.getLogger(__name__)
 
 
@@ -35,12 +34,11 @@ def _cache_data(*decorator_args, **decorator_kwargs) -> Callable[[Callable[..., 
 
 
 @_cache_data(show_spinner=False)
-def load_demo_payload(query_text: str, data_dir: str | None = None) -> dict[str, object]:
+def load_demo_payload(query_text: str) -> dict[str, object]:
     settings = load_settings()
     query = Query(text=query_text)
-    data_path = Path(data_dir) if data_dir else None
     try:
-        result = run_agent_workflow(query, data_dir=data_path, settings=settings)
+        result = run_agent_workflow(query, settings=settings)
     except (PubMedRequestError, URLError, OSError) as exc:
         LOGGER.warning("streamlit_agent_unavailable reason=%s", type(exc).__name__)
         return {
@@ -386,7 +384,6 @@ def main() -> None:
 
     with st.form("query_form", clear_on_submit=False):
         query_text = st.text_input("Biomedical question", value=DEFAULT_QUERY)
-        data_dir = st.text_input("Optional data directory", value=DEFAULT_DATA_DIR)
         submitted = st.form_submit_button("Run demo")
 
     if not submitted:
@@ -398,7 +395,7 @@ def main() -> None:
         st.warning("Please enter a biomedical question.")
         return
 
-    payload = load_demo_payload(query_text, data_dir.strip() or None)
+    payload = load_demo_payload(query_text)
     st.markdown(f"**Query:** {payload['query']}")
 
     if payload.get("agent_notice"):

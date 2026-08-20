@@ -37,7 +37,7 @@ citations remain available alongside the answer.
 ```text
 query
 -> run the baseline
--> optional Hetionet entity/path discovery
+-> if baseline is insufficient, optional Hetionet entity/path discovery
 -> plan one or more follow-up literature queries
 -> retrieve and merge branch results
 -> check deterministic stopping criteria

@@ -1,19 +1,23 @@
+FROM ghcr.io/astral-sh/uv:0.11.31 AS uv
+
 FROM python:3.12-slim
+
+COPY --from=uv /uv /uvx /bin/
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DATA_DIR=/app/data/corpora/demo \
-    EMBEDDING_CACHE_DIR=/tmp/bioevidence-cache
+    EMBEDDING_CACHE_DIR=/tmp/bioevidence-cache \
+    PATH=/app/.venv/bin:$PATH
 
 WORKDIR /app
 
 RUN useradd --create-home --shell /usr/sbin/nologin appuser
 
-COPY pyproject.toml README.md ./
+COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
 
-RUN python -m pip install --upgrade pip \
-    && python -m pip install --no-cache-dir ".[serve,graph]"
+RUN uv sync --locked --no-dev --extra serve --extra graph --no-managed-python
 
 COPY interfaces ./interfaces
 COPY data ./data

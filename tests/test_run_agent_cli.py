@@ -2,6 +2,8 @@ from dataclasses import replace
 import json
 from pathlib import Path
 
+import pytest
+
 import scripts.run_agent as run_agent_script
 from bioevidence.agent.state import AgentState
 from bioevidence.workflows import AgentWorkflowResult, WorkflowResult
@@ -130,3 +132,25 @@ def test_run_agent_cli_writes_run_artifacts(tmp_path: Path, monkeypatch) -> None
     trace_lines = (run_directory / "trace.jsonl").read_text(encoding="utf-8").splitlines()
     assert report["run"]["run_id"]
     assert [json.loads(line)["event"] for line in trace_lines] == ["run_started", "run_completed"]
+
+
+def test_run_agent_cli_closes_artifact_log_on_unexpected_error(tmp_path: Path, monkeypatch) -> None:
+    def failed_workflow(query, data_dir=None, settings=None, trace_recorder=None):
+        del query, data_dir, settings, trace_recorder
+        raise RuntimeError("unexpected workflow failure")
+
+    close_calls: list[Path] = []
+    original_close_log_file = run_agent_script.close_log_file
+
+    def close_log_file(log_file: Path) -> None:
+        close_calls.append(log_file)
+        original_close_log_file(log_file)
+
+    monkeypatch.setattr(run_agent_script, "run_agent_workflow", failed_workflow)
+    monkeypatch.setattr(run_agent_script, "close_log_file", close_log_file)
+
+    with pytest.raises(RuntimeError, match="unexpected workflow failure"):
+        run_agent_script.main(["--artifacts-dir", str(tmp_path)])
+
+    assert len(close_calls) == 1
+    assert close_calls[0].name == "run.log"

@@ -68,39 +68,41 @@ def main(argv: Sequence[str] | None = None) -> int:
     settings = load_settings()
     recorder = TraceRecorder()
     artifact_paths = create_run_artifact_paths(args.artifacts_dir, recorder) if args.artifacts_dir is not None else None
-    configure_logging(settings.log_level, log_file=artifact_paths.log if artifact_paths else None)
-    query = Query(text=args.query)
     try:
-        result = run_agent_workflow(
-            query,
-            data_dir=args.data_dir,
-            settings=settings,
-            trace_recorder=recorder,
-        )
-    except (PubMedRequestError, URLError, OSError) as exc:
-        LOGGER.warning("agent_workflow_unavailable reason=%s", type(exc).__name__)
+        configure_logging(settings.log_level, log_file=artifact_paths.log if artifact_paths else None)
+        query = Query(text=args.query)
+        try:
+            result = run_agent_workflow(
+                query,
+                data_dir=args.data_dir,
+                settings=settings,
+                trace_recorder=recorder,
+            )
+        except (PubMedRequestError, URLError, OSError) as exc:
+            LOGGER.warning("agent_workflow_unavailable reason=%s", type(exc).__name__)
+            if artifact_paths is not None:
+                save_jsonl(recorder.events(), artifact_paths.trace)
+            return 1
+
+        if result.run_id is None:
+            result = replace(result, run_id=recorder.run_id, trace_events=recorder.events())
+        report = build_agent_report_payload(result)
+        print(render_agent_run_summary(result))
+
+        if args.output is not None:
+            save_json(report, args.output)
+            print(f"Report written to {args.output}")
+
         if artifact_paths is not None:
-            save_jsonl(recorder.events(), artifact_paths.trace)
+            save_json(report, artifact_paths.report)
+            save_jsonl(result.trace_events, artifact_paths.trace)
+            if args.debug:
+                save_json(build_agent_comparison_payload(result), artifact_paths.debug)
+            print(f"Run artifacts written to {artifact_paths.directory}")
+        return 0
+    finally:
+        if artifact_paths is not None:
             close_log_file(artifact_paths.log)
-        return 1
-
-    if result.run_id is None:
-        result = replace(result, run_id=recorder.run_id, trace_events=recorder.events())
-    report = build_agent_report_payload(result)
-    print(render_agent_run_summary(result))
-
-    if args.output is not None:
-        save_json(report, args.output)
-        print(f"Report written to {args.output}")
-
-    if artifact_paths is not None:
-        save_json(report, artifact_paths.report)
-        save_jsonl(result.trace_events, artifact_paths.trace)
-        if args.debug:
-            save_json(build_agent_comparison_payload(result), artifact_paths.debug)
-        print(f"Run artifacts written to {artifact_paths.directory}")
-        close_log_file(artifact_paths.log)
-    return 0
 
 
 if __name__ == "__main__":

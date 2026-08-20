@@ -11,7 +11,6 @@ from bioevidence.agent.llm import AgentLLMError, create_agent_client
 from bioevidence.agent.planner import plan_next_steps_with_trace
 from bioevidence.agent.state import AgentState
 from bioevidence.agent.stop_criteria import should_stop
-from bioevidence.agent.tools import merge_candidates, merge_evidence_records
 from bioevidence.config import Settings, load_settings
 from bioevidence.extraction.model_backend import ExtractionBackend, create_product_extraction_backend
 from bioevidence.generation.agent_answerer import synthesize_agent_answer_with_trace
@@ -326,8 +325,8 @@ def _build_agent_graph(
                     stop_reason_after_branch=None,
                 ),
             )
-            merge_candidates(state, branch_result.retrieved_candidates)
-            merge_evidence_records(state, branch_result.evidence_records)
+            state.merge_candidates(branch_result.retrieved_candidates)
+            state.merge_evidence_records(branch_result.evidence_records)
             new_pmids = sorted({candidate.document.pmid for candidate in ranked_candidates} - pmids_before_branch)
             LOGGER.info(
                 "branch_retrieval_completed iteration=%d source=%s candidates=%d evidence=%d new_pmids=%d",
@@ -435,12 +434,16 @@ def _build_agent_graph(
     graph.add_node("retrieve_branches", cast(Any, retrieve_node))
     graph.add_node("synthesize", cast(Any, synthesize_node))
     graph.add_edge(START, "retrieve_baseline")
-    graph.add_edge("retrieve_baseline", "discover_graph")
+    graph.add_conditional_edges("retrieve_baseline", lambda state: _route_after_baseline(state, settings))
     graph.add_conditional_edges("discover_graph", lambda state: _route_after_discovery(state, settings))
     graph.add_conditional_edges("plan", _route_after_plan)
     graph.add_conditional_edges("retrieve_branches", lambda state: _route_after_retrieval(state, settings))
     graph.add_edge("synthesize", END)
     return graph.compile()
+
+
+def _route_after_baseline(graph_state: AgentGraphState, settings: Settings) -> str:
+    return "synthesize" if _stop(graph_state["state"], settings) else "discover_graph"
 
 
 def _route_after_discovery(graph_state: AgentGraphState, settings: Settings) -> str:

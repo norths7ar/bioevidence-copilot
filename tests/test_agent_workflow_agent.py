@@ -11,6 +11,7 @@ from bioevidence.schemas.answer import AnswerBundle
 from bioevidence.schemas.document import Document, RetrievedCandidate
 from bioevidence.schemas.evidence import EvidenceRecord
 from bioevidence.schemas.query import Query
+from bioevidence.graph.models import GraphDiscoveryResult
 from bioevidence.graph.provider import GraphDiscoveryError
 
 
@@ -61,6 +62,105 @@ def _evidence(pmid: str, score: float) -> EvidenceRecord:
         summary=f"Summary {pmid}",
         relevance_score=score,
     )
+
+
+def _baseline_result(query: Query, pmids: tuple[str, ...]) -> agent_workflow.WorkflowResult:
+    candidates = tuple(_candidate(pmid, 0.9 - index * 0.05, index + 1) for index, pmid in enumerate(pmids))
+    evidence = tuple(_evidence(pmid, candidate.score) for pmid, candidate in zip(pmids, candidates, strict=True))
+    return agent_workflow.WorkflowResult(
+        query=query,
+        documents=tuple(candidate.document for candidate in candidates),
+        retrieved_candidates=candidates,
+        evidence_records=evidence,
+        answer=AnswerBundle(
+            answer_text="Baseline answer",
+            citations=pmids,
+            evidence_records=evidence,
+            rewritten_query=query.text,
+        ),
+        source="local_corpus",
+    )
+
+
+def test_sufficient_baseline_skips_graph_discovery(monkeypatch) -> None:
+    query = Query(text="asthma")
+    baseline = _baseline_result(query, ("111", "222", "333"))
+
+    class CountingProvider:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def discover(self, query_text: str) -> GraphDiscoveryResult:
+            self.calls += 1
+            return GraphDiscoveryResult(query=query_text, status="empty")
+
+        def close(self) -> None:
+            return None
+
+    provider = CountingProvider()
+
+    monkeypatch.setattr(agent_workflow, "run_rag_pipeline", lambda *args, **kwargs: baseline)
+    monkeypatch.setattr(agent_workflow, "create_agent_client", lambda settings: object())
+    monkeypatch.setattr(
+        agent_workflow,
+        "synthesize_agent_answer_with_trace",
+        lambda state, baseline_answer, *, settings=None, client=None: AgentSynthesisResult(
+            answer=baseline.answer,
+            source="fallback",
+        ),
+    )
+
+    result = agent_workflow.run_agent_workflow(query, settings=_settings(), graph_provider=provider)
+
+    assert provider.calls == 0
+    assert result.graph_discovery is None
+    assert result.state.sufficient is True
+    assert not any(event["event"] == "graph_discovery_completed" for event in result.trace_events)
+
+
+def test_insufficient_baseline_runs_graph_discovery(monkeypatch) -> None:
+    query = Query(text="asthma")
+    baseline = _baseline_result(query, ("111", "222"))
+
+    class CountingProvider:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def discover(self, query_text: str) -> GraphDiscoveryResult:
+            self.calls += 1
+            return GraphDiscoveryResult(query=query_text, status="empty")
+
+        def close(self) -> None:
+            return None
+
+    provider = CountingProvider()
+
+    monkeypatch.setattr(agent_workflow, "run_rag_pipeline", lambda *args, **kwargs: baseline)
+    monkeypatch.setattr(agent_workflow, "create_agent_client", lambda settings: object())
+    monkeypatch.setattr(
+        agent_workflow,
+        "plan_next_steps_with_trace",
+        lambda *args, **kwargs: planner_module.PlanningResult(
+            proposed_queries=(),
+            accepted_queries=(),
+            rationale="No additional query.",
+            source="fallback",
+        ),
+    )
+    monkeypatch.setattr(
+        agent_workflow,
+        "synthesize_agent_answer_with_trace",
+        lambda state, baseline_answer, *, settings=None, client=None: AgentSynthesisResult(
+            answer=baseline.answer,
+            source="fallback",
+        ),
+    )
+
+    result = agent_workflow.run_agent_workflow(query, settings=_settings(), graph_provider=provider)
+
+    assert provider.calls == 1
+    assert result.graph_discovery is not None
+    assert any(event["event"] == "graph_discovery_completed" for event in result.trace_events)
 
 
 def test_run_agent_workflow_accumulates_branches_and_stops(monkeypatch):
@@ -183,9 +283,28 @@ def test_graph_discovery_only_degrades_declared_operational_errors(monkeypatch) 
             return None
 
     monkeypatch.setattr(agent_workflow, "run_rag_pipeline", lambda *args, **kwargs: baseline)
+    monkeypatch.setattr(agent_workflow, "create_agent_client", lambda settings: object())
+    monkeypatch.setattr(
+        agent_workflow,
+        "plan_next_steps_with_trace",
+        lambda *args, **kwargs: planner_module.PlanningResult(
+            proposed_queries=(),
+            accepted_queries=(),
+            rationale="No additional query.",
+            source="fallback",
+        ),
+    )
+    monkeypatch.setattr(
+        agent_workflow,
+        "synthesize_agent_answer_with_trace",
+        lambda state, baseline_answer, *, settings=None, client=None: AgentSynthesisResult(
+            answer=baseline.answer,
+            source="fallback",
+        ),
+    )
     result = agent_workflow.run_agent_workflow(
         query,
-        settings=replace(_settings(), agent_max_iterations=0),
+        settings=replace(_settings(), agent_max_iterations=1),
         graph_provider=UnavailableProvider(),
     )
 

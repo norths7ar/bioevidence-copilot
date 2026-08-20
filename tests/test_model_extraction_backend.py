@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import json
+import sys
+import types
 
+import pytest
 from bioevidence.extraction.model_backend import (
     ExtractionBackendError,
     FallbackExtractionBackend,
@@ -195,6 +198,62 @@ def test_unavailable_backend_is_not_counted_as_parsed_json(tmp_path) -> None:
 
     assert attempt.error_kind == "unavailable"
     assert attempt.json_parsed is False
+
+
+def test_local_adapter_reports_unavailable_without_cuda_before_model_load(tmp_path, monkeypatch) -> None:
+    class FakeFastLanguageModel:
+        load_calls = 0
+
+        @classmethod
+        def from_pretrained(cls, **kwargs):
+            cls.load_calls += 1
+            raise AssertionError("model loading should not start without CUDA")
+
+    fake_torch = types.ModuleType("torch")
+    fake_torch.cuda = types.SimpleNamespace(is_available=lambda: False)
+    fake_unsloth = types.ModuleType("unsloth")
+    fake_unsloth.FastLanguageModel = FakeFastLanguageModel
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+    monkeypatch.setitem(sys.modules, "unsloth", fake_unsloth)
+
+    backend = LocalAdapterExtractionBackend(adapter_path=tmp_path)
+
+    with pytest.raises(ExtractionBackendError, match="requires CUDA") as exc_info:
+        backend._load_runtime()
+
+    assert exc_info.value.kind == "unavailable"
+    assert FakeFastLanguageModel.load_calls == 0
+
+
+def test_local_adapter_cuda_unavailability_is_cached_by_fallback(tmp_path, monkeypatch) -> None:
+    fake_torch = types.ModuleType("torch")
+    fake_torch.cuda = types.SimpleNamespace(is_available=lambda: False)
+    fake_unsloth = types.ModuleType("unsloth")
+    fake_unsloth.FastLanguageModel = types.SimpleNamespace()
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+    monkeypatch.setitem(sys.modules, "unsloth", fake_unsloth)
+
+    primary = LocalAdapterExtractionBackend(adapter_path=tmp_path)
+    load_calls = 0
+    original_load_runtime = primary._load_runtime
+
+    def counted_load_runtime():
+        nonlocal load_calls
+        load_calls += 1
+        return original_load_runtime()
+
+    monkeypatch.setattr(primary, "_load_runtime", counted_load_runtime)
+    backend = FallbackExtractionBackend(primary, RuleBasedExtractionBackend())
+    document = Document(pmid="1", title="Trial protocol", abstract="This study protocol describes asthma.")
+
+    first = backend.resolve("asthma intervention", document)
+    second = backend.resolve("asthma intervention", document)
+
+    assert first.used_backend == "rules"
+    assert first.fallback_reason == "unavailable"
+    assert second.used_backend == "rules"
+    assert second.fallback_reason == "unavailable"
+    assert load_calls == 1
 
 
 def test_rule_backend_returns_schema_valid_protocol_none() -> None:

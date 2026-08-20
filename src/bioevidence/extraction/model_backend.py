@@ -194,6 +194,8 @@ class LocalAdapterExtractionBackend:
                 "Local adapter inference requires the separate training environment",
                 kind="unavailable",
             ) from exc
+        if not torch.cuda.is_available():
+            raise ExtractionBackendError("Local adapter requires CUDA", kind="unavailable")
         LOGGER.info(
             "local_adapter_runtime_import_completed duration_ms=%.1f",
             (perf_counter() - import_started) * 1000,

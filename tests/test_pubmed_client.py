@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from urllib.error import HTTPError, URLError
+from xml.etree import ElementTree as ET
 
 import pytest
 
@@ -230,6 +231,20 @@ def test_search_pubmed_raises_clear_error_on_nonretryable_http_status(monkeypatc
 
     assert opener.search_attempts == 1
     assert sleep_calls == []
+
+
+def test_search_pubmed_wraps_malformed_xml_error_without_retrying():
+    def opener(request):
+        if "esearch.fcgi" in request.full_url:
+            return _FakeResponse(json.dumps(SEARCH_JSON).encode("utf-8"))
+        if "efetch.fcgi" in request.full_url:
+            return _FakeResponse(b"<PubmedArticleSet>")
+        raise AssertionError(f"Unexpected URL: {request.full_url}")
+
+    with pytest.raises(PubMedRequestError, match="malformed XML") as exc_info:
+        search_pubmed(Query(text="alpha"), opener=opener)
+
+    assert isinstance(exc_info.value.__cause__, ET.ParseError)
 
 
 def test_search_pubmed_exhausts_retries_on_network_error(monkeypatch):

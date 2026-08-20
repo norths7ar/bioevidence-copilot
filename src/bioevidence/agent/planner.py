@@ -71,6 +71,12 @@ def plan_next_steps_with_trace(
         rationale = _normalize_rationale(payload.get("rationale"))
         source = "model"
         fallback_reason = None
+        accepted_queries = _deduplicate_queries(branch_queries, state.branch_queries)[:branch_count]
+        if not accepted_queries:
+            branch_queries = _fallback_branch_queries(state, branch_count=branch_count)
+            rationale = _fallback_rationale(state)
+            source = "fallback"
+            fallback_reason = "model returned no novel queries"
     except (AgentLLMError, ValueError, TypeError) as exc:
         LOGGER.warning("planner_fallback reason=%s detail=%s", type(exc).__name__, exc)
         branch_queries = _fallback_branch_queries(state, branch_count=branch_count)
@@ -120,7 +126,7 @@ def _fallback_branch_queries(state: AgentState, *, branch_count: int) -> list[st
         f"{base_query} mechanism",
         f"{base_query} evidence {evidence_hint}".strip(),
     ]
-    return variants[:branch_count]
+    return _deduplicate_queries(variants, state.branch_queries)[:branch_count]
 
 
 def _fallback_rationale(state: AgentState) -> str:

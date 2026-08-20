@@ -86,6 +86,89 @@ def test_plan_next_steps_with_trace_includes_rationale(monkeypatch):
     assert result.source == "model"
 
 
+def test_plan_next_steps_with_trace_falls_back_for_empty_model_queries(monkeypatch):
+    state = AgentState(query=Query(text="asthma corticosteroids"))
+
+    monkeypatch.setattr(planner_module, "load_settings", _settings)
+    monkeypatch.setattr(planner_module, "create_agent_client", lambda settings: object())
+    monkeypatch.setattr(
+        planner_module,
+        "chat_json",
+        lambda client, *, model, messages, max_tokens, temperature: {"branch_queries": []},
+    )
+
+    result = planner_module.plan_next_steps_with_trace(state, branch_count=2)
+
+    assert result.proposed_queries == (
+        "asthma corticosteroids review",
+        "asthma corticosteroids recent literature",
+    )
+    assert result.accepted_queries == result.proposed_queries
+    assert result.source == "fallback"
+    assert result.fallback_reason == "model returned no novel queries"
+    assert "Fallback planning" in result.rationale
+
+
+def test_plan_next_steps_with_trace_fallback_skips_used_variants(monkeypatch):
+    state = AgentState(
+        query=Query(text="asthma corticosteroids"),
+        branch_queries=[
+            "asthma corticosteroids review",
+            "asthma corticosteroids recent literature",
+        ],
+    )
+
+    monkeypatch.setattr(planner_module, "load_settings", _settings)
+    monkeypatch.setattr(planner_module, "create_agent_client", lambda settings: object())
+    monkeypatch.setattr(
+        planner_module,
+        "chat_json",
+        lambda client, *, model, messages, max_tokens, temperature: {
+            "branch_queries": [
+                "asthma corticosteroids review",
+                "asthma corticosteroids recent literature",
+            ]
+        },
+    )
+
+    result = planner_module.plan_next_steps_with_trace(state, branch_count=2)
+
+    assert result.accepted_queries == (
+        "asthma corticosteroids clinical evidence",
+        "asthma corticosteroids mechanism",
+    )
+    assert result.source == "fallback"
+    assert result.fallback_reason == "model returned no novel queries"
+
+
+def test_plan_next_steps_with_trace_marks_fallback_exhausted(monkeypatch):
+    state = AgentState(
+        query=Query(text="asthma corticosteroids"),
+        branch_queries=[
+            "asthma corticosteroids review",
+            "asthma corticosteroids recent literature",
+            "asthma corticosteroids clinical evidence",
+            "asthma corticosteroids mechanism",
+            "asthma corticosteroids evidence",
+        ],
+    )
+
+    monkeypatch.setattr(planner_module, "load_settings", _settings)
+    monkeypatch.setattr(planner_module, "create_agent_client", lambda settings: object())
+    monkeypatch.setattr(
+        planner_module,
+        "chat_json",
+        lambda client, *, model, messages, max_tokens, temperature: {"branch_queries": []},
+    )
+
+    result = planner_module.plan_next_steps_with_trace(state, branch_count=2)
+
+    assert result.proposed_queries == ()
+    assert result.accepted_queries == ()
+    assert result.source == "fallback"
+    assert result.fallback_reason == "model returned no novel queries"
+
+
 def test_plan_next_steps_falls_back_when_llm_unavailable(monkeypatch):
     state = AgentState(query=Query(text="asthma corticosteroids"))
 

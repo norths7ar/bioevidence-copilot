@@ -3,13 +3,13 @@ from __future__ import annotations
 from collections.abc import Iterator
 import json
 import logging
-from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
+from bioevidence import __version__
 from bioevidence.workflows import (
     AgentWorkflowResult,
     WorkflowResult,
@@ -30,15 +30,16 @@ LOGGER = logging.getLogger(__name__)
 
 app = FastAPI(
     title="BioEvidence Copilot API",
-    version="0.2.0",
+    version=__version__,
     description="Thin API layer over the local BioEvidence retrieval and agent workflows.",
 )
 
 
 class QueryRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     query: str = Field(min_length=1)
     top_k: int = Field(default=5, gt=0, le=50)
-    data_dir: str | None = None
 
 
 @app.get("/api/v1/health")
@@ -49,7 +50,7 @@ def health() -> dict[str, str]:
 @app.post("/api/v1/query/baseline")
 def query_baseline(request: QueryRequest) -> dict[str, Any]:
     try:
-        result = run_rag_pipeline(_to_query(request), data_dir=_data_dir(request))
+        result = run_rag_pipeline(_to_query(request), settings=load_settings())
     except (FileNotFoundError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -61,7 +62,7 @@ def query_baseline(request: QueryRequest) -> dict[str, Any]:
 @app.post("/api/v1/query/agent")
 def query_agent(request: QueryRequest) -> dict[str, Any]:
     try:
-        result = run_agent_workflow(_to_query(request), data_dir=_data_dir(request))
+        result = run_agent_workflow(_to_query(request), settings=load_settings())
     except (FileNotFoundError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -73,7 +74,7 @@ def query_agent(request: QueryRequest) -> dict[str, Any]:
 @app.post("/api/v1/query/agent/stream")
 def query_agent_stream(request: QueryRequest) -> StreamingResponse:
     try:
-        event_iterator = iter(stream_agent_workflow(_to_query(request), data_dir=_data_dir(request)))
+        event_iterator = iter(stream_agent_workflow(_to_query(request), settings=load_settings()))
         first_event = next(event_iterator)
     except StopIteration:
         return StreamingResponse(iter(()), media_type="application/x-ndjson")
@@ -103,12 +104,6 @@ def query_agent_stream(request: QueryRequest) -> StreamingResponse:
 
 def _to_query(request: QueryRequest) -> Query:
     return Query(text=request.query.strip(), top_k=request.top_k)
-
-
-def _data_dir(request: QueryRequest) -> Path | None:
-    if request.data_dir is None:
-        return None
-    return Path(request.data_dir)
 
 
 def _serialize_stream_event(event: dict[str, object]) -> str:

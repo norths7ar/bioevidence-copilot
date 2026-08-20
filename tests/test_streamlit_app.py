@@ -97,15 +97,23 @@ def test_streamlit_entrypoint_imports_without_side_effects():
 def test_load_demo_payload_builds_comparison_view(monkeypatch, tmp_path: Path):
     settings = _settings(tmp_path)
     monkeypatch.setattr(streamlit_app, "load_settings", lambda: settings)
+
+    received = {}
+
+    def fake_workflow(query, *, settings=None):
+        received["settings"] = settings
+        return _agent_result()
+
     monkeypatch.setattr(
-        streamlit_app, "run_agent_workflow", lambda query, data_dir=None, settings=None: _agent_result()
+        streamlit_app, "run_agent_workflow", fake_workflow
     )
 
-    payload = streamlit_app.load_demo_payload("asthma corticosteroids", data_dir=str(tmp_path))
+    payload = streamlit_app.load_demo_payload("asthma corticosteroids")
 
     assert payload["baseline"]["query"] == "asthma corticosteroids"
     assert payload["agent"]["retrieval_source"] == "agent:local_corpus"
     assert payload["agent_notice"] is None
+    assert received["settings"] is settings
 
 
 def test_build_run_summary_marks_agent_expansion():

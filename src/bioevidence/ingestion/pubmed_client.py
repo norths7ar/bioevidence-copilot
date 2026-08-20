@@ -222,7 +222,11 @@ def _parse_pubmed_xml(xml_text: str) -> list[Document]:
     if not xml_text.strip():
         return []
 
-    root = ET.fromstring(xml_text)
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError as exc:
+        raise PubMedRequestError("PubMed response contained malformed XML") from exc
+
     documents: list[Document] = []
     for article in root.findall("PubmedArticle"):
         record = _parse_pubmed_article(article)

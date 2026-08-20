@@ -72,17 +72,23 @@ correct.
 All extraction modes consume the same query-document annotations and target the
 same `ModelEvidenceExtraction` schema.
 
-Run the deterministic baseline:
+Run the deterministic baseline against the tracked v2 held-out split:
 
 ```powershell
-python scripts/run_extraction_eval.py --backend rules
+python scripts/run_extraction_eval.py `
+  --backend rules `
+  --dataset artifacts/training/evidence_extraction/training_v2_sft/test.annotations.jsonl `
+  --output artifacts/evaluations/extraction_v2_test_rules.json
 ```
 
 For an OpenAI-compatible prompted model, configure `EXTRACTION_API_KEY`,
 `EXTRACTION_BASE_URL`, and `EXTRACTION_MODEL`, then run:
 
 ```powershell
-python scripts/run_extraction_eval.py --backend prompted
+python scripts/run_extraction_eval.py `
+  --backend prompted `
+  --dataset artifacts/training/evidence_extraction/training_v2_sft/test.annotations.jsonl `
+  --output artifacts/evaluations/extraction_v2_test_prompted_base.json
 ```
 
 For the published local adapter, first prepare the pinned release and generate
@@ -94,7 +100,7 @@ python scripts/run_extraction_eval.py `
   --backend local `
   --adapter-path artifacts/models/bioevidence-qwen3-4b-extraction-lora-v2 `
   --dataset artifacts/training/evidence_extraction/training_v2_sft/test.annotations.jsonl `
-  --output artifacts/evaluations/extraction_local_adapter_v2.json
+  --output artifacts/evaluations/extraction_v2_test_qlora_adapter_v2.json
 ```
 
 The evaluator reports:

@@ -12,7 +12,7 @@ from openai.types.chat import ChatCompletionMessageParam
 from bioevidence.config import Settings
 
 
-JSON_FENCE_PATTERN = re.compile(r"```json\s*(.*?)\s*```", re.DOTALL | re.IGNORECASE)
+JSON_FENCE_PATTERN = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL | re.IGNORECASE)
 LOGGER = logging.getLogger(__name__)
 
 
